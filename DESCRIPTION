@@ -1,11 +1,48 @@
 Package: apde.chi.tools
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Title: Simplify Common Analytics Pipeline Procesees Of Public Health Seattle & King County's Assessment Policy Development and Evaluation Unit
+Version: 0.0.1
+Authors@R: person(
+  "Ronald","Buie", 
+  email = "rbuie@kingcounty.gov", 
+  role = c("auth", "cre"))
+Description: This package is for use by epidemiologists within Public Health Seattle
+    and King County, and aligns to analytics guidelines and practices for Community
+    Health Indicators (CHI) as reported by the Assessment, Policy Development, and
+    Evaluation Unit. The major activities assisted by this packages are 
+    Simplifying the execution of identical CHI analyses across multiple variables
+    Creating CHI Tableau ready output of the analysis
+    Performing quality assurance regarding data structure and formatting
+    Pushing and pulling data to APDE servers
+URL: https://github.com/PHSKC-APDE/apde.chi.tools
+BugReports: https://github.com/PHSKC-APDE/apde.chi.tools/issues
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Imports:
+    data.table (>= 1.14.2),
+    DBI (>= 1.1.0),
+    dtsurvey (>= 0.0.2.0),
+    glue (>= 1.6.1),
+    keyring (>= 1.2.0),
+    lubridate (>= 1.6.0),
+    methods,
+    odbc (>= 1.2.2),
+    rads.data (>= 1.0.7.5),
+    stats,
+    utf8 (>= 1.1.4),
+    yaml (>= 2.2.1),
+    utils
+Remotes:
+    github::PHSKC-APDE/rads.data, github::PHSKC-APDE/dtsurvey
+Suggests: 
+    httr, 
+    knitr,
+    rmarkdown, 
+    markdown,
+    testthat,
+    srvyr,
+    survey (>= 4.0)
+VignetteBuilder: knitr
+Depends: 
+    R (>= 3.1)

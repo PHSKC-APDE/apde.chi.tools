@@ -55,3 +55,16 @@ Set an environment variable; with_envvar(), local_envvar()
 Change working directory; with_dir(), local_dir()
 Set a graphics parameter; with_par(), local_par()
 
+
+We like to use the withr package (https://withr.r-lib.org) to make temporary changes in global state, because it automatically captures the initial state and arranges the eventual restoration. You’ve already seen an example of its usage, when we explored snapshot tests:
+
+test_that("side-by-side diffs work", {
+  withr::local_options(width = 20) # <-- (°_°) look here!
+  expect_snapshot(
+    waldo::compare(c("X", letters), c(letters, "X"))
+  )
+})
+
+We recommend including withr in Suggests, if you’re only going to use it in your tests, or in Imports, if you also use it below R/
+
+
