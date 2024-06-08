@@ -13,7 +13,6 @@
 #' @return status message indicating success and location, or failure, of upload
 #' @export
 #'
-#' @examples
 #'
 chi_sql_update <- function(CHIestimates = NULL,
                            CHImetadata = NULL,

@@ -1,9 +1,9 @@
 #' CHI Generate Trend Years
 #'
-#' @param indicator_key
-#' @param span
-#' @param end.year
-#' @param trend.periods
+#' @param indicator_key chi indicator key variable
+#' @param span number of years to include in a trend year estimate
+#' @param end.year last year of a trend year time series
+#' @param trend.periods number of periods to calculate
 #'
 #' @description
 #' helper fucntion for chi_generate_tro_shell

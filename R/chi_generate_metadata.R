@@ -6,7 +6,7 @@
 #' @param meta.old Previous metadata table
 #' @param est.current current year's tableau ready output with completed estimates
 #'
-#' @return
+#' @return table of metadata
 #' @export
 #'
 chi_generate_metadata <- function(meta.old = NULL,
