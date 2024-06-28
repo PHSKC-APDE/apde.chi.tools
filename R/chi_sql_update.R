@@ -1,23 +1,28 @@
 #' CHI SQL Update
 #'
 #' @description
-#' function to update (or replace) results and metadata in SQL 51 (dev/WIP) or 50 (prod)
+#' function to update (or replace) results and metadata into APDE PHExtractStore servers. For details on server access, and to configure your local settings please review documentation [here](https://kc1.sharepoint.com/:w:/r/teams/DPH-KCCross-SectorData/_layouts/15/Doc.aspx?sourcedoc=%7B34352D66-9CD6-45C9-AD19-B8FE88A4C7C6%7D&file=SQL%20Server%20Setup%20APDE.docx&action=default&mobileredirect=true)
 #'
 #'
 #' @param CHIestimates DT or DF containing CHI analytic results
 #' @param CHImetadata DT or DF containing CHI metadata
 #' @param table_name name of SQL Server table to update
-#' @param server name of serverto access
+#' @param server type of server ('development' for KCITSQLUATHIP40 and 'production' for KCITSQLPRPHIP40)
 #' @param replace_table If T, drop existing table and insert data, if F update matching rows and insert new data
 #'
 #' @return status message indicating success and location, or failure, of upload
-#' @export
 #'
+#'
+#'
+#' @keywords CHI, Tableau, Production
+#'
+#' @export
+
 #'
 chi_sql_update <- function(CHIestimates = NULL,
                            CHImetadata = NULL,
                            table_name = NULL,
-                           server = 'wip', # options include c('wip', 'dev', 'prod', '51', '50')
+                           server = 'development', # options include c('development', 'production')
                            replace_table = F # default is to update select rows rather than replace the entire table
 ){
   # load CHI yaml config file ----
@@ -42,7 +47,7 @@ chi_sql_update <- function(CHIestimates = NULL,
 
   # check server argument----
   server = tolower(as.character(server))
-  if(!server %in% c('wip', 'dev', 'prod', '51', '50')){stop("\n\U0001f47f The server argument is limited to: 'wip', 'dev', 'prod', '51', '50'")}
+  if(!server %in% c('wip', 'dev', 'prod')){stop("\n\U0001f47f The server argument is limited to: 'development', 'production'")}
   if(length(server) != 1){stop("\n\U0001f47f The `server` argument must be of length 1")}
 
   # check replace argument----
@@ -50,21 +55,21 @@ chi_sql_update <- function(CHIestimates = NULL,
   if(length(replace_table) != 1){stop("\n\U0001f47f The `server` argument must be of length 1")}
 
   # open database connection----
-  if(server %in% c('wip', 'dev', '51')){
+  if(server %in% c('development')){
     CHI_db_cxn <- odbc::dbConnect(odbc::odbc(),
                                   Driver = "SQL Server",
-                                  Server = "KCITSQLUTPDBH51",
+                                  Server = "KCITSQLUATHIP40",
                                   Database = "PHExtractStore")
     schema_suffix = '_WIP'
-    complete_servername = 'KCITSQLUTPDBH51'
+    complete_servername = 'KCITSQLUATHIP40'
   }
-  if(server %in% c('prod', '50')){
+  if(server %in% c('production')){
     CHI_db_cxn <- odbc::dbConnect(odbc::odbc(),
                                   Driver = "SQL Server",
-                                  Server = "KCITSQLPRPDBM50",
+                                  Server = "KCITSQLPRPHIP40",
                                   Database = "PHExtractStore")
     schema_suffix = ''
-    complete_servername = 'KCITSQLPRPDBM50'
+    complete_servername = 'KCITSQLPRPHIP40'
   }
 
   # check if *_results and *_metadata tables already exist in the appropriate schema----
