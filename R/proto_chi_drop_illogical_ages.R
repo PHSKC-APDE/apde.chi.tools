@@ -1,20 +1,3 @@
-#' CHI_drop_illogical_ages
-#'
-#' @description
-#' a helper function for filtering ages from a set of observations
-#'
-#' @details
-#' CHI analyses relay
-#'
-#'
-#' @param DTx
-#' @param agevar
-#'
-#' @return
-#' @export
-#'
-#' @examples
-#'
 chi_drop_illogical_ages <- function(DTx, agevar = 'chi_age'){
   DTx = copy(DTx)
   for(CatNum in c("cat1", "cat2")){

@@ -1,14 +1,3 @@
-# Get populations that correspond with standard counts ----
-# CHI_generate_instructions_pop() - function to generate instructions for get_population based on structure of count data----
-#' Title
-#'
-#' @param mycount.data
-#' @param povgeo
-#'
-#' @return
-#' @export
-#'
-#' @examples
 chi_generate_instructions_pop <- function(mycount.data, povgeo = NA){
   pop.template <- copy(mycount.data)
   pop.template <- unique(copy(pop.template)[, .(year, cat1, cat1_varname, cat2, cat2_varname, tab)])

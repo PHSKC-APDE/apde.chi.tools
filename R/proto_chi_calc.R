@@ -1,19 +1,3 @@
-#' Title
-#'
-#' @param ph.data
-#' @param ph.instructions
-#' @param rate
-#' @param rate_per
-#' @param small_num_suppress
-#' @param suppress_low
-#' @param suppress_high
-#' @param source_name
-#' @param source_date
-#'
-#' @return
-#' @export
-#'
-#' @examples
 chi_calc <- function(ph.data = NULL,
                      ph.instructions = NULL,
                      rate = F,

@@ -1,5 +1,3 @@
-
-
 # CHI_get_proper_pop() - function to get population for a single row specified by the output of CHI_generate_instructions_pop() ----
 chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages = NULL){
   # check for valid values of pop.genders ----

@@ -1,13 +1,3 @@
-#' CHI Count By Age
-#'
-#' @param ph.data
-#' @param ph.instructions
-#' @param source_date
-#'
-#' @return
-#' @export
-#'
-#' @examples
 chi_count_by_age <- function(ph.data = NULL,
                              ph.instructions = NULL,
                              source_date = NULL){
