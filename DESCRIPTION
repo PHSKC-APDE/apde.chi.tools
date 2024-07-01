@@ -34,7 +34,7 @@ Imports:
     yaml (>= 2.2.1),
     utils
 Remotes:
-    github::PHSKC-APDE/rads.data, github::PHSKC-APDE/dtsurvey
+    github::PHSKC-APDE/rads.data, github::PHSKC-APDE/dtsurvey, github::PHSKC-APDE/apde.chi.tools
 Suggests: 
     httr,
     knitr,
