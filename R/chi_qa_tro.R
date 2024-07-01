@@ -1,4 +1,4 @@
-#'
+#' CHI - QA: Tableau Ready output
 #'
 #' @description
 #' Checks data for compliance with CHI TRO standard
