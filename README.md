@@ -18,7 +18,7 @@ You will want to have already installed [`rads`](https://github.com/PHSKC-APDE/r
 
 Install [`apde.chi.tools`](https://github.com/PHSKC-APDE/apde.chi.tools) ... `remotes::install_github("PHSKC-APDE/apde.chi.tools", auth_token = NULL)`
 
-    -   To install github from a particular branch, specify it with the 'ref' argument, e.g., `remotes::install_github("PHSKC-APDE/apde.chi.tools", ref = "dev", auth_token = NULL)`
+To install github from a particular branch, specify it with the 'ref' argument, e.g., `remotes::install_github("PHSKC-APDE/apde.chi.tools", ref = "dev", auth_token = NULL)`
 
 Load [`apde.chi.tools`](https://github.com/PHSKC-APDE/apde.chi.tools) ... `library(apde.chi.tools)`
 
@@ -31,10 +31,6 @@ Load [`apde.chi.tools`](https://github.com/PHSKC-APDE/apde.chi.tools) ... `libra
 If you have code that uses these functions from last year, you will want to confirm that the function contained in this package conforms to the expectations of the previous version. You can review the manual for any function by typing '?[function_name]()'. There you will see the expected parameters and examples of usage. If these are insufficient, please reach out!
 
 Coming soon: wiki pages to train users who are new to these functions
-
-***ignore***
-After installation, we highly recommend that you start by walking through a vignette on the [wiki](https://github.com/PHSKC-APDE/rads/wiki). \* [calc()](https://github.com/PHSKC-APDE/rads/wiki/calc) \* [get_population()](https://github.com/PHSKC-APDE/rads/wiki/get_population) \* [get_data()](https://github.com/PHSKC-APDE/rads/wiki/get_data) \* [age_standardize()](https://github.com/PHSKC-APDE/rads/wiki/age_standardize)
-***end ignore***
 
 ## Problems?
 
