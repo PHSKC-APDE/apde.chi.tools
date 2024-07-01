@@ -23,11 +23,14 @@
 #' @param trend.span the number of years to be included in a single trend period
 #' @param trend.periods the number of periods to be included in a trend
 #' @returns data table with a single row for each calculation to be performed in generating Tableau Ready Output for CHI reporting
+#'
 #' @keywords CHI, Tableau, Production
+#'
 #' @import data.table0
 #' @import dtsurvey
 #' @import future
 #' @import future.apply
+#'
 #' @export
 #'
 chi_generate_tro_shell <- function(ph.analysis_set,
