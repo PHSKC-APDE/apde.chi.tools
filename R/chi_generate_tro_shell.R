@@ -26,7 +26,7 @@
 #'
 #' @keywords CHI, Tableau, Production
 #'
-#' @import data.table0
+#' @import data.table
 #' @import dtsurvey
 #' @import future
 #' @import future.apply

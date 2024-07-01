@@ -8,7 +8,7 @@ chi_sql_update(
   CHIestimates = NULL,
   CHImetadata = NULL,
   table_name = NULL,
-  server = "wip",
+  server = "development",
   replace_table = F
 )
 }
@@ -19,7 +19,7 @@ chi_sql_update(
 
 \item{table_name}{name of SQL Server table to update}
 
-\item{server}{name of serverto access}
+\item{server}{type of server ('development' for KCITSQLUATHIP40 and 'production' for KCITSQLPRPHIP40)}
 
 \item{replace_table}{If T, drop existing table and insert data, if F update matching rows and insert new data}
 }
@@ -27,5 +27,8 @@ chi_sql_update(
 status message indicating success and location, or failure, of upload
 }
 \description{
-function to update (or replace) results and metadata in SQL 51 (dev/WIP) or 50 (prod)
+function to update (or replace) results and metadata into APDE PHExtractStore servers. For details on server access, and to configure your local settings please review documentation [here](https://kc1.sharepoint.com/:w:/r/teams/DPH-KCCross-SectorData/_layouts/15/Doc.aspx?sourcedoc=%7B34352D66-9CD6-45C9-AD19-B8FE88A4C7C6%7D&file=SQL%20Server%20Setup%20APDE.docx&action=default&mobileredirect=true)
 }
+\keyword{CHI,}
+\keyword{Production}
+\keyword{Tableau,}

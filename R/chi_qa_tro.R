@@ -25,6 +25,7 @@
 #' @importFrom glue glue
 #' @importFrom utils write.table
 #' @importFrom yaml yaml.load
+#' @importFrom rads chi_qa
 #'
 #' @examples
 #'

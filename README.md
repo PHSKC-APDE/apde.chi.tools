@@ -16,7 +16,7 @@ The are ment to support our epidemiologist in various steps along the pipeline, 
 You will want to have already installed [`rads`](https://github.com/PHSKC-APDE/rads)
 
 
-Install [`apde.chi.tools`](https://github.com/PHSKC-APDE/apde.chi.tools) ... `remotes::install_github("PHSKC-APDE/rads", auth_token = NULL)`
+Install [`apde.chi.tools`](https://github.com/PHSKC-APDE/apde.chi.tools) ... `remotes::install_github("PHSKC-APDE/apde.chi.tools", auth_token = NULL)`
 
     -   To install github from a particular branch, specify it with the 'ref' argument, e.g., `remotes::install_github("PHSKC-APDE/apde.chi.tools", ref = "dev", auth_token = NULL)`
 
