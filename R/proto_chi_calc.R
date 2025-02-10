@@ -56,10 +56,10 @@ chi_calc <- function(ph.data = NULL,
       if(length(tempbv2) == 0){tempbv2 = NA}
       tempbv <- setdiff(c(tempbv1, tempbv2), c(NA))
 
-      # send constants to global environment so it can be used by the calc() function below
-      assign("tempbv", tempbv, envir = .GlobalEnv)
-      assign("tempend", ph.instructions[X][['end']], envir = .GlobalEnv)
-      assign("tempstart", ph.instructions[X][['start']], envir = .GlobalEnv)
+      # create variables of interest used in calc function below
+      tempbv <- tempbv
+      tempend <- ph.instructions[X][['end']]
+      tempstart <- ph.instructions[X][['start']]
 
       # use calc()----
       if(rate == FALSE){ # standard proportion analysis
@@ -182,9 +182,6 @@ chi_calc <- function(ph.data = NULL,
     tempCHIest[cat2_varname %in% c('race3') & tab %in% c('crosstabs', 'demgroups') & cat2_group == 'Hispanic',
                cat2 := 'Ethnicity']
   }
-
-  # drop temporary vars that were sent to global environment for calc() ----
-  rm(tempbv, tempend, tempstart, envir = .GlobalEnv)
 
   # Create additional necessary CHI columns ----
   tempCHIest[, source_date := as.Date(source_date)]
