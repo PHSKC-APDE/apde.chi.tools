@@ -7,13 +7,14 @@
 #' @param est.current current year's tableau ready output with completed estimates
 #'
 #' @return table of metadata
+#' @importFrom rads substrRight
 #' @export
 #'
 chi_generate_metadata <- function(meta.old = NULL,
                                   est.current = NULL){
   # get new metadata ----
   meta.new <- unique(est.current[tab == "metadata",
-                                 .(indicator_key,
+                                 list(indicator_key,
                                    latest_yearx = as.integer(year),
                                    latest_year_resultx = result,
                                    run_datex = run_date,
@@ -33,7 +34,7 @@ chi_generate_metadata <- function(meta.old = NULL,
   meta.new[, c("latest_yearx", "latest_year_resultx", "run_datex", "latest_year_countx", "latest_year_kc_popx") := NULL]
 
   # update valid_years ----
-  meta.new[as.integer(latest_year) > suppressWarnings(as.integer(substrRight(valid_years, 1, 4))),
+  meta.new[as.integer(latest_year) > suppressWarnings(as.integer(rads::substrRight(valid_years, 1, 4))),
            valid_years := suppressWarnings(paste(as.integer(substr(valid_years, 1, 4)):as.integer(latest_year), collapse = " "))]
 
   # Ensure there are no missing important metadata cells ----

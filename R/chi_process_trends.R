@@ -1,7 +1,7 @@
 #' CHI Generate Trend Years
 #'
 #' @param indicator_key chi indicator key variable
-#' @param span number of years to include in a trend year estimate
+#' @param trend.span the number of years to be included in a single trend period
 #' @param end.year last year of a trend year time series
 #' @param trend.periods number of periods to calculate
 #'
@@ -15,6 +15,7 @@
 #' @returns TRO with rows for each indicator key and span of years within the provided time frame
 #' @keywords CHI, Tableau, Production
 #' @import dtsurvey
+#' @importFrom tidyr crossing
 
 chi_process_trends <- function(indicator_key = NULL,
                                      trend.span = NULL,

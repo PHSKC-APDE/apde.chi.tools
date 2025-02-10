@@ -7,9 +7,6 @@ chi_calc <- function(ph.data = NULL,
                      suppress_high = 9,
                      source_name = 'blahblah',
                      source_date = NULL){
-
-
-
   # Error if ph.instructions has no data ----
   if(nrow(ph.instructions) == 0){
     stop("\n\U0001f47f the table ph.instructions does not have any rows.")
@@ -67,13 +64,13 @@ chi_calc <- function(ph.data = NULL,
       # use calc()----
       if(rate == FALSE){ # standard proportion analysis
         if(any(grepl('wastate', tempbv))){
-          tempest <- calc(ph.data = ph.data,
+          tempest <- rads::calc(ph.data = ph.data,
                           what = ph.instructions[X][['indicator_key']],
                           where = chi_year >= tempstart & chi_year <= tempend,
                           by = tempbv,
                           metrics = c('mean', 'numerator', 'denominator', 'rse'))
         } else {
-          tempest <- calc(ph.data = ph.data,
+          tempest <- rads::calc(ph.data = ph.data,
                           what = ph.instructions[X][['indicator_key']],
                           where = chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County',
                           by = tempbv,
@@ -82,14 +79,14 @@ chi_calc <- function(ph.data = NULL,
       }
       if(rate == TRUE){
         if(any(grepl('wastate', tempbv))){
-          tempest <- calc(ph.data = ph.data,
+          tempest <- rads::calc(ph.data = ph.data,
                           what = ph.instructions[X][['indicator_key']],
                           where = chi_year >= tempstart & chi_year <= tempend,
                           by = tempbv,
                           metrics = c('rate', 'numerator', 'denominator', 'rse'),
                           per = rate_per)
         } else {
-          tempest <- calc(ph.data = ph.data,
+          tempest <- rads::calc(ph.data = ph.data,
                           what = ph.instructions[X][['indicator_key']],
                           where = chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County',
                           by = tempbv,
@@ -197,7 +194,7 @@ chi_calc <- function(ph.data = NULL,
   tempCHIest[, data_source := source_name]
   tempCHIest[, time_trends := NA] # NA because no longer calculated
 
-  tempCHIest <- compare_estimate(mydt = tempCHIest,
+  tempCHIest <- rads::compare_estimate(mydt = tempCHIest,
                                  id_vars = c("indicator_key", "year"),
                                  key_where = cat1_group == "King County" & tab != "crosstabs",
                                  new_col = "comparison_with_kc",
@@ -215,7 +212,7 @@ chi_calc <- function(ph.data = NULL,
 
 
   # Keep and order standard CHI columns ----
-  tempCHIest <- tempCHIest[, c(chi_cols()[]), with = F]
+  tempCHIest <- tempCHIest[, c(rads::chi_cols()[]), with = F]
 
   tempCHIest <- tempCHIest[, cat1 := factor(cat1, levels = c("King County", sort(setdiff(unique(tempCHIest$cat1), "King County"))) )]
   tempCHIest <- tempCHIest[, tab := factor(tab, levels = c(c("_kingcounty","demgroups", "trends"),  sort(setdiff(unique(tempCHIest$tab), c("_kingcounty","demgroups", "trends")))) )]

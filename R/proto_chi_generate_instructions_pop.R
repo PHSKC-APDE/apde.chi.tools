@@ -1,6 +1,6 @@
 chi_generate_instructions_pop <- function(mycount.data, povgeo = NA){
   pop.template <- copy(mycount.data)
-  pop.template <- unique(copy(pop.template)[, .(year, cat1, cat1_varname, cat2, cat2_varname, tab)])
+  pop.template <- unique(copy(pop.template)[, list(year, cat1, cat1_varname, cat2, cat2_varname, tab)])
   pop.template[, c("start", "stop") := tstrsplit(year, split = '-') ]
   pop.template[is.na(stop), stop := start] # need to have an end date even if it is just one year
 

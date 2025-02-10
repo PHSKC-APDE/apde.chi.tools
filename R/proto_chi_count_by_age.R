@@ -52,13 +52,13 @@ chi_count_by_age <- function(ph.data = NULL,
 
       # use calc----
       if(any(grepl('wastate', tempbv))){
-        tempcount <- calc(ph.data = ph.data,
+        tempcount <- rads::calc(ph.data = ph.data,
                           what = ph.instructions[X][['indicator_key']],
                           where = chi_year >= tempstart & chi_year <= tempend,
                           by = tempbv,
                           metrics = c('numerator'))
       } else {
-        tempcount <- calc(ph.data = ph.data,
+        tempcount <- rads::calc(ph.data = ph.data,
                           what = ph.instructions[X][['indicator_key']],
                           where = chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County',
                           by = tempbv,
@@ -103,7 +103,7 @@ chi_count_by_age <- function(ph.data = NULL,
                 year := ph.instructions[X][['end']]]
 
       # order output----
-      tempcount <- tempcount[, .(indicator_key, year, tab, cat1, cat1_varname, cat1_group, cat2, cat2_varname, cat2_group, chi_age, count)]
+      tempcount <- tempcount[, list(indicator_key, year, tab, cat1, cat1_varname, cat1_group, cat2, cat2_varname, cat2_group, chi_age, count)]
       setorder(tempcount, cat1_group, cat2_group, chi_age)
 
     }

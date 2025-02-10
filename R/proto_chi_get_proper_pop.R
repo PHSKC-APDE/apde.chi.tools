@@ -26,7 +26,7 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
 
     # use rads::get_population ----
     if(is.na(pop.template[X, geo_type])){
-      tempy <- get_population(group_by = groupy,
+      tempy <- rads::get_population(group_by = groupy,
                               race_type = pop.template[X, race_type],
                               years = pop.template[X, start]:pop.template[X, stop],
                               genders = gendery,
@@ -34,7 +34,7 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
                               round = F)
     }
     if(!is.na(pop.template[X, geo_type])){
-      tempy <- get_population(group_by = groupy,
+      tempy <- rads::get_population(group_by = groupy,
                               geo_type = pop.template[X, geo_type],
                               race_type = pop.template[X, race_type],
                               years = pop.template[X, start]:pop.template[X, stop],
@@ -85,21 +85,21 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
 
       # HRAS ----
       if(tempy[1, geo_type] == 'blk' & tempy[1, get(catnum)] == 'Cities/neighborhoods'){
-        temp.xwalk <- rads.data::spatial_block20_to_hra20_to_region20[, .(geo_id = GEOID20, hra20_name)]
+        temp.xwalk <- rads.data::spatial_block20_to_hra20_to_region20[, list(geo_id = GEOID20, hra20_name)]
         tempy <- merge(tempy, temp.xwalk, by = "geo_id", all.x = T, all.y = F)
         tempy[, paste0(catnum, "_group") := hra20_name]
       }
 
       # Regions ----
       if(tempy[1, geo_type] == 'blk' & tempy[1, get(catnum)] == 'Regions'){
-        temp.xwalk <- rads.data::spatial_block20_to_hra20_to_region20[, .(geo_id = GEOID20, region_name)]
+        temp.xwalk <- rads.data::spatial_block20_to_hra20_to_region20[, list(geo_id = GEOID20, region_name)]
         tempy <- merge(tempy, temp.xwalk, by = 'geo_id', all.x = T, all.y = F)
 
         tempy[, paste0(catnum, "_group") := region_name]
       }
 
       if(tempy[1, geo_type] == 'hra' & tempy[1, get(catnum)] == 'Regions'){
-        temp.xwalk <- rads.data::spatial_hra20_to_region20[, .(geo_id = hra20_name, region_name)]
+        temp.xwalk <- rads.data::spatial_hra20_to_region20[, list(geo_id = hra20_name, region_name)]
         tempy <- merge(tempy, temp.xwalk, by = 'geo_id', all.x = T, all.y = F)
 
         tempy[, paste0(catnum, "_group") := region_name]
@@ -108,11 +108,11 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
       if(tempy[1, geo_type] == 'zip' & tempy[1, get(catnum)] == 'Regions'){
         zip_2_region <- rads.data::spatial_zip_to_hra20_pop
         zip_2_region <- merge(zip_2_region,
-                              rads.data::spatial_hra20_to_region20[, .(hra20_name, region = region_name)],
+                              rads.data::spatial_hra20_to_region20[, list(hra20_name, region = region_name)],
                               by = 'hra20_name',
                               all = T)
-        zip_2_region <- zip_2_region[, .(s2t_fraction = sum(s2t_fraction)), # collapse fractions down to region level
-                                     .(geo_id = as.character(source_id), region)]
+        zip_2_region <- zip_2_region[, list(s2t_fraction = sum(s2t_fraction)), # collapse fractions down to region level
+                                     list(geo_id = as.character(source_id), region)]
 
         tempy <- merge(tempy, zip_2_region, by = "geo_id", all.x = T, all.y = F, allow.cartesian = T)
         tempy[, pop := pop * s2t_fraction] # calculate weighted pop
@@ -122,13 +122,13 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
       # Big Cities ----
       if(tempy[1, get(catnum)] == 'Big cities'){
         if(tempy[1, geo_type] == 'blk'){
-          blk20_hra20 <- rads.data::spatial_block20_to_hra20_to_region20[, .(geo_id = GEOID20, hra20_name)]
+          blk20_hra20 <- rads.data::spatial_block20_to_hra20_to_region20[, list(geo_id = GEOID20, hra20_name)]
           tempy <- merge(tempy, blk20_hra20, by = "geo_id", all.x = T, all.y = F)
-          hra20_bigcity <- rads.data::spatial_hra20_to_bigcities[, .(hra20_name, bigcity)]
+          hra20_bigcity <- rads.data::spatial_hra20_to_bigcities[, list(hra20_name, bigcity)]
           tempy <- merge(tempy, hra20_bigcity, by = 'hra20_name', all.x = T, all.y = F)
         }
         if(tempy[1, geo_type] == 'hra'){
-          hra20_bigcity <- rads.data::spatial_hra20_to_bigcities[, .(hra20_name, bigcity)]
+          hra20_bigcity <- rads.data::spatial_hra20_to_bigcities[, list(hra20_name, bigcity)]
           tempy <- merge(tempy, hra20_bigcity, by.x = 'geo_id', by.y = 'hra20_name', all.x = T, all.y = F)
         }
         tempy[, paste0(catnum, "_group") := bigcity]
@@ -159,7 +159,7 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
       if(tempy[1, geo_type] == 'blk' & grepl("poverty$", tempy[1, get(catnum)], ignore.case = T)){
         tempy[, geo_tract2020 := substr(geo_id, 1, 11)] # have blocks (15 char), so keep first 11 for tracts
         tempy <- merge(tempy,
-                       rads.data::misc_poverty_groups[geo_type=='Tract'][, .(geo_tract2020 = geo_id, pov200grp)],
+                       rads.data::misc_poverty_groups[geo_type=='Tract'][, list(geo_tract2020 = geo_id, pov200grp)],
                        by = "geo_tract2020",
                        all.x = T,
                        all.y = F)
@@ -167,7 +167,7 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
       }
       if( tempy[1, geo_type] == 'zip' & grepl("poverty$", tempy[1, get(catnum)], ignore.case = T)){
         tempy <- merge(tempy,
-                       rads.data::misc_poverty_groups[geo_type=='ZCTA'][, .(geo_id, pov200grp)],
+                       rads.data::misc_poverty_groups[geo_type=='ZCTA'][, list(geo_id, pov200grp)],
                        by = 'geo_id',
                        all.x = T,
                        all.y = F)
@@ -183,7 +183,7 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
     tempy <- tempy[!(cat2 != 'NA' & (cat2_group == 'NA') | is.na(cat2_group))] # did not yet switch back to true NA at this point
 
     # collapse to one row per demographic combination and keep minimum needed columns ----
-    tempy <- tempy[, .(pop = sum(pop)), .(chi_age = age, year, cat1, cat1_varname, cat1_group, cat2, cat2_varname, cat2_group)]
+    tempy <- tempy[, list(pop = sum(pop)), list(chi_age = age, year, cat1, cat1_varname, cat1_group, cat2, cat2_varname, cat2_group)]
 
     # ensure each demographic has rows for all relevant ages & only relevant ages ----
     if(tempy[1]$cat1 == "Age"){
@@ -205,7 +205,7 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
                                     breaks = c(-1, 4, 9, 14, 17),
                                     labels = c('0-4', '5-9', '10-14', '15-17'))]}
 
-      temp.demog <- setDT(tidyr::crossing(unique(tempy[, .(year = as.character(year), cat2, cat2_varname, cat2_group)]),
+      temp.demog <- setDT(tidyr::crossing(unique(tempy[, list(year = as.character(year), cat2, cat2_varname, cat2_group)]),
                                           tempage))
     }
 
@@ -228,15 +228,15 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
                                     breaks = c(-1, 4, 9, 14, 17),
                                     labels = c('0-4', '5-9', '10-14', '15-17'))]}
 
-      temp.demog <- setDT(tidyr::crossing(unique(tempy[, .(year = as.character(year), cat1, cat1_varname, cat1_group)]),
+      temp.demog <- setDT(tidyr::crossing(unique(tempy[, list(year = as.character(year), cat1, cat1_varname, cat1_group)]),
                                           tempage))
     }
 
     if(!"Age" %in% unique(c(tempy$cat1, tempy$cat2))){
       # all combinations of cat1 x cat2
       temp.demog <- setDT(tidyr::crossing(
-        unique(tempy[, .(cat1, cat1_varname, cat1_group)]),
-        unique(tempy[, .(cat2, cat2_varname, cat2_group)])
+        unique(tempy[, list(cat1, cat1_varname, cat1_group)]),
+        unique(tempy[, list(cat2, cat2_varname, cat2_group)])
       ))
       # all combination of cat table with year and age
       temp.demog <- setDT(tidyr::crossing(
