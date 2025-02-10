@@ -8,6 +8,7 @@ chi_generate_tro_shell(
   ph.analysis_set,
   start.year,
   end.year,
+  year.span = NULL,
   trend.span = NULL,
   trend.periods = NULL
 )
@@ -18,6 +19,8 @@ chi_generate_tro_shell(
 \item{start.year}{the earliest year to be used for estimates}
 
 \item{end.year}{the latest year to be used for aggregate estimates (note, the earliest year for trends estimates is calculated from from the span and number of periods)}
+
+\item{year.span}{the number of years to be included in a single non-trend period}
 
 \item{trend.span}{the number of years to be included in a single trend period}
 
