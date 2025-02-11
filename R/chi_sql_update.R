@@ -12,12 +12,16 @@
 #'
 #' @return status message indicating success and location, or failure, of upload
 #'
-#'
-#'
 #' @keywords CHI, Tableau, Production
 #'
+#' @importFrom data.table setDT copy
+#' @importFrom DBI dbConnect dbWriteTable dbGetQuery dbExistsTable Id
+#' @importFrom odbc odbc
+#' @importFrom glue glue_sql
+#' @importFrom yaml yaml.load
+#' @importFrom rads tsql_validate_field_types
+#'
 #' @export
-
 #'
 chi_sql_update <- function(CHIestimates = NULL,
                            CHImetadata = NULL,
@@ -26,19 +30,17 @@ chi_sql_update <- function(CHIestimates = NULL,
                            replace_table = F # default is to update select rows rather than replace the entire table
 ){
   # load CHI yaml config file ----
-  chi_config <- yaml::yaml.load(httr::GET(url = "https://raw.githubusercontent.com/PHSKC-APDE/rads/main/ref/chi_qa.yaml", httr::authenticate(Sys.getenv("GITHUB_TOKEN"), "")))
-
   # check CHIestimates argument----
   if(!exists('CHIestimates')){stop("\n\U0001f47f The results table to push to SQL (CHIestimates) is missing ")}
   if( inherits(CHIestimates, "data.frame") == FALSE){stop("\n\U0001f47f CHIestimates must be a data.frame or a data.table.")}
   if( inherits(CHIestimates, "data.table") == FALSE){setDT(CHIestimates)}
-  rads::validate_yaml_data(DF = CHIestimates, YML = chi_config, VARS = "vars")
+  rads::tsql_validate_field_types(ph.data = CHIestimates, field_types = unlist(chi_get_yaml()$vars))
 
   # check CHImetadata argument----
   if(!exists('CHImetadata')){stop("\n\U0001f47f The metadata table to push to SQL (CHImetadata) is missing ")}
   if( inherits(CHImetadata, "data.frame") == FALSE){stop("\n\U0001f47f CHImetadata must be a data.frame or a data.table.")}
   if( inherits(CHImetadata, "data.table") == FALSE){setDT(CHImetadata)}
-  rads::validate_yaml_data(DF = CHImetadata, YML = chi_config, VARS = "metadata")
+  rads::tsql_validate_field_types(ph.data = CHImetadata, field_types = unlist(chi_get_yaml()$metadata))
 
   # ensure indicator_key is consistent across estimates and metadata
   if(!identical(sort(as.character(unique(CHIestimates$indicator_key))), sort(as.character(CHImetadata$indicator_key)))){
@@ -145,7 +147,7 @@ chi_sql_update <- function(CHIestimates = NULL,
                       value = as.data.frame(copy(CHIestimates)),
                       overwrite = T,
                       append = F,
-                      field.types = unlist(chi_config$vars))
+                      field.types = unlist(chi_get_yaml()$vars))
 
     # metadata
     DBI::dbWriteTable(conn = CHI_db_cxn,
@@ -153,7 +155,7 @@ chi_sql_update <- function(CHIestimates = NULL,
                       value = as.data.frame(copy(CHImetadata)),
                       overwrite = T,
                       append = F,
-                      field.types = unlist(chi_config$metadata))
+                      field.types = unlist(chi_get_yaml()$metadata))
   }
 
   if(isFALSE(replace_table)){
