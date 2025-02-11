@@ -7,6 +7,7 @@
 #' @param est.current current year's tableau ready output with completed estimates
 #'
 #' @return table of metadata
+#' @importFrom data.table setDT copy :=
 #' @importFrom rads substrRight
 #' @export
 #'

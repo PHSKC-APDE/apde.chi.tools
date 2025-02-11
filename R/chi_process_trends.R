@@ -14,7 +14,7 @@
 #'
 #' @returns TRO with rows for each indicator key and span of years within the provided time frame
 #' @keywords CHI, Tableau, Production
-#' @import dtsurvey
+#' @importFrom data.table setDT setorder
 #' @importFrom tidyr crossing
 
 chi_process_trends <- function(indicator_key = NULL,
