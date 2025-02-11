@@ -19,12 +19,18 @@
 #'
 #' @param ph.analysis_set name of data.table to parse
 #' @param myset chosen set number from table
+#'
 #' @returns data table with a single row for each calculation to be performed in generating Tableau Ready Output for CHI reporting
+#'
 #' @keywords CHI, Tableau, Production
+#'
+#' @importFrom data.table setDT rbindlist setcolorder `:=`
 #' @import dtsurvey
 #' @import future
 #' @import future.apply
 #' @importFrom tidyr crossing
+#' @importFrom rads string_clean
+#' @export
 chi_process_nontrends <- function(ph.analysis_set = NULL,
                                   myset = NULL){
 
@@ -63,7 +69,7 @@ chi_process_nontrends <- function(ph.analysis_set = NULL,
   tempy[cat1 %in% c('Ethnicity', "Birthing person's ethnicity") & cat1_varname == 'race3', cat1_varname := 'race3_hispanic']
   tempy[cat2 %in% c('Ethnicity', "Birthing person's ethnicity") & cat2_varname == 'race3', cat2_varname := 'race3_hispanic']
   setcolorder(tempy, 'indicator_key')
-  rads::sql_clean(tempy)
+  rads::string_clean(tempy)
   tempy <- tempy[!(tab == 'crosstabs' & cat1 == 'King County' & cat2 != 'King County')] # only legit xtab for KC is KC by itself
   tempy[tab == 'crosstabs' & cat2 == 'King County', `:=` (cat2 = 'Overall', cat2_varname = 'overall')]
 
