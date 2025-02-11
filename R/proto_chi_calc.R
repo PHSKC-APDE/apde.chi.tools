@@ -1,3 +1,25 @@
+#' Calculate CHI Estimates
+#'
+#' @description
+#' Generates CHI estimates from input data according to provided instructions.
+#' Handles both proportions and rates, with options for suppression of small numbers.
+#'
+#' @param ph.data Input data.frame or data.table containing CHI data
+#' @param ph.instructions data.frame or data.table containing calculation instructions
+#' @param rate Logical; if TRUE calculates rates, if FALSE calculates proportions
+#' @param rate_per Rate multiplier when rate=TRUE (e.g., 100000 for per 100,000)
+#' @param small_num_suppress Logical; if TRUE suppresses small numbers
+#' @param suppress_low Lower bound for suppression
+#' @param suppress_high Upper bound for suppression
+#' @param source_name Name of data source
+#' @param source_date Date of data source
+#'
+#' @return A data.table containing CHI estimates with standard columns
+#' @importFrom data.table setDT copy setnames := setorder set .SD data.table
+#' @importFrom rads calc compare_estimate suppress chi_cols
+#' @export
+#'
+#'
 chi_calc <- function(ph.data = NULL,
                      ph.instructions = NULL,
                      rate = F,
@@ -35,7 +57,7 @@ chi_calc <- function(ph.data = NULL,
   stdbyvars[group %in% c("Hispanic", 'Non-Hispanic') & varname == 'race3', varname := 'race3_hispanic'] # necessary because race3 & Hispanic must be two distinct variables in raw data
   phbyvars <- rbindlist(lapply(
     X=as.list(neededbyvars),
-    FUN = function(X){data.table(varname = X, group = setdiff(unique(ph.data[[X]]), NA), ph.data = 1)}))
+    FUN = function(X){data.table::data.table(varname = X, group = setdiff(unique(ph.data[[X]]), NA), ph.data = 1)}))
   compbyvars <- merge(stdbyvars, phbyvars, by = c('varname', 'group'), all = T)
   if(nrow(compbyvars[is.na(reference)| is.na(ph.data)]) > 0){
     print(compbyvars[is.na(reference)| is.na(ph.data)])
@@ -93,7 +115,7 @@ chi_calc <- function(ph.data = NULL,
                           metrics = c('rate', 'numerator', 'denominator', 'rse'),
                           per = rate_per)
         }
-        setnames(tempest, gsub("^rate", "mean", names(tempest)))
+        data.table::setnames(tempest, gsub("^rate", "mean", names(tempest)))
       }
 
       # add on CHI standard columns that are from ph.instructions (in order of standard results output)----
@@ -104,14 +126,14 @@ chi_calc <- function(ph.data = NULL,
       tempest[ph.instructions[X][['end']] == ph.instructions[X][['start']],
               year := ph.instructions[X][['end']]]
       tempest[, cat1 := ph.instructions[X][['cat1']]]
-      setnames(tempest, ph.instructions[X][['cat1_varname']], 'cat1_group')
+      data.table::setnames(tempest, ph.instructions[X][['cat1_varname']], 'cat1_group')
       tempest[, cat1_varname := ph.instructions[X][['cat1_varname']]]
       tempest[, cat2 := ph.instructions[X][['cat2']]]
       if(!is.na(tempbv2) & tempbv1 != tempbv2){
-        setnames(tempest, ph.instructions[X][['cat2_varname']], 'cat2_group')} else{
+        data.table::setnames(tempest, ph.instructions[X][['cat2_varname']], 'cat2_group')} else{
           tempest[, cat2_group := NA] }
       tempest[, cat2_varname := ph.instructions[X][['cat2_varname']]]
-      setnames(tempest,
+      data.table::setnames(tempest,
                c("mean", "mean_lower", "mean_upper", "mean_se"),
                c("result", "lower_bound", "upper_bound", "se"))
     }
@@ -196,7 +218,7 @@ chi_calc <- function(ph.data = NULL,
                                  key_where = cat1_group == "King County" & tab != "crosstabs",
                                  new_col = "comparison_with_kc",
                                  tidy = TRUE)
-  setnames(tempCHIest, "comparison_with_kc_sig", "significance")
+  data.table::setnames(tempCHIest, "comparison_with_kc_sig", "significance")
 
   if(small_num_suppress == TRUE){
     tempCHIest <- rads::suppress(sup_data = tempCHIest,
