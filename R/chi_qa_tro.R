@@ -9,7 +9,7 @@
 #' specifications. If set to verbose mode (default) will report diagnostic information in
 #' The user interface as warnings (if failed) and messages (for progress and pass). In any
 #' Case will return 1 or 0 for pass or fail respectively.
-#' The CHI Tableau Ready Output (TRO) standards can be reviewed [here]("//phshare01/epe_share/WORK/CHI Visualizations/Tableau Ready Output Format_v2.xlsx")
+#' The CHI Tableau Ready Output (TRO) standards can be reviewed [here](https://kc1.sharepoint.com/:x:/r/teams/DPH-CommunityHealthIndicators/_layouts/15/Doc.aspx?sourcedoc=%7BBED2F507-B834-4D28-8658-C5724F64C001%7D&file=CHI-Standards-TableauReady%20Output.xlsx&action=default&mobileredirect=true&CID=975A2706-130E-46AB-AEB2-DF919FDEC185&wdLOR=cDF77DB7A-3774-430F-92C7-EFAB34CEB35F)
 #'
 #' @param chi_est Name of a data.table or data.frame containing the prepared data to be pushed to SQL
 #' @param chi_meta Name of a data.table or data.frame containing the metadata to be pushed to SQL
@@ -21,11 +21,10 @@
 #'
 #' @keywords CHI, Tableau, Production
 #'
-#' @importFrom data.table is.data.table ':=' setDT setDF data.table setorder copy setnames setorder dcast setcolorder fread shift "%between%"
+#' @importFrom data.table setDT copy setcolorder is.data.table %between%
 #' @importFrom glue glue
-#' @importFrom utils write.table
-#' @importFrom yaml yaml.load
-#' @importFrom rads chi_qa
+#' @importFrom yaml read_yaml
+#' @importFrom rads tsql_validate_field_types
 #'
 #' @examples
 #'
@@ -71,9 +70,6 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
   chi_est <- data.table::setDT(copy(chi_est))
   chi_meta <- data.table::setDT(copy(chi_meta))
 
-  ## Load reference YAML ----
-  chi.yaml <- yaml::yaml.load(httr::GET(url = "https://raw.githubusercontent.com/PHSKC-APDE/rads/main/ref/chi_qa.yaml", httr::authenticate(Sys.getenv("GITHUB_TOKEN"), "")))
-
   ## Check columns ----
   if(verbose) {
     message("Checking that all column names are unique")
@@ -94,7 +90,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
   if(verbose){
     message("Checking that all necessary columns exist")
   }
-  missing.var <- setdiff(names(chi.yaml$vars), names(chi_est))
+  missing.var <- setdiff(chi_get_cols(), names(chi_est))
   if(length(missing.var) > 0){
     status <- 0
     if(verbose) {
@@ -103,7 +99,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
     }
   }
 
-  missing.var <- setdiff(names(chi.yaml$metadata), names(chi_meta))
+  missing.var <- setdiff(names(unlist(chi_get_yaml()$metadata)), names(chi_meta))
   if(length(missing.var) > 0){
     status <- 0
     if(verbose){
@@ -113,7 +109,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
   }
 
   # Confirm that there are no additional variables ----
-  extra.var <- setdiff(names(chi_est), names(chi.yaml$vars))
+  extra.var <- setdiff(names(chi_est), chi_get_cols())
   if(length(extra.var) > 0){
     status <- 0
     if(verbose){
@@ -123,7 +119,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
     }
   }
 
-  extra.var <- setdiff(names(chi_meta), names(chi.yaml$meta))
+  extra.var <- setdiff(names(chi_meta), names(unlist(chi_get_yaml()$metadata)))
   if(length(extra.var) > 0){
     status <- 0
     if(verbose){
@@ -139,11 +135,11 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
   if(verbose){
     message("Validating CHI estimates: ")
   }
-  rads::validate_yaml_data(DF = chi_est, YML = chi.yaml, VARS = "vars") # check CHI estimate table
+  rads::tsql_validate_field_types(ph.data = chi_est, field_types = unlist(chi_get_yaml()$vars)) # check CHI estimate table
   if(verbose){
     message(paste("", "Validating CHI metadata: ", sep = "\n"))
   }
-  rads::validate_yaml_data(DF = chi_meta, YML = chi.yaml, VARS = "metadata") # check CHI metadata table
+  rads::tsql_validate_field_types(ph.data = chi_meta, field_types = unlist(chi_get_yaml()$metadata)) # check CHI metadata table
   if(verbose) message(paste("", "", sep = "\n"))
 
   if(verbose){
@@ -161,7 +157,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
       warning(paste0("\U00026A0 Warning: '", mycol, "' is missing in at least one row of the CHI data."))
     }
   }
-  for(mycol in setdiff(names(chi.yaml$metadata), c("latest_year_kc_pop", "latest_year_count"))){
+  for(mycol in setdiff(names(unlist(chi_get_yaml()$metadata)), c("latest_year_kc_pop", "latest_year_count"))){
     if(nrow(chi_meta[is.na(get(mycol))]) > 0){
       status <- 0
       warning(paste0("'", mycol, "' is missing in at least one row but is a critical identifier column in CHI metadata. \n", "Fix the error and run this QA script again."))
@@ -182,8 +178,8 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
   }
 
   ## Set the columns in standard order ----
-  setcolorder(chi_est, names(chi.yaml$vars))
-  setcolorder(chi_meta, names(chi.yaml$meta))
+  setcolorder(chi_est, chi_get_cols())
+  setcolorder(chi_meta, names(unlist(chi_get_yaml()$metadata)))
 
   #Basic logic checks for estimates
 
@@ -195,7 +191,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
       status <- 0
       if(verbose){
           warning(glue::glue("There is at least one row where is.infinite({var}) == T.
-                       Please fix this problem before rerunning chi_qa() (e.g., by setting it equal to NA)
+                       Please fix this problem before rerunning chi_qa_tro() (e.g., by setting it equal to NA)
                        You can view the problematic data by typing something like: View(chi_est[is.infinite({var}), ])"))
       }
     }
@@ -220,7 +216,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
     status <- 0
     if(verbose){
       warning("There is at least one row where the upper_bound is less than the lower_bound.
-                 Please fix this error prior to re-running the chi_qa() function.
+                 Please fix this error prior to re-running the chi_qa_tro() function.
                  You can view the problematic data by typing something like: View(chi_est[upper_bound < lower_bound, ])")
     }
   }
@@ -232,7 +228,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
     status <- 0
     if(verbose){
       warning("There is at least one row where the result is not less than or equal to the upper_bound.
-               Please fix this error prior to rerunning the chi_qa() function.
+               Please fix this error prior to rerunning the chi_qa_tro() function.
                You can view the problematic data by typing something like: View(chi_est[!(result <= upper_bound)])")
     }
   }
@@ -244,7 +240,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
     status <- 0
     if(verbose){
       warning("There is at least one row where the result is not greater than or equal to the lower_bound.
-           Please fix this error prior to rerunning the chi_qa() function.
+           Please fix this error prior to rerunning the chi_qa_tro() function.
            You can view the problematic data by typing something like: View(chi_est[!(result >= lower_bound)])")
     }
   }
@@ -255,7 +251,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
     status <- 0
     if(verbose){
           warning("There is at least one row where the lower_bound is less than zero (i.e., it is negative).
-           Please fix this error prior to rerunning the chi_qa() function.
+           Please fix this error prior to rerunning the chi_qa_tro() function.
           You can view the problematic data by typing something like: View(chi_est[lower_bound < 0])")
     }
   }
@@ -281,7 +277,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
     if(verbose){
       warning("All RSEs are within the range (0, 1]. CHI Tableau Ready standards necessitate that these proportions
                be mutliplied by 100. I.e., .12345 >> 12.345
-               Please fix this error prior to rerunning the chi_qa() function.")
+               Please fix this error prior to rerunning the chi_qa_tro() function.")
     }
   }
 
@@ -292,7 +288,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
     status <- 0
     if(verbose){
       warning("There is at least one row where a caution flag ('!') is not used and rse >= 30% or is.na(rse) == T.
-                 Please fix this error prior to rerunning the chi_qa() function.
+                 Please fix this error prior to rerunning the chi_qa_tro() function.
                  You can view the problematic data by typing something like: View(chi_est[(rse>=30 | is.na(rse)) & (caution != '!' | is.na(caution))])")
     }
   }
@@ -337,7 +333,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
     }
   }
 
-  if(vebrose){
+  if(verbose){
     message("Checking that se is rounded to four digits")
   }
   if(sum(chi_est$se != round2(chi_est$se, 4), na.rm = T) != 0) {
@@ -355,7 +351,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
       status <- 0
       if(verbose){
         warning(glue::glue("There is at least one row where '{var}' is missing.
-                          Please fill in the missing value before rerunning chi_qa()"))
+                          Please fill in the missing value before rerunning chi_qa_tro()"))
       }
     }
   }
@@ -364,7 +360,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
       status <- 0
       if(verbose){
         warning(glue::glue("There is at least one row where 'cat1_varname' is missing.
-                        Please fill in the missing value before rerunning chi_qa()"))
+                        Please fill in the missing value before rerunning chi_qa_tro()"))
       }
     }
   }
@@ -373,7 +369,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
       status <- 0
       if(verbose){
         warning(glue::glue("There is at least one row where tab=='crosstabs' & where '{var}' is missing.
-                          Please fill in the missing value before rerunning chi_qa()"))
+                          Please fill in the missing value before rerunning chi_qa_tro()"))
       }
     }
   }
@@ -382,7 +378,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
       status <- 0
       if(verbose){
         warning(glue::glue("There is at least one row where 'cat2_varname' is missing.
-                      Please fill in the missing value before rerunning chi_qa()"))
+                      Please fill in the missing value before rerunning chi_qa_tro()"))
       }
     }
   }
@@ -395,7 +391,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
       status <- 0
       if(verbose){
         warning(glue::glue("There is at least one row that is not suppressed & where '{var}' is missing.
-                          Please fill in the missing value before rerunning chi_qa()"))
+                          Please fill in the missing value before rerunning chi_qa_tro()"))
       }
     }
   }
@@ -408,7 +404,7 @@ chi_qa_tro <- function(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = 
       status <- 0
       if(verbose) {
               warning(glue::glue("There is at least one row where tab=='trends' & where 'time_trends' is missing.
-                            Please fill in the missing value before rerunning chi_qa()"))
+                            Please fill in the missing value before rerunning chi_qa_tro()"))
       }
     }
   }

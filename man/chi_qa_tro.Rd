@@ -28,7 +28,7 @@ This function tests if the structure of the data matches CHI Tableau Ready Outpu
 specifications. If set to verbose mode (default) will report diagnostic information in
 The user interface as warnings (if failed) and messages (for progress and pass). In any
 Case will return 1 or 0 for pass or fail respectively.
-The CHI Tableau Ready Output (TRO) standards can be reviewed [here]("//phshare01/epe_share/WORK/CHI Visualizations/Tableau Ready Output Format_v2.xlsx")
+The CHI Tableau Ready Output (TRO) standards can be reviewed [here](https://kc1.sharepoint.com/:x:/r/teams/DPH-CommunityHealthIndicators/_layouts/15/Doc.aspx?sourcedoc=%7BBED2F507-B834-4D28-8658-C5724F64C001%7D&file=CHI-Standards-TableauReady%20Output.xlsx&action=default&mobileredirect=true&CID=975A2706-130E-46AB-AEB2-DF919FDEC185&wdLOR=cDF77DB7A-3774-430F-92C7-EFAB34CEB35F)
 }
 \examples{
 
