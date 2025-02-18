@@ -18,9 +18,6 @@ vars:
     upper_bound: float
     se: float
     rse: float
-    comparison_with_kc: varchar(255)
-    time_trends: varchar(255)
-    significance: varchar(255)
     caution: varchar(255)
     suppression: varchar(255)
     numerator: float
