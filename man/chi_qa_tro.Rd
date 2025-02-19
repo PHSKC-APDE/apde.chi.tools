@@ -4,12 +4,18 @@
 \alias{chi_qa_tro}
 \title{CHI - QA: Tableau Ready output}
 \usage{
-chi_qa_tro(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = F)
+chi_qa_tro(
+  CHIestimates,
+  CHImetadata,
+  acs = FALSE,
+  ignore_trends = TRUE,
+  verbose = FALSE
+)
 }
 \arguments{
-\item{chi_est}{Name of a data.table or data.frame containing the prepared data to be pushed to SQL}
+\item{CHIestimates}{Name of a data.table or data.frame containing the prepared data to be pushed to SQL}
 
-\item{chi_meta}{Name of a data.table or data.frame containing the metadata to be pushed to SQL}
+\item{CHImetadata}{Name of a data.table or data.frame containing the metadata to be pushed to SQL}
 
 \item{acs}{default FALSE, Indicates whether it is ACS data (which does not have / need varnames)}
 
@@ -21,23 +27,38 @@ chi_qa_tro(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = F)
 1 or 0 for pass or fail status
 }
 \description{
-Checks data for compliance with CHI TRO standard
+Checks estimates created by \code{\link{chi_calc}} and metadata created by
+\code{\link{chi_generate_metadata}} for compliance with CHI TRO standard.
 }
 \details{
 This function tests if the structure of the data matches CHI Tableau Ready Output
 specifications. If set to verbose mode (default) will report diagnostic information in
 The user interface as warnings (if failed) and messages (for progress and pass). In any
 Case will return 1 or 0 for pass or fail respectively.
-The CHI Tableau Ready Output (TRO) standards can be reviewed [here](https://kc1.sharepoint.com/:x:/r/teams/DPH-CommunityHealthIndicators/_layouts/15/Doc.aspx?sourcedoc=%7BBED2F507-B834-4D28-8658-C5724F64C001%7D&file=CHI-Standards-TableauReady%20Output.xlsx&action=default&mobileredirect=true&CID=975A2706-130E-46AB-AEB2-DF919FDEC185&wdLOR=cDF77DB7A-3774-430F-92C7-EFAB34CEB35F)
+The CHI Tableau Ready Output (TRO) standards can be reviewed here:
+\href{https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady\%20Output.xlsx}{
+SharePoint > Community Health Indicators > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}
 }
 \examples{
 
 \dontrun{
-# create sample data
-
-# run function
+# QA check estimates and metadata
+qa_status <- chi_qa_tro(
+  CHIestimates = my_estimates,
+  CHImetadata = my_metadata,
+  acs = FALSE,
+  ignore_trends = TRUE,
+  verbose = TRUE
+)
 }
 
+}
+\seealso{
+\code{\link{chi_calc}} for generating estimates
+
+\code{\link{chi_generate_metadata}} for creating metadata
+
+\code{\link{chi_compare_estimates}} for comparing estimates between versions
 }
 \keyword{CHI,}
 \keyword{Production}
