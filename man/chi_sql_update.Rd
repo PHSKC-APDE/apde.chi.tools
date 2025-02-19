@@ -9,25 +9,56 @@ chi_sql_update(
   CHImetadata = NULL,
   table_name = NULL,
   server = "development",
-  replace_table = F
+  replace_table = FALSE
 )
 }
 \arguments{
-\item{CHIestimates}{DT or DF containing CHI analytic results}
+\item{CHIestimates}{data.frame/data.table containing CHI analytic results}
 
-\item{CHImetadata}{DT or DF containing CHI metadata}
+\item{CHImetadata}{data.frame/data.table containing CHI metadata}
 
 \item{table_name}{name of SQL Server table to update}
 
-\item{server}{type of server ('development' for KCITSQLUATHIP40 and 'production' for KCITSQLPRPHIP40)}
+\item{server}{type of server (\code{'development'} for KCITSQLUATHIP40 and
+\code{'production'} for KCITSQLPRPHIP40)
 
-\item{replace_table}{If T, drop existing table and insert data, if F update matching rows and insert new data}
+Default \code{server = 'development'}}
+
+\item{replace_table}{If TRUE, drop existing table and insert data, if FALSE
+update matching rows and insert new data
+
+Default \code{replace_table = FALSE}}
 }
 \value{
 status message indicating success and location, or failure, of upload
 }
 \description{
-function to update (or replace) results and metadata into APDE PHExtractStore servers. For details on server access, and to configure your local settings please review documentation [here](https://kc1.sharepoint.com/:w:/r/teams/DPH-KCCross-SectorData/_layouts/15/Doc.aspx?sourcedoc=%7B34352D66-9CD6-45C9-AD19-B8FE88A4C7C6%7D&file=SQL%20Server%20Setup%20APDE.docx&action=default&mobileredirect=true)
+Function to update (or replace) results and metadata in APDE PHExtractStore
+servers.
+}
+\details{
+For details on server access, and to configure your local settings,
+please review documentation:
+\href{https://kc1.sharepoint.com/teams/DPH-KCCross-SectorData/Shared\%20Documents/References/SQL/SQL Server Setup APDE.docx}{
+SharePoint > DPH-KCCross-SectorData > Documents > References > SQL > SQL Server Setup APDE.docx}.
+}
+\examples{
+\dontrun{
+# Update development database
+chi_sql_update(
+  CHIestimates = final_estimates,
+  CHImetadata = final_metadata,
+  table_name = "birth",
+  server = "development",
+  replace_table = FALSE
+)
+}
+
+}
+\seealso{
+\code{\link{chi_qa_tro}} for validating data before upload
+
+\code{\link{chi_compare_estimates}} for comparing with existing data
 }
 \keyword{CHI,}
 \keyword{Production}

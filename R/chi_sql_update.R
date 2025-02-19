@@ -1,14 +1,43 @@
 #' CHI SQL Update
 #'
 #' @description
-#' function to update (or replace) results and metadata into APDE PHExtractStore servers. For details on server access, and to configure your local settings please review documentation [here](https://kc1.sharepoint.com/:w:/r/teams/DPH-KCCross-SectorData/_layouts/15/Doc.aspx?sourcedoc=%7B34352D66-9CD6-45C9-AD19-B8FE88A4C7C6%7D&file=SQL%20Server%20Setup%20APDE.docx&action=default&mobileredirect=true)
+#' Function to update (or replace) results and metadata in APDE PHExtractStore
+#' servers.
 #'
+#' @details
+#' For details on server access, and to configure your local settings,
+#' please review documentation:
+#' \href{https://kc1.sharepoint.com/teams/DPH-KCCross-SectorData/Shared\%20Documents/References/SQL/SQL Server Setup APDE.docx}{
+#' SharePoint > DPH-KCCross-SectorData > Documents > References > SQL > SQL Server Setup APDE.docx}.
 #'
-#' @param CHIestimates DT or DF containing CHI analytic results
-#' @param CHImetadata DT or DF containing CHI metadata
+#' @param CHIestimates data.frame/data.table containing CHI analytic results
+#' @param CHImetadata data.frame/data.table containing CHI metadata
 #' @param table_name name of SQL Server table to update
-#' @param server type of server ('development' for KCITSQLUATHIP40 and 'production' for KCITSQLPRPHIP40)
-#' @param replace_table If T, drop existing table and insert data, if F update matching rows and insert new data
+#' @param server type of server (\code{'development'} for KCITSQLUATHIP40 and
+#' \code{'production'} for KCITSQLPRPHIP40)
+#'
+#' Default \code{server = 'development'}
+#' @param replace_table If TRUE, drop existing table and insert data, if FALSE
+#' update matching rows and insert new data
+#'
+#' Default \code{replace_table = FALSE}
+#'
+#' @examples
+#' \dontrun{
+#' # Update development database
+#' chi_sql_update(
+#'   CHIestimates = final_estimates,
+#'   CHImetadata = final_metadata,
+#'   table_name = "birth",
+#'   server = "development",
+#'   replace_table = FALSE
+#' )
+#' }
+#'
+#' @seealso
+#' \code{\link{chi_qa_tro}} for validating data before upload
+#'
+#' \code{\link{chi_compare_estimates}} for comparing with existing data
 #'
 #' @return status message indicating success and location, or failure, of upload
 #'
@@ -27,20 +56,24 @@ chi_sql_update <- function(CHIestimates = NULL,
                            CHImetadata = NULL,
                            table_name = NULL,
                            server = 'development', # options include c('development', 'production')
-                           replace_table = F # default is to update select rows rather than replace the entire table
+                           replace_table = FALSE # default is to update select rows rather than replace the entire table
 ){
   # load CHI yaml config file ----
   # check CHIestimates argument----
-  if(!exists('CHIestimates')){stop("\n\U0001f47f The results table to push to SQL (CHIestimates) is missing ")}
+  if(is.null(CHIestimates)){stop("\n\U0001f47f The results table to push to SQL (CHIestimates) is missing ")}
   if( inherits(CHIestimates, "data.frame") == FALSE){stop("\n\U0001f47f CHIestimates must be a data.frame or a data.table.")}
   if( inherits(CHIestimates, "data.table") == FALSE){setDT(CHIestimates)}
   rads::tsql_validate_field_types(ph.data = CHIestimates, field_types = unlist(chi_get_yaml()$vars))
 
   # check CHImetadata argument----
-  if(!exists('CHImetadata')){stop("\n\U0001f47f The metadata table to push to SQL (CHImetadata) is missing ")}
+  if(is.null(CHImetadata)){stop("\n\U0001f47f The metadata table to push to SQL (CHImetadata) is missing ")}
   if( inherits(CHImetadata, "data.frame") == FALSE){stop("\n\U0001f47f CHImetadata must be a data.frame or a data.table.")}
   if( inherits(CHImetadata, "data.table") == FALSE){setDT(CHImetadata)}
   rads::tsql_validate_field_types(ph.data = CHImetadata, field_types = unlist(chi_get_yaml()$metadata))
+
+  # checkt table_name ----
+  if(is.null(table_name)){stop("\n\U0001f47f The table_name argument is missing ")}
+  if(length(table_name) != 1 | !is.character(table_name)){stop("\n\U0001f47f table_name must be a character vector of length 1")}
 
   # ensure indicator_key is consistent across estimates and metadata
   if(!identical(sort(as.character(unique(CHIestimates$indicator_key))), sort(as.character(CHImetadata$indicator_key)))){
@@ -49,7 +82,7 @@ chi_sql_update <- function(CHIestimates = NULL,
 
   # check server argument----
   server = tolower(as.character(server))
-  if(!server %in% c('wip', 'dev', 'prod')){stop("\n\U0001f47f The server argument is limited to: 'development', 'production'")}
+  if(!server %in% c('development', 'production')){stop("\n\U0001f47f The server argument is limited to: 'development', 'production'")}
   if(length(server) != 1){stop("\n\U0001f47f The `server` argument must be of length 1")}
 
   # check replace argument----
@@ -75,25 +108,15 @@ chi_sql_update <- function(CHIestimates = NULL,
   }
 
   # check if *_results and *_metadata tables already exist in the appropriate schema----
-  if(!DBI::dbExistsTable(conn = CHI_db_cxn, glue::glue_sql("[PHExtractStore].[APDE{DBI::SQL(schema_suffix)}].[{DBI::SQL(table_name)}_results]", .con = CHI_db_cxn))){
-    tempquestion <- paste0("The table `[PHExtractStore].[APDE", schema_suffix, "].[", table_name, "_results]` does NOT currently exist. Are you sure you want to continue? (y/n) ")
-    answer <- readline(tempquestion)
-    if (answer == "y") {
+    if (!DBI::dbExistsTable(conn = CHI_db_cxn, glue::glue_sql("[PHExtractStore].[APDE{DBI::SQL(schema_suffix)}].[{DBI::SQL(table_name)}_results]", .con = CHI_db_cxn))) {
+      warning(paste0("\U00026A0\U00026A0\nThe table `[PHExtractStore].[APDE", schema_suffix, "].[", table_name, "_results]` does NOT currently exist. Continuing without this table."))
       message("Continuing...")
-    } else {
-      stop(paste0("\n\U0001f47f The table `[PHExtractStore].[APDE", schema_suffix, "].[", table_name, "_results]` does NOT currently exist and you gave instructions not to continue."))
     }
-  }
 
-  if(!DBI::dbExistsTable(conn = CHI_db_cxn, glue::glue_sql("[PHExtractStore].[APDE{DBI::SQL(schema_suffix)}].[{DBI::SQL(table_name)}_metadata]", .con = CHI_db_cxn))){
-    tempquestion <- paste0("The table `[PHExtractStore].[APDE", schema_suffix, "].[", table_name, "_metadata]` does NOT currently exist. Are you sure you want to continue? (y/n) ")
-    answer <- readline(tempquestion)
-    if (answer == "y") {
+    if (!DBI::dbExistsTable(conn = CHI_db_cxn, glue::glue_sql("[PHExtractStore].[APDE{DBI::SQL(schema_suffix)}].[{DBI::SQL(table_name)}_metadata]", .con = CHI_db_cxn))) {
+      warning(paste0("\U00026A0\U00026A0\nThe table `[PHExtractStore].[APDE", schema_suffix, "].[", table_name, "_metadata]` does NOT currently exist. Continuing without this table."))
       message("Continuing...")
-    } else {
-      stop(paste0("\n\U0001f47f The table `[PHExtractStore].[APDE", schema_suffix, "].[", table_name, "_metadata]` does NOT currently exist and you gave instructions not to continue."))
     }
-  }
 
   # if replace_table = F, delete existing data that will be replaced in SQL----
   if(isFALSE(replace_table)){
