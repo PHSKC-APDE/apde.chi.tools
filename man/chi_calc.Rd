@@ -17,15 +17,15 @@ chi_calc(
 )
 }
 \arguments{
-\item{ph.data}{Input data.frame or data.table containing CHI data}
+\item{ph.data}{Input data.frame or data.table containing analytic read data}
 
 \item{ph.instructions}{data.frame or data.table containing calculation instructions}
 
-\item{rate}{Logical; if TRUE calculates rates, if FALSE calculates proportions}
+\item{rate}{Logical; if \code{TRUE} calculates rates, if \code{FALSE} calculates proportions}
 
-\item{rate_per}{Rate multiplier when rate=TRUE (e.g., 100000 for per 100,000)}
+\item{rate_per}{Rate multiplier when \code{rate=TRUE} (e.g., 100000 for per 100,000)}
 
-\item{small_num_suppress}{Logical; if TRUE suppresses small numbers}
+\item{small_num_suppress}{Logical; if \code{TRUE} suppresses small numbers}
 
 \item{suppress_low}{Lower bound for suppression}
 
@@ -36,9 +36,41 @@ chi_calc(
 \item{source_date}{Date of data source}
 }
 \value{
-A data.table containing CHI estimates with standard columns
+A data.table containing CHI estimates with the following columns:
+\itemize{
+  \item{\code{data_source}} Data source (e.g., acs, brfss, etc.)
+  \item{\code{indicator_key}} Unique indicator key
+  \item{\code{tab}} Type of analysis (e.g., demgroups, _kingcounty, etc.)
+  \item{\code{year}} Year(s) of data
+  \item{\code{cat1}} Describes data field (e.g., Gender, Ethnicity, etc.)
+  \item{\code{cat1_group}} Demographics variables for cat1 (e.g., Female, Hispanic, etc.)
+  \item{\code{cat1_varname}} cat1 variable name in the analytic data sets
+  \item{\code{cat2}} Describes data field (e.g., Gender, Ethnicity, etc.)
+  \item{\code{cat2_group}} Demographics variables for cat2 (e.g., Female, Hispanic, etc.)
+  \item{\code{cat2_varname}} cat2 variable name in the analytic data sets
+  \item{\code{result}} Calculated proportion/percent or rate
+  \item{\code{lower_bound}} Lower bound of confidence interval
+  \item{\code{upper_bound}} Upper bound of confidence interval
+  \item{\code{se}} Standard error
+  \item{\code{rse}} Relative standard error
+  \item{\code{caution}} '!' when RSE>=30% | N == 0
+  \item{\code{suppression}} '^' when suppressed
+  \item{\code{numerator}} For line-level data, count of events; for surveys, people who responded yes or no for binary variable
+  \item{\code{numerator}} For line-level data, population; for surveys, sample size
+  \item{\code{chi}} '1' indicates that rows is used for CHI
+  \item{\code{source_date}} date analytic ready data was created
+  \item{\code{run_date}} date of this analysis
+}
 }
 \description{
-Generates CHI estimates from input data according to provided instructions.
+Generates CHI estimates from input data according to provided instructions
+created by \code{\link{chi_generate_tro_shell}}.
 Handles both proportions and rates, with options for suppression of small numbers.
+}
+\seealso{
+\code{\link{chi_generate_tro_shell}} for creating calculation instructions
+
+\code{\link{chi_qa_tro}} for validating results
+
+\code{\link{chi_generate_metadata}} for creating metadata from results
 }
