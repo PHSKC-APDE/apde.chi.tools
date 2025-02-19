@@ -2,7 +2,7 @@
 % Please edit documentation in R/chi_process_nontrends.R
 \name{chi_process_nontrends}
 \alias{chi_process_nontrends}
-\title{CHI generate_nontrend_years}
+\title{CHI generate nontrend years}
 \usage{
 chi_process_nontrends(ph.analysis_set = NULL, myset = NULL)
 }
@@ -15,22 +15,32 @@ chi_process_nontrends(ph.analysis_set = NULL, myset = NULL)
 data table with a single row for each calculation to be performed in generating Tableau Ready Output for CHI reporting
 }
 \description{
-This function takes an analysis set file and indicator of which set should be processed. It returns a skeleton of CHI Tableau Ready Output. Hidden and ment to be called by CHI generate instructions. Not exported, but called by chi_generate_tro_shell().
+This function takes an analysis set file and indicator of which set should be
+processed. It returns a skeleton of CHI Tableau Ready Output. Hidden and meant
+to be called by CHI generate instructions. Not exported, but called by
+chi_generate_tro_shell().
 }
 \details{
-It takes in a data.table containing a compact list of variables, byvariables, and analysis types, and returns a shell table of the rows and columns expected in a CHI Tableau ready output. For details on TRO format, review here: https://kc1.sharepoint.com/:x:/r/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady%20Output.xlsx?d=wbed2f507b8344d288658c5724f64c001&csf=1&web=1&e=qEIPcc&nav=MTVfezAwMDAwMDAwLTAwMDEtMDAwMC0wMjAwLTAwMDAwMDAwMDAwMH0
+It takes in a data.table containing a compact list of variables, byvariables,
+and analysis types, and returns a shell table of the rows and columns expected
+in a CHI Tableau ready output. For details on TRO format, review here:
+\href{https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady\%20Output.xlsx}{
+SharePoint > Community Health Indicators > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}
 
-the expected format of the analysis file is:
-set: numeric integer 1...x, indicates set the observations are calcualted as part of (why are sets valueable? should this be discarded?)
-cat1: character, the name expected in CHI TRO for cat1
-cat1_varname: character, the name expected in CHI TRO for cat1_varname
-_kingcounty: character "":"X", indicator of if analysis is king county specific (could be removed, this is imputable by variable name)
-_wastate: character "":"x", indicator of if analysis is of wa state
-demgroups: character "":"x", indicator of if analysis includes single demographic
-crosstabs: character "":"x", indicator of if analysis includes crosstabulations
-trands: character "":"x", indicator of if analysis includes trends
-set_idictaor_keys character comma sep list, list of indicators variables expected from data source
+The expected format of the analysis file is:
+\itemize{
+   \item \code{set}: numeric integer 1...x, indicates set or batch of analyses since not all indicators have all the same analyses
+   \item \code{cat1}: character, the name expected in CHI TRO for cat1
+   \item \code{cat1_varname}: character, the name expected in CHI TRO for cat1_varname
+   \item \code{_kingcounty}: character "":"X", indicator of if analysis is King County specific (could be removed, this is imputable by variable name)
+   \item \code{_wastate}: character "":"x", indicator of if analysis is of WA state
+   \item \code{demgroups}: character "":"x", indicator of if analysis includes single demographic
+   \item \code{crosstabs}: character "":"x", indicator of if analysis includes crosstabulations
+   \item \code{trends}: character "":"x", indicator of if analysis includes trends
+   \item \code{set_indictaor_keys} character comma sep list, list of indicators variables expected from data source
+}
 }
 \keyword{CHI,}
-\keyword{Production}
+\keyword{Production,}
 \keyword{Tableau,}
+\keyword{internal}
