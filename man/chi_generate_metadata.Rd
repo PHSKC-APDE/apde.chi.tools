@@ -7,7 +7,7 @@
 chi_generate_metadata(meta.old = NULL, est.current = NULL)
 }
 \arguments{
-\item{meta.old}{Previous metadata table}
+\item{meta.old}{Name of a data.table with the prior year's metadata}
 
 \item{est.current}{current year's tableau ready output with completed estimates}
 }
@@ -16,4 +16,9 @@ table of metadata
 }
 \description{
 function to generate metadata table combining existing metadata and latest estimates.
+}
+\seealso{
+\code{\link{chi_calc}} for generating estimates
+
+\code{\link{chi_qa_tro}} for validating metadata
 }
