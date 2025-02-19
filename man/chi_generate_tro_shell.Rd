@@ -18,7 +18,7 @@ chi_generate_tro_shell(
 
 \item{start.year}{the earliest year to be used for estimates}
 
-\item{end.year}{the latest year to be used for aggregate estimates (note, the earliest year for trends estimates is calculated from from the span and number of periods)}
+\item{end.year}{the latest year to be used for aggregate estimates}
 
 \item{year.span}{the number of years to be included in a single non-trend period}
 
@@ -27,24 +27,43 @@ chi_generate_tro_shell(
 \item{trend.periods}{the number of periods to be included in a trend}
 }
 \value{
-data table with a single row for each calculation to be performed in generating Tableau Ready Output for CHI reporting
+A data table containing calculation instructions with columns:
+\itemize{
+  \item{indicator_key} Unique identifier for each indicator
+  \item{tab} Analysis type (_kingcounty, demgroups, trends, etc.)
+  \item{year} Time period for analysis
+  \item{Additional columns} As specified in analysis_set input
+}
 }
 \description{
-This function takes an analysis set file and indicator of which set should be processed. It returns a skeleton of CHI Tableau Ready Output.
+This function takes an analysis set file and indicator of which set should be
+processed. It returns a skeleton of CHI Tableau Ready Output, which is used
+as an instruction set for \code{\link{chi_calc}}.
 }
 \details{
-It takes in a data.table containing a compact list of variables, byvariables, and analysis types, and returns a shell table of the rows and columns expected in a CHI Tableau ready output. For details on TRO format, review here: https://kc1.sharepoint.com/:x:/r/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady%20Output.xlsx?d=wbed2f507b8344d288658c5724f64c001&csf=1&web=1&e=qEIPcc&nav=MTVfezAwMDAwMDAwLTAwMDEtMDAwMC0wMjAwLTAwMDAwMDAwMDAwMH0
+It takes in a data.table containing a compact list of \code{indicator_keys},
+byvariables, and analysis types, and returns a shell table of the rows and columns expected
+in a CHI Tableau ready output. For details on TRO format, review here:
+\href{https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady\%20Output.xlsx}{
+SharePoint > Community Health Indicators > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}
 
-the expected format of the analysis file is:
-set: numeric integer 1...x, indicates set the observations are calcualted as part of (why are sets valueable? should this be discarded?)
-cat1: character, the name expected in CHI TRO for cat1
-cat1_varname: character, the name expected in CHI TRO for cat1_varname
-kingcounty: character "":"X", indicator of if analysis is king county specific (could be removed, this is imputable by variable name)
-wastate: character "":"x", indicator of if analysis is of wa state
-demgroups: character "":"x", indicator of if analysis includes single demographic
-crosstabs: character "":"x", indicator of if analysis includes crosstabulations
-trands: character "":"x", indicator of if analysis includes trends
-set_idictaor_keys character comma sep list, list of indicators variables expected from data source
+The expected format of \code{ph.analysis_set} is:
+  \itemize{
+    \item \code{set}: Integer identifying groups of indicators with identical analysis patterns
+    \item \code{cat1}: Category name as expected in CHI TRO
+    \item \code{cat1_varname}: Category variable name as expected in CHI TRO
+    \item \code{_kingcounty}: \code{'x'} if analysis includes King County tab
+    \item \code{_wastate}: \code{'x'} if analysis includes Washington State tab
+    \item \code{demgroups}: \code{'x'} if analysis includes demographic groups
+    \item \code{crosstabs}: \code{'x'} if analysis includes crosstabulations
+    \item \code{trends}: \code{'x'} if analysis includes trends analysis
+    \item \code{set_indicator_keys}: Comma-separated list of indicator keys sharing the pattern
+  }
+}
+\seealso{
+\code{\link{chi_generate_analysis_set}} for creating analysis sets
+
+\code{\link{chi_calc}} for performing calculations using these instructions
 }
 \keyword{CHI,}
 \keyword{Production}
