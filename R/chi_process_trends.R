@@ -6,14 +6,14 @@
 #' @param trend.periods number of periods to calculate
 #'
 #' @description
-#' helper fucntion for chi_generate_tro_shell
+#' helper function for chi_generate_tro_shell
 #'
 #' @details
 #' called by chi_generate_tro_shell to calculate and create rows for expected trends analyses.
 #'
 #'
 #' @returns TRO with rows for each indicator key and span of years within the provided time frame
-#' @keywords CHI, Tableau, Production
+#' @keywords CHI, Tableau, Production, internal
 #' @importFrom data.table setDT setorder
 #' @importFrom tidyr crossing
 

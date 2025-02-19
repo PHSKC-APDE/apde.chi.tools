@@ -24,11 +24,12 @@ chi_process_trends(
 TRO with rows for each indicator key and span of years within the provided time frame
 }
 \description{
-helper fucntion for chi_generate_tro_shell
+helper function for chi_generate_tro_shell
 }
 \details{
 called by chi_generate_tro_shell to calculate and create rows for expected trends analyses.
 }
 \keyword{CHI,}
-\keyword{Production}
+\keyword{Production,}
 \keyword{Tableau,}
+\keyword{internal}
