@@ -281,20 +281,24 @@ pretty_kable(head(mymetadata[]))
 After calculation, we need to perform quality assurance checks to ensure our estimates and metadata conform to CHI standards. `chi_qa_tro` checks whether the CHI estimates and metadata are properly formatted, complete, and compliant with required standards, ensuring that column names, values, and data types meet specified criteria, such as proper rounding, absence of missing critical data, and consistency with reference tables. It also checks for issues like infinite values and ensures that specific data rules (e.g., proportions, bounds) are followed.
 
 ```{r qa}
-#| message: true
+#| message: false
+#| output: false
 
 # Perform QA checks
 qa_result <- chi_qa_tro(CHIestimates = myestimates,
                         CHImetadata = mymetadata,
                         acs = F,
-                        ignore_trends = T,
                         verbose = F)
+```
 
-# The function returns 1 for pass, 0 for fail
+The function returns 1 for pass, 0 for to warn of deviations from CHI standards
+
+```{r qa-result}
+#| message: true
 if(qa_result == 1) {
   message("QA checks passed successfully!")
 } else {
-  message("QA checks failed. Please review your data and calculations.")
+  message("QA checks identified at least one deviation from CHI standars. Run again with verbose = TRUE.")
 }
 ```
 
