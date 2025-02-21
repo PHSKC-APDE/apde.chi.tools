@@ -200,6 +200,7 @@ options(future.globals.maxSize = future.GB * 1024^3)
 
 myestimates <- chi_calc(ph.data = birthsdt,
                         ph.instructions = myinstructions,
+                        ci = 0.90, 
                         rate = FALSE,
                         small_num_suppress = TRUE,
                         suppress_low = 0,

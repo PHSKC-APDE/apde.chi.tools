@@ -1,19 +1,19 @@
 #' Calculate CHI Estimates
 #'
 #' @description
-#' Generates CHI estimates from input data according to provided instructions
-#' created by \code{\link{chi_generate_tro_shell}}.
+#' Generates CHI estimates from input data according to provided instructions. 
 #' Handles both proportions and rates, with options for suppression of small numbers.
 #'
-#' @param ph.data Input data.frame or data.table containing analytic read data
-#' @param ph.instructions data.frame or data.table containing calculation instructions
-#' @param rate Logical; if \code{TRUE} calculates rates, if \code{FALSE} calculates proportions
-#' @param rate_per Rate multiplier when \code{rate=TRUE} (e.g., 100000 for per 100,000)
-#' @param small_num_suppress Logical; if \code{TRUE} suppresses small numbers
-#' @param suppress_low Lower bound for suppression
-#' @param suppress_high Upper bound for suppression
-#' @param source_name Name of data source
-#' @param source_date Date of data source
+#' @param ph.data data.frame or data.table. Input data containing analytic read data.
+#' @param ph.instructions data.frame or data.table. Calculation instructions for processing.
+#' @param ci numeric. Confidence level between 0 and 1. Default: \code{0.90}.
+#' @param rate logical. If TRUE calculates rates, if FALSE calculates proportions. Default: \code{FALSE}.
+#' @param rate_per numeric. Rate multiplier when \code{rate = TRUE} (e.g., 100000 for per 100,000). Default: \code{NULL}.
+#' @param small_num_suppress logical. If TRUE suppresses small numbers. Default: \code{TRUE}.
+#' @param suppress_low numeric. Lower bound for suppression. Default: \code{0}.
+#' @param suppress_high numeric. Upper bound for suppression. Default: \code{9}.
+#' @param source_name character. Name of data source. Default: \code{NULL}.
+#' @param source_date Date. Date ph.data was created. Default: \code{NULL}.
 #'
 #' @return A data.table containing CHI estimates with the following columns:
 #' \itemize{
@@ -35,7 +35,7 @@
 #'   \item{\code{caution}} '!' when RSE>=30% | N == 0
 #'   \item{\code{suppression}} '^' when suppressed
 #'   \item{\code{numerator}} For line-level data, count of events; for surveys, people who responded yes or no for binary variable
-#'   \item{\code{numerator}} For line-level data, population; for surveys, sample size
+#'   \item{\code{denominator}} For line-level data, population; for surveys, sample size
 #'   \item{\code{chi}} '1' indicates that rows is used for CHI
 #'   \item{\code{source_date}} date analytic ready data was created
 #'   \item{\code{run_date}} date of this analysis
@@ -49,7 +49,7 @@
 #' \code{\link{chi_generate_metadata}} for creating metadata from results
 #'
 #' @importFrom data.table setDT copy setnames := setorder set .SD data.table
-#' @importFrom rads calc compare_estimate suppress chi_cols
+#' @importFrom rads calc compare_estimate suppress chi_cols round2
 #' @importFrom future.apply future_lapply
 #' @importFrom stats na.omit
 #' @import progressr
@@ -58,34 +58,50 @@
 #'
 chi_calc <- function(ph.data = NULL,
                      ph.instructions = NULL,
-                     rate = F,
+                     ci = 0.90,
+                     rate = FALSE,
                      rate_per = NULL,
-                     small_num_suppress = T,
+                     small_num_suppress = TRUE,
                      suppress_low = 0,
                      suppress_high = 9,
-                     source_name = 'blahblah',
+                     source_name = NULL,
                      source_date = NULL){
   # Input validation ----
     if (is.null(ph.data)) stop("\n\U1F6D1 ph.data must be provided")
     if (!is.data.frame(ph.data)) stop("\n\U1F6D1 ph.data must be a data.frame or data.table")
+    if (nrow(ph.data) == 0) stop("\n\U1F6D1 ph.data is empty")
+    if (!is.data.table(ph.data)) setDT(ph.data)
 
     if (is.null(ph.instructions)) stop("\n\U1F6D1 ph.instructions must be provided")
     if (!is.data.frame(ph.instructions)) stop("\n\U1F6D1 ph.instructions must be a data.frame or data.table")
-
-    if (!is.logical(rate)) stop("\n\U1F6D1 rate must be logical (TRUE/FALSE)")
-    if (rate && is.null(rate_per)) stop("\n\U1F6D1 rate_per must be provided when rate=TRUE")
-
-    if (!is.logical(small_num_suppress)) stop("\n\U1F6D1 small_num_suppress must be logical (TRUE/FALSE)")
-
-    # Convert to data.table if needed
-    if (!is.data.table(ph.data)) setDT(ph.data)
+    if (nrow(ph.instructions) == 0) stop("\n\U1F6D1 ph.instructions is empty")
     if (!is.data.table(ph.instructions)) setDT(ph.instructions)
 
-  # Error if ph.instructions has no data ----
-    if(nrow(ph.instructions) == 0){
-      stop("\n\U0001f47f the table ph.instructions does not have any rows.")
-      #tempCHIest <- data.table(setNames(data.frame(matrix(ncol = length(chi_cols()), nrow = 0), stringsAsFactors = FALSE), chi_cols()))
-    }
+    # Validate ci parameter
+    if (!is.numeric(ci)) stop("\n\U1F6D1 ci must be numeric")
+    if (ci <= 0 || ci >= 1) stop("\n\U1F6D1 ci must be between 0 and 1")
+
+    # Validate rate-related parameters
+    if (!is.logical(rate)) stop("\n\U1F6D1 rate must be logical (TRUE/FALSE)")
+    if (rate && is.null(rate_per)) stop("\n\U1F6D1 rate_per must be provided when rate=TRUE")
+    if (rate && !is.numeric(rate_per)) stop("\n\U1F6D1 rate_per must be numeric")
+    if (rate && rate_per <= 0) stop("\n\U1F6D1 rate_per must be positive")
+
+    # Validate suppression parameters
+    if (!is.logical(small_num_suppress)) stop("\n\U1F6D1 small_num_suppress must be logical (TRUE/FALSE)")
+    if (!is.numeric(suppress_low)) stop("\n\U1F6D1 suppress_low must be numeric")
+    if (!is.numeric(suppress_high)) stop("\n\U1F6D1 suppress_high must be numeric")
+    if (suppress_low >= suppress_high) stop("\n\U1F6D1 suppress_low must be less than suppress_high")
+
+    # Validate source_name
+    if (is.null(source_name)) stop("\n\U1F6D1 source_name must be provided")
+    if (!is.character(source_name)) stop("\n\U1F6D1 source_name must be a character string")
+    if (nchar(trimws(source_name)) == 0) stop("\n\U1F6D1 source_name cannot be an empty string")
+
+    # validate source_date
+    if (is.null(source_date)) stop("\n\U1F6D1 source_date must be provided")
+    if (!inherits(source_date, "Date")) stop("\n\U1F6D1 source_date must be a be a Date object")
+
 
   # Create 'Overall' if needed for crosstabs ----
     if(!'overall' %in% names(ph.data)){
@@ -147,11 +163,13 @@ chi_calc <- function(ph.data = NULL,
               tempest <- rads::calc(ph.data = ph.data[chi_year >= tempstart & chi_year <= tempend],
                               what = current_row$indicator_key,
                               by = tempbv,
+                              ci = ci,
                               metrics = c('mean', 'numerator', 'denominator', 'rse'))
             } else {
               tempest <- rads::calc(ph.data = ph.data[chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County'],
                               what = current_row$indicator_key,
                               by = tempbv,
+                              ci = ci,
                               metrics = c('mean', 'numerator', 'denominator', 'rse'))
             }
           }
@@ -160,12 +178,14 @@ chi_calc <- function(ph.data = NULL,
               tempest <- rads::calc(ph.data = ph.data[chi_year >= tempstart & chi_year <= tempend],
                               what = current_row$indicator_key,
                               by = tempbv,
+                              ci = ci,
                               metrics = c('rate', 'numerator', 'denominator', 'rse'),
                               per = rate_per)
             } else {
               tempest <- rads::calc(ph.data = ph.data[chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County'],
                               what = current_row$indicator_key,
                               by = tempbv,
+                              ci = ci,
                               metrics = c('rate', 'numerator', 'denominator', 'rse'),
                               per = rate_per)
             }

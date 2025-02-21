@@ -7,33 +7,36 @@
 chi_calc(
   ph.data = NULL,
   ph.instructions = NULL,
-  rate = F,
+  ci = 0.9,
+  rate = FALSE,
   rate_per = NULL,
-  small_num_suppress = T,
+  small_num_suppress = TRUE,
   suppress_low = 0,
   suppress_high = 9,
-  source_name = "blahblah",
+  source_name = NULL,
   source_date = NULL
 )
 }
 \arguments{
-\item{ph.data}{Input data.frame or data.table containing analytic read data}
+\item{ph.data}{data.frame or data.table. Input data containing analytic read data.}
 
-\item{ph.instructions}{data.frame or data.table containing calculation instructions}
+\item{ph.instructions}{data.frame or data.table. Calculation instructions for processing.}
 
-\item{rate}{Logical; if \code{TRUE} calculates rates, if \code{FALSE} calculates proportions}
+\item{ci}{numeric. Confidence level between 0 and 1. Default: \code{0.90}.}
 
-\item{rate_per}{Rate multiplier when \code{rate=TRUE} (e.g., 100000 for per 100,000)}
+\item{rate}{logical. If TRUE calculates rates, if FALSE calculates proportions. Default: \code{FALSE}.}
 
-\item{small_num_suppress}{Logical; if \code{TRUE} suppresses small numbers}
+\item{rate_per}{numeric. Rate multiplier when \code{rate = TRUE} (e.g., 100000 for per 100,000). Default: \code{NULL}.}
 
-\item{suppress_low}{Lower bound for suppression}
+\item{small_num_suppress}{logical. If TRUE suppresses small numbers. Default: \code{TRUE}.}
 
-\item{suppress_high}{Upper bound for suppression}
+\item{suppress_low}{numeric. Lower bound for suppression. Default: \code{0}.}
 
-\item{source_name}{Name of data source}
+\item{suppress_high}{numeric. Upper bound for suppression. Default: \code{9}.}
 
-\item{source_date}{Date of data source}
+\item{source_name}{character. Name of data source. Default: \code{NULL}.}
+
+\item{source_date}{Date. Date ph.data was created. Default: \code{NULL}.}
 }
 \value{
 A data.table containing CHI estimates with the following columns:
@@ -56,15 +59,14 @@ A data.table containing CHI estimates with the following columns:
   \item{\code{caution}} '!' when RSE>=30% | N == 0
   \item{\code{suppression}} '^' when suppressed
   \item{\code{numerator}} For line-level data, count of events; for surveys, people who responded yes or no for binary variable
-  \item{\code{numerator}} For line-level data, population; for surveys, sample size
+  \item{\code{denominator}} For line-level data, population; for surveys, sample size
   \item{\code{chi}} '1' indicates that rows is used for CHI
   \item{\code{source_date}} date analytic ready data was created
   \item{\code{run_date}} date of this analysis
 }
 }
 \description{
-Generates CHI estimates from input data according to provided instructions
-created by \code{\link{chi_generate_tro_shell}}.
+Generates CHI estimates from input data according to provided instructions. 
 Handles both proportions and rates, with options for suppression of small numbers.
 }
 \seealso{

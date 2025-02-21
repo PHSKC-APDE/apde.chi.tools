@@ -5,6 +5,7 @@ test_that("chi_calc performs basic calculations correctly", {
   result <- chi_calc(
     ph.data = test_data$my.analytic,
     ph.instructions = test_data$my.instructions,
+    ci = 0.90,
     rate = FALSE,
     source_name = "test",
     source_date = Sys.Date()
