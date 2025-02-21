@@ -1,25 +1,27 @@
-#' CHI - QA: Tableau Ready output
+#' Quality Assurance Check for CHI Tableau Ready Output
 #'
 #' @description
-#' Checks estimates created by \code{\link{chi_calc}} and metadata created by
-#' \code{\link{chi_generate_metadata}} for compliance with CHI TRO standard.
+#' Validates data structures and values in CHI estimates and metadata for compliance
+#' with CHI Tableau Ready Output (TRO) standards.
 #'
 #' @details
-#' This function tests if the structure of the data matches CHI Tableau Ready Output
-#' specifications. If set to verbose mode (default) will report diagnostic information in
-#' The user interface as warnings (if failed) and messages (for progress and pass). In any
-#' Case will return 1 or 0 for pass or fail respectively.
+#' This function performs comprehensive validation of data structure and content against
+#' CHI TRO specifications. When verbose mode is enabled (default), it provides detailed
+#' diagnostic information through warnings (for deviations from standards) and messages
+#' (for progress and successful checks).
+#'
 #' The CHI Tableau Ready Output (TRO) standards can be reviewed here:
 #' \href{https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady\%20Output.xlsx}{
 #' SharePoint > Community Health Indicators > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}
 #'
 #' @param CHIestimates Name of a data.table or data.frame containing the prepared data to be pushed to SQL
 #' @param CHImetadata Name of a data.table or data.frame containing the metadata to be pushed to SQL
-#' @param acs default FALSE, Indicates whether it is ACS data (which does not have / need varnames)
-#' @param ignore_trends default TRUE, Indicates whether the time_trends column should be ignored when checking for missing data.
-#' @param verbose default TRUE, if false will only return status
+#' @param acs default \code{FALSE}, Indicates whether it is ACS data (which does not have / need varnames)
+#' @param verbose default \code{TRUE}, Controls whether to display detailed progress and diagnostic messages
 #'
-#' @return 1 or 0 for pass or fail status
+#' @return Returns 1 if all checks pass, 0 if any deviations from standards are detected.
+#' If the return value is 0, we suggest running the function with verbose=TRUE to review
+#' specific details about potential issues that may need attention.
 #'
 #' @seealso
 #' \code{\link{chi_calc}} for generating estimates
@@ -36,14 +38,12 @@
 #' @importFrom rads tsql_validate_field_types round2
 #'
 #' @examples
-#'
 #' \dontrun{
-#' # QA check estimates and metadata
+#' # Basic QA check of estimates and metadata
 #' qa_status <- chi_qa_tro(
 #'   CHIestimates = my_estimates,
 #'   CHImetadata = my_metadata,
 #'   acs = FALSE,
-#'   ignore_trends = TRUE,
 #'   verbose = TRUE
 #' )
 #' }
@@ -53,38 +53,50 @@
 chi_qa_tro <- function(CHIestimates,
                        CHImetadata,
                        acs = FALSE,
-                       ignore_trends = TRUE,
-                       verbose = FALSE){
+                       verbose = TRUE){
   status <- 1
 
   ## Check arguments ----
+  if(!is.logical(verbose)){
+    stop('verbose must a logical, i.e., TRUE or FALSE')
+  }
+
+
+  if(verbose){
+    message("Checking that that `acs` is logical")
+  }
+  if(!is.logical(acs)){
+    stop('acs must a logical, i.e., TRUE or FALSE')
+  }
+
+
   if(verbose){
     message("Checking that both the results and the metadata were provided")
   }
-  if(is.null(CHIestimates)){
-    status <- 0
-    if(verbose) {
-      warning("You must provide the name of a data.frame or data.table that contains the CHI results.")
+    if(is.null(CHIestimates)){
+      status <- 0
+      if(verbose) {
+        warning("You must provide the name of a data.frame or data.table that contains the CHI results.")
+      }
+
+    }
+    if(is.null(CHImetadata)){
+      status <- 0
+      if(verbose){
+        warning("You must provide the name of a data.frame or data.table that contains the CHI metadata ")
+      }
+
+    }
+    #if both data sets are not provided, abort check
+    if(status == 0) {
+      if(verbose){
+        stop("Check incomplete. Please correct errors to proceed")
+      }
+      return(status)
     }
 
-  }
-  if(is.null(CHImetadata)){
-    status <- 0
-    if(verbose){
-      warning("You must provide the name of a data.frame or data.table that contains the CHI metadata ")
-    }
-
-  }
-  #if both data sets are not provided, abort check
-  if(status == 0) {
-    if(verbose){
-      warning("Check incomplete. Please correct errors to proceed")
-    }
-    return(status)
-  }
-
-  CHIestimates <- data.table::setDT(copy(CHIestimates))
-  CHImetadata <- data.table::setDT(copy(CHImetadata))
+    CHIestimates <- data.table::setDT(copy(CHIestimates))
+    CHImetadata <- data.table::setDT(copy(CHImetadata))
 
   ## Check columns ----
   if(verbose) {
@@ -124,27 +136,30 @@ chi_qa_tro <- function(CHIestimates,
     }
   }
 
-  ## Confirm that there are no additional variables ----
-  extra.var <- setdiff(names(CHIestimates), chi_get_cols())
-  if(length(extra.var) > 0){
+  if(verbose){
+    message("Checking for unexpected columns")
+  }
+  missing.var <- setdiff(names(CHIestimates), chi_get_cols())
+  if(length(missing.var) > 0){
     status <- 0
-    if(verbose){
-      extra.var <- paste(extra.var, collapse = ", ")
-      warning(glue::glue("Your dataset contains the following columns that are not CHI compliant: {extra.var}.
-                            Please drop these variables from CHIestimates before attempting to QA the data again."))
+    if(verbose) {
+      missing.var <- paste(missing.var, collapse = ", ")
+      warning(glue::glue("Your CHIestimates table has the following non-standard columns: {missing.var}
+                         Please drop these variables from CHIestimates before attempting to QA the data again."))
     }
   }
 
-  extra.var <- setdiff(names(CHImetadata), names(unlist(chi_get_yaml()$metadata)))
-  if(length(extra.var) > 0){
+  missing.var <- setdiff(names(CHImetadata), names(unlist(chi_get_yaml()$metadata)))
+  if(length(missing.var) > 0){
     status <- 0
     if(verbose){
-      extra.var <- paste(extra.var, collapse = ", ")
-      warning(glue::glue("Your metadata table contains the following columns that are not CHI compliant: {extra.var}.
-                            Please drop these variables from CHImetadata before attempting to QA the data again."))
+      missing.var <- paste(missing.var, collapse = ", ")
+      warning(glue::glue("Your CHImetadata table has the following non-standard columns: {missing.var}
+                         Please drop these variables from CHIestimates before attempting to QA the data again."))
     }
   }
 
+  ## Confirm variable class ----
   if(verbose){
     message("Checking that variables are of the proper class")
   }
@@ -160,31 +175,28 @@ chi_qa_tro <- function(CHIestimates,
   rads::tsql_validate_field_types(ph.data = CHImetadata, field_types = unlist(chi_get_yaml()$metadata)) # check CHI metadata table
   if(verbose) message(paste("", "", sep = "\n"))
 
+  ## Check for missingness ----
   if(verbose){
     message("Checking that critical columns are not missing any values")
   }
+
   for(mycol in c("indicator_key", "year", "data_source", "tab", "cat1", "cat1_group", "run_date")){
     if(nrow(CHIestimates[is.na(get(mycol))]) > 0){
       status <- 0
       warning(paste0("'", mycol, "' is missing in at least one row but is a critical identifier column in CHI data. \n", "Fix the error and run this QA script again."))
     }
   }
+
   for(mycol in c("result", "lower_bound", "upper_bound", "se", "rse", "numerator", "denominator", "chi", "source_date", "run_date")){
     if(nrow(CHIestimates[is.na(get(mycol)) & is.na(suppression)]) > 0){
       status <- 0
       warning(paste0("\U00026A0 Warning: '", mycol, "' is missing in at least one row of the CHI data."))
     }
   }
-  for(mycol in setdiff(names(unlist(chi_get_yaml()$metadata)), c("latest_year_kc_pop", "latest_year_count"))){
+  for(mycol in names(unlist(chi_get_yaml()$metadata))){
     if(nrow(CHImetadata[is.na(get(mycol))]) > 0){
       status <- 0
       warning(paste0("'", mycol, "' is missing in at least one row but is a critical identifier column in CHI metadata. \n", "Fix the error and run this QA script again."))
-    }
-  }
-  for(mycol in c("latest_year_kc_pop", "latest_year_count")){
-    if(nrow(CHImetadata[is.na(get(mycol))]) > 0){
-      status <- 0
-      warning(paste0("\U00026A0 Warning: '", mycol, "' is missing in at least one row of the metadata."))
     }
   }
 
@@ -414,19 +426,6 @@ chi_qa_tro <- function(CHIestimates,
     }
   }
 
-  if(ignore_trends == F){
-    if(verbose){
-      message("Checking that time_trends are provided when tab=='trends'")
-    }
-    if(nrow(CHIestimates[tab == "trends" & is.na(time_trends)]) > 0 ){
-      status <- 0
-      if(verbose) {
-              warning(glue::glue("There is at least one row where tab=='trends' & where 'time_trends' is missing.
-                            Please fill in the missing value before rerunning chi_qa_tro()"))
-      }
-    }
-  }
-
   ## Ensure cat1/cat2 values meet CHI standards ----
     if(verbose) {
       message("Checking that category combinations align with CHI standards")
@@ -481,6 +480,12 @@ chi_qa_tro <- function(CHIestimates,
           group = cat1_group
         )])
 
+          # wonky tweaks because of annoying structure for Birthing Person's race/ethnicity
+            chi_cat1_combos[cat %in% c("Birthing person's race/ethnicity", "Birthing person's race"), cat := "[Birthing person's] Race"]
+            chi_cat1_combos[cat == "Birthing person's ethnicity", cat := "[Birthing person's] Ethnicity"]
+            chi_cat1_combos[cat == "[Birthing person's] Race" & varname == 'race3' & group == 'Hispanic', cat := "[Birthing person's] Ethnicity"]
+            chi_cat1_combos[, cat := gsub("Birthing person's eth", "[Birthing person's] Eth", cat)]
+
         cat1_invalid <- chi_cat1_combos[!ref_combos, on = list(cat, varname, group)]
 
         if(nrow(cat1_invalid) > 0) {
@@ -500,6 +505,12 @@ chi_qa_tro <- function(CHIestimates,
           varname = cat2_varname,
           group = cat2_group
         )])
+
+          # wonky tweaks because of annoying structure for Birthing Person's race/ethnicity
+            chi_cat2_combos[cat %in% c("Birthing person's race/ethnicity", "Birthing person's race"), cat := "[Birthing person's] Race"]
+            chi_cat2_combos[cat == "Birthing person's ethnicity", cat := "[Birthing person's] Ethnicity"]
+            chi_cat2_combos[cat == "[Birthing person's] Race" & varname == 'race3' & group == 'Hispanic', cat := "[Birthing person's] Ethnicity"]
+            chi_cat2_combos[, cat := gsub("Birthing person's eth", "[Birthing person's] Eth", cat)]
 
         cat2_invalid <- chi_cat2_combos[!ref_combos, on = list(cat, varname, group)]
 
