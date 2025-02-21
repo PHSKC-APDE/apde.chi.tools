@@ -40,6 +40,7 @@ Suggests:
     progress,
     rmarkdown,
     markdown,
+    quarto (>= 1.4),
     testthat (>= 3.0.0),
     srvyr,
     survey (>= 4.0)
