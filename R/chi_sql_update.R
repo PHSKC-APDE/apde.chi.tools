@@ -109,12 +109,12 @@ chi_sql_update <- function(CHIestimates = NULL,
 
   # check if *_results and *_metadata tables already exist in the appropriate schema----
     if (!DBI::dbExistsTable(conn = CHI_db_cxn, glue::glue_sql("[PHExtractStore].[APDE{DBI::SQL(schema_suffix)}].[{DBI::SQL(table_name)}_results]", .con = CHI_db_cxn))) {
-      warning(paste0("\U00026A0\U00026A0\nThe table `[PHExtractStore].[APDE", schema_suffix, "].[", table_name, "_results]` does NOT currently exist. Continuing without this table."))
+      warning(paste0("\U00026A0\U00026A0\U00026A0\U00026A0\nThe table `[PHExtractStore].[APDE", schema_suffix, "].[", table_name, "_results]` does NOT currently exist. A NEW table will be created."))
       message("Continuing...")
     }
 
     if (!DBI::dbExistsTable(conn = CHI_db_cxn, glue::glue_sql("[PHExtractStore].[APDE{DBI::SQL(schema_suffix)}].[{DBI::SQL(table_name)}_metadata]", .con = CHI_db_cxn))) {
-      warning(paste0("\U00026A0\U00026A0\nThe table `[PHExtractStore].[APDE", schema_suffix, "].[", table_name, "_metadata]` does NOT currently exist. Continuing without this table."))
+      warning(paste0("\U00026A0\U00026A0\U00026A0\U00026A0\nThe table `[PHExtractStore].[APDE", schema_suffix, "].[", table_name, "_metadata]` does NOT currently exist. A NEW table will be created."))
       message("Continuing...")
     }
 
