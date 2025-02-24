@@ -4,7 +4,7 @@
 
 apde.chi.tools is an R library that provides easy access and centralized versioning of convenience tools for the CHI/CHNA update process.
 
-The are ment to support our epidemiologist in various steps along the pipeline, including:
+The are meant to support our epidemiologist in various steps along the pipeline, including:
 
 + planning
 + batch processing

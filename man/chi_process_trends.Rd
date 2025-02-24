@@ -14,11 +14,11 @@ chi_process_trends(
 \arguments{
 \item{indicator_key}{chi indicator key variable}
 
+\item{trend.span}{the number of years to be included in a single trend period}
+
 \item{end.year}{last year of a trend year time series}
 
 \item{trend.periods}{number of periods to calculate}
-
-\item{span}{number of years to include in a trend year estimate}
 }
 \value{
 TRO with rows for each indicator key and span of years within the provided time frame

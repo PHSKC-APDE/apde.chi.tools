@@ -24,6 +24,7 @@
 #' @import dtsurvey
 #' @import future
 #' @import future.apply
+#' @importFrom tidyr crossing
 chi_process_nontrends <- function(ph.analysis_set = NULL,
                                   myset = NULL){
 
@@ -35,15 +36,15 @@ chi_process_nontrends <- function(ph.analysis_set = NULL,
   tempy <- rbindlist(lapply(as.list(seq(1, length(subtabs))),
                             FUN = function(subtab){
                               tempx <- subsets[get(subtabs[subtab]) == 'x',
-                                               .(tab = subtabs[subtab], cat1, cat1_varname, cat2 = NA_character_, cat2_varname = NA_character_)]
+                                               list(tab = subtabs[subtab], cat1, cat1_varname, cat2 = NA_character_, cat2_varname = NA_character_)]
                               tempx <- setDT(tidyr::crossing(tempx, data.table(indicator_key = sub_indicators)))
 
                             }))
 
   # crosstabs are a bit more complicated
   sub_crosstabs = setDT(tidyr::crossing(
-    unique(subsets[crosstabs == 'x', .(cat1, cat1_varname)]),
-    unique(subsets[crosstabs == 'x', .(cat2 = cat1, cat2_varname = cat1_varname)]) ))
+    unique(subsets[crosstabs == 'x', list(cat1, cat1_varname)]),
+    unique(subsets[crosstabs == 'x', list(cat2 = cat1, cat2_varname = cat1_varname)]) ))
   sub_crosstabs <- sub_crosstabs[cat1 == 'King County' | cat1_varname != cat2_varname]
   sub_crosstabs <- sub_crosstabs[!(cat1_varname == 'race3' & cat2_varname %in% c('race3', 'race4'))] # do not want race x race
   sub_crosstabs <- sub_crosstabs[!(cat2_varname == 'race3' & cat1_varname %in% c('race3', 'race4'))] # do not want race x race

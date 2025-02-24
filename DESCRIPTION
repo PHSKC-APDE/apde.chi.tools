@@ -5,15 +5,14 @@ Version: 0.0.1
 Authors@R: person(
   "Ronald","Buie", 
   email = "rbuie@kingcounty.gov", 
-  role = c("auth", "cre"))
-Description: This package is for use by epidemiologists within Public Health Seattle
-    and King County, and aligns to analytics guidelines and practices for Community
+  role = c("aut", "cre"))
+Description: This package provides tools for epidemiologists within Public Health Seattle
+    and King County. It aligns with analytics guidelines and practices for Community
     Health Indicators (CHI) as reported by the Assessment, Policy Development, and
-    Evaluation Unit. The major activities assisted by this packages are 
-    Simplifying the execution of identical CHI analyses across multiple variables
-    Creating CHI Tableau ready output of the analysis
-    Performing quality assurance regarding data structure and formatting
-    Pushing and pulling data to APDE servers
+    Evaluation Unit. The package simplifies the execution of identical CHI analyses 
+    across multiple variables, creates CHI Tableau-ready output of the analysis, 
+    performs quality assurance regarding data structure and formatting, and 
+    facilitates pushing and pulling data to APDE servers.
 URL: https://github.com/PHSKC-APDE/apde.chi.tools
 BugReports: https://github.com/PHSKC-APDE/apde.chi.tools/issues
 License: MIT + file LICENSE
@@ -23,18 +22,17 @@ Imports:
     data.table (>= 1.14.2),
     DBI (>= 1.1.0),
     dtsurvey (>= 0.0.2.0),
+    future, 
+    future.apply,
     glue (>= 1.6.1),
-    keyring (>= 1.2.0),
-    lubridate (>= 1.6.0),
-    methods,
     odbc (>= 1.2.2),
-    rads.data (>= 1.0.7.5),
-    stats,
-    utf8 (>= 1.1.4),
+    rads, 
+    rads.data,
+    tidyr,
     yaml (>= 2.2.1),
     utils
 Remotes:
-    github::PHSKC-APDE/rads.data, github::PHSKC-APDE/dtsurvey, github::PHSKC-APDE/apde.chi.tools
+    github::PHSKC-APDE/rads, github::PHSKC-APDE/dtsurvey
 Suggests: 
     httr,
     knitr,
@@ -43,8 +41,7 @@ Suggests:
     testthat (>= 3.0.0),
     srvyr,
     survey (>= 4.0)
-VignetteBuilder: knitr
 Depends: 
-    R (>= 3.1)
+    R (>= 4.1)
 Config/testthat/edition: 3
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
