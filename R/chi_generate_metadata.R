@@ -3,15 +3,34 @@
 #' @description
 #' function to generate metadata table combining existing metadata and latest estimates.
 #'
-#' @param meta.old Previous metadata table
+#' @param meta.old Name of a data.table with the prior year's metadata
 #' @param est.current current year's tableau ready output with completed estimates
 #'
 #' @return table of metadata
+#'
+#' @seealso
+#' \code{\link{chi_calc}} for generating estimates
+#'
+#' \code{\link{chi_qa_tro}} for validating metadata
+#'
+#' @importFrom data.table setDT copy :=
 #' @importFrom rads substrRight
+#' @importFrom utils tail
 #' @export
 #'
 chi_generate_metadata <- function(meta.old = NULL,
                                   est.current = NULL){
+  # Input validation ----
+  if (is.null(meta.old)) stop("\n\U1F6D1 meta.old must be provided")
+  if (!is.data.frame(meta.old)) stop("\n\U1F6D1 meta.old must be a data.frame or data.table")
+
+  if (is.null(est.current)) stop("\n\U1F6D1 est.current must be provided")
+  if (!is.data.frame(est.current)) stop("\n\U1F6D1 est.current must be a data.frame or data.table")
+
+  # Convert to data.table if needed ----
+  if (!is.data.table(meta.old)) setDT(meta.old)
+  if (!is.data.table(est.current)) setDT(est.current)
+
   # get new metadata ----
   meta.new <- unique(est.current[tab == "metadata",
                                  list(indicator_key,
@@ -36,6 +55,16 @@ chi_generate_metadata <- function(meta.old = NULL,
   # update valid_years ----
   meta.new[as.integer(latest_year) > suppressWarnings(as.integer(rads::substrRight(valid_years, 1, 4))),
            valid_years := suppressWarnings(paste(as.integer(substr(valid_years, 1, 4)):as.integer(latest_year), collapse = " "))]
+
+  # Since trends only have 10 years of data, valid_years should be limited to 10 years max ----
+  meta.new[, valid_years := {
+    allyears <- sort(as.integer(strsplit(valid_years, " ")[[1]])) # convert valid_years to a vector of numbers
+    if(length(allyears) > 10) {
+      paste(tail(sort(allyears), 10), collapse = " ")
+    } else {
+      paste(allyears, collapse = " ")
+    }
+  }, by = indicator_key]
 
   # Ensure there are no missing important metadata cells ----
   missing.per.col <- sapply(meta.new, function(x) sum(is.na(x)))

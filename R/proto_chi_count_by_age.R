@@ -1,3 +1,21 @@
+#' Generate Age-Specific Counts for CHI Data
+#'
+#' @description
+#' Creates a detailed breakdown of counts by age for CHI data analysis, most
+#' often for age standardization.Processes data according to provided
+#' instructions and handles demographic groupings.
+#'
+#' @param ph.data Input data frame or data table containing CHI data
+#' @param ph.instructions Data frame or data table containing calculation instructions
+#' @param source_date Date of data source
+#'
+#' @return A data.table containing age-specific counts with standard CHI groupings
+#' @importFrom data.table setDT rbindlist setnames := setorder data.table
+#' @importFrom rads calc
+#' @importFrom future.apply future_lapply
+#' @importFrom tidyr crossing
+#' @export
+#'
 chi_count_by_age <- function(ph.data = NULL,
                              ph.instructions = NULL,
                              source_date = NULL){

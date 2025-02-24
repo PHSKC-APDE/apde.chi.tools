@@ -2,42 +2,56 @@
 % Please edit documentation in R/chi_qa_tro.R
 \name{chi_qa_tro}
 \alias{chi_qa_tro}
-\title{CHI - QA: Tableau Ready output}
+\title{Quality Assurance Check for CHI Tableau Ready Output}
 \usage{
-chi_qa_tro(chi_est, chi_meta, acs = F, ignore_trends = T, verbose = F)
+chi_qa_tro(CHIestimates, CHImetadata, acs = FALSE, verbose = TRUE)
 }
 \arguments{
-\item{chi_est}{Name of a data.table or data.frame containing the prepared data to be pushed to SQL}
+\item{CHIestimates}{Name of a data.table or data.frame containing the prepared data to be pushed to SQL}
 
-\item{chi_meta}{Name of a data.table or data.frame containing the metadata to be pushed to SQL}
+\item{CHImetadata}{Name of a data.table or data.frame containing the metadata to be pushed to SQL}
 
-\item{acs}{default FALSE, Indicates whether it is ACS data (which does not have / need varnames)}
+\item{acs}{default \code{FALSE}, Indicates whether it is ACS data (which does not have / need varnames)}
 
-\item{ignore_trends}{default TRUE, Indicates whether the time_trends column should be ignored when checking for missing data.}
-
-\item{verbose}{default TRUE, if false will only return status}
+\item{verbose}{default \code{TRUE}, Controls whether to display detailed progress and diagnostic messages}
 }
 \value{
-1 or 0 for pass or fail status
+Returns 1 if all checks pass, 0 if any deviations from standards are detected.
+If the return value is 0, we suggest running the function with verbose=TRUE to review
+specific details about potential issues that may need attention.
 }
 \description{
-Checks data for compliance with CHI TRO standard
+Validates data structures and values in CHI estimates and metadata for compliance
+with CHI Tableau Ready Output (TRO) standards.
 }
 \details{
-This function tests if the structure of the data matches CHI Tableau Ready Output
-specifications. If set to verbose mode (default) will report diagnostic information in
-The user interface as warnings (if failed) and messages (for progress and pass). In any
-Case will return 1 or 0 for pass or fail respectively.
-The CHI Tableau Ready Output (TRO) standards can be reviewed [here]("//phshare01/epe_share/WORK/CHI Visualizations/Tableau Ready Output Format_v2.xlsx")
+This function performs comprehensive validation of data structure and content against
+CHI TRO specifications. When verbose mode is enabled (default), it provides detailed
+diagnostic information through warnings (for deviations from standards) and messages
+(for progress and successful checks).
+
+The CHI Tableau Ready Output (TRO) standards can be reviewed here:
+\href{https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady\%20Output.xlsx}{
+SharePoint > Community Health Indicators > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}
 }
 \examples{
-
 \dontrun{
-# create sample data
-
-# run function
+# Basic QA check of estimates and metadata
+qa_status <- chi_qa_tro(
+  CHIestimates = my_estimates,
+  CHImetadata = my_metadata,
+  acs = FALSE,
+  verbose = TRUE
+)
 }
 
+}
+\seealso{
+\code{\link{chi_calc}} for generating estimates
+
+\code{\link{chi_generate_metadata}} for creating metadata
+
+\code{\link{chi_compare_estimates}} for comparing estimates between versions
 }
 \keyword{CHI,}
 \keyword{Production}

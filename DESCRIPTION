@@ -26,18 +26,21 @@ Imports:
     future.apply,
     glue (>= 1.6.1),
     odbc (>= 1.2.2),
+    progressr,
     rads, 
     rads.data,
+    stats,
     tidyr,
-    yaml (>= 2.2.1),
-    utils
+    yaml (>= 2.2.1)
 Remotes:
     github::PHSKC-APDE/rads, github::PHSKC-APDE/dtsurvey
 Suggests: 
     httr,
     knitr,
+    progress,
     rmarkdown,
     markdown,
+    quarto,
     testthat (>= 3.0.0),
     srvyr,
     survey (>= 4.0)

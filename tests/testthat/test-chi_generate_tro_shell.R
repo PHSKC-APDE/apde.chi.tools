@@ -1,4 +1,12 @@
-test_that("injest template format", {
+test_that("chi_generate_tro_shell validates inputs correctly", {
+  test_data <- setup_test_data()
+
+  expect_error(chi_generate_tro_shell(), "ph.analysis_set must be provided")
+  expect_error(chi_generate_tro_shell(data.frame(), start.year = "2023"),
+               "start.year must be a single numeric value")
+})
+
+test_that("ingest template format", {
   set <- c(rep(1,7),rep(2,4))
   cat1 <- c("King County", "Cities/neighborhoods", "Poverty", "Race", "Race/ethnicity","Regions", "Big cities",
             "King County", "Poverty", "Race", "Regions")
