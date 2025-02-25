@@ -14,7 +14,8 @@ chi_calc(
   suppress_low = 0,
   suppress_high = 9,
   source_name = NULL,
-  source_date = NULL
+  source_date = NULL,
+  non_chi_byvars = NULL
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ chi_calc(
 \item{source_name}{character. Name of data source. Default: \code{NULL}.}
 
 \item{source_date}{Date. Date ph.data was created. Default: \code{NULL}.}
+
+\item{non_chi_byvars}{character vector. Variable names to exclude from CHI byvar encoding validation. Default: \code{NULL}.}
 }
 \value{
 A data.table containing CHI estimates with the following columns:
@@ -66,7 +69,7 @@ A data.table containing CHI estimates with the following columns:
 }
 }
 \description{
-Generates CHI estimates from input data according to provided instructions. 
+Generates CHI estimates from input data according to provided instructions.
 Handles both proportions and rates, with options for suppression of small numbers.
 }
 \seealso{

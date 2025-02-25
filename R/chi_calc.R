@@ -14,6 +14,7 @@
 #' @param suppress_high numeric. Upper bound for suppression. Default: \code{9}.
 #' @param source_name character. Name of data source. Default: \code{NULL}.
 #' @param source_date Date. Date ph.data was created. Default: \code{NULL}.
+#' @param non_chi_byvars character vector. Variable names to exclude from CHI byvar encoding validation. Default: \code{NULL}.
 #'
 #' @return A data.table containing CHI estimates with the following columns:
 #' \itemize{
@@ -65,7 +66,8 @@ chi_calc <- function(ph.data = NULL,
                      suppress_low = 0,
                      suppress_high = 9,
                      source_name = NULL,
-                     source_date = NULL){
+                     source_date = NULL,
+                     non_chi_byvars = NULL){
   # Input validation ----
     if (is.null(ph.data)) stop("\n\U1F6D1 ph.data must be provided")
     if (!is.data.frame(ph.data)) stop("\n\U1F6D1 ph.data must be a data.frame or data.table")
@@ -102,6 +104,10 @@ chi_calc <- function(ph.data = NULL,
     if (is.null(source_date)) stop("\n\U1F6D1 source_date must be provided")
     if (!inherits(source_date, "Date")) stop("\n\U1F6D1 source_date must be a be a Date object")
 
+    # Validate non_chi_byvars
+    if(!is.null(non_chi_byvars)) {
+      if(!is.character(non_chi_byvars)) stop("\n\U1F6D1 non_chi_byvars must be a character vector")
+    }
 
   # Create 'Overall' if needed for crosstabs ----
     if(!'overall' %in% names(ph.data)){
@@ -130,16 +136,41 @@ chi_calc <- function(ph.data = NULL,
   } else{message("\U0001f642 All specified variables exist in ph.data")}
 
   # Check to make sure all byvariables have the CHI specified encoding ----
-  stdbyvars <- rads.data::misc_chi_byvars[varname %in% unique(na.omit(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)))][, list(varname, group, keepme, reference = 1)]
-  stdbyvars[group %in% c("Hispanic", 'Non-Hispanic') & varname == 'race3', varname := 'race3_hispanic'] # necessary because race3 & Hispanic must be two distinct variables in raw data
-  phbyvars <- rbindlist(lapply(
-    X=as.list(neededbyvars),
-    FUN = function(X){data.table::data.table(varname = X, group = unique(na.omit(ph.data[[X]])), ph.data = 1)}))
-  compbyvars <- merge(stdbyvars, phbyvars, by = c('varname', 'group'), all = T)
-  if(nrow(compbyvars[is.na(reference)| is.na(ph.data)]) > 0){
-    print(compbyvars[is.na(reference)| is.na(ph.data)])
-    stop("\n\U2620 the table above shows the varname/group combinations that do not align between the reference table and your ph.data.")
-  } else {message("\U0001f642 All specified cat1_group and cat2_group values align with the reference standard.")}
+    # Filter out non-CHI variables if specified
+      chi_byvars <- neededbyvars
+      if(!is.null(non_chi_byvars)) {
+        chi_byvars <- setdiff(neededbyvars, non_chi_byvars)
+        if(length(setdiff(non_chi_byvars, neededbyvars)) > 0) {
+          message("\U00002139 Note: Some specified non_chi_byvars are not used in the analysis: ",
+                  paste0(setdiff(non_chi_byvars, neededbyvars), collapse = ", "))
+        }
+        if(length(setdiff(neededbyvars, chi_byvars)) > 0) {
+          message("\U00002139 Note: The following variables will be excluded from CHI encoding validation: ",
+                  paste0(setdiff(neededbyvars, chi_byvars), collapse = ", "))
+        }
+      }
+
+    # Only validate CHI variables
+      stdbyvars <- rads.data::misc_chi_byvars[varname %in% unique(na.omit(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)))]
+      stdbyvars <- stdbyvars[!varname %in% non_chi_byvars][, list(varname, group, keepme, reference = 1)]
+      stdbyvars[group %in% c("Hispanic", 'Non-Hispanic') & varname == 'race3', varname := 'race3_hispanic'] # necessary because race3 & Hispanic must be two distinct variables in raw data
+
+      phbyvars <- rbindlist(lapply(
+        X=as.list(chi_byvars),
+        FUN = function(X){data.table::data.table(varname = X, group = unique(na.omit(ph.data[[X]])), ph.data = 1)}))
+
+    # Skip validation if there are no CHI variables to validate after excluding non_chi_byvars
+      if(nrow(phbyvars) > 0 && nrow(stdbyvars) > 0) {
+        compbyvars <- merge(stdbyvars, phbyvars, by = c('varname', 'group'), all = T)
+        if(nrow(compbyvars[is.na(reference) | is.na(ph.data)]) > 0){
+          print(compbyvars[is.na(reference) | is.na(ph.data)])
+          stop("\n\U2620 the table above shows the varname/group combinations that do not align between the reference table and your ph.data.")
+        } else {message("\U0001f642 All specified cat1_group and cat2_group values align with the reference standard.")}
+      } else if(length(chi_byvars) > 0) {
+        message("\U00002139 Note: No CHI variables to validate after excluding non_chi_byvars.")
+      } else {
+        message("\U00002139 Note: No variables to validate for CHI encoding.")
+      }
 
   # Use rads::calc to generate estimates for each row of ph.instructions ----
   message("\U023F3 Be patient! The function is generating estimates for each row of ph.instructions.")
