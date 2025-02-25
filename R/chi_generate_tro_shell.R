@@ -114,7 +114,7 @@ chi_generate_tro_shell <- function(ph.analysis_set,
 
   # add years to template (trends)
   if(nrow(template.trends) > 0){
-    trend.years <- chi_process_trends(indicator_key = unique(template$indicator_key),
+    trend.years <- chi_process_trends(indicator_key = intersect(unique(template$indicator_key), unique(template.trends$indicator_key)),
                                             trend.span = trend.span,
                                             end.year = end.year,
                                             trend.periods = trend.periods)
