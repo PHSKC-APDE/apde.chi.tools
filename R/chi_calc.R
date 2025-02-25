@@ -1,7 +1,7 @@
 #' Calculate CHI Estimates
 #'
 #' @description
-#' Generates CHI estimates from input data according to provided instructions. 
+#' Generates CHI estimates from input data according to provided instructions.
 #' Handles both proportions and rates, with options for suppression of small numbers.
 #'
 #' @param ph.data data.frame or data.table. Input data containing analytic read data.
@@ -110,15 +110,23 @@ chi_calc <- function(ph.data = NULL,
 
   # Check to make sure all variables needed exist in the data ----
   neededbyvars <- unique(na.omit(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)))
-  if("race3" %in% neededbyvars & !"race3_hispanic" %in% neededbyvars){neededbyvars <- c(neededbyvars, 'race3_hispanic')} # By definition, Hispanic cannot be contained within race3
+
+  # Handle the race3/race3_hispanic relationship
+  if("race3" %in% neededbyvars & !"race3_hispanic" %in% neededbyvars) {
+    neededbyvars <- c(neededbyvars, 'race3_hispanic')
+    message("\U00002139 Note: Adding 'race3_hispanic' as a required variable because 'race3' is present. By definition, race3 requires separate Hispanic ethnicity information.")
+  }
+
+  if(!"race3" %in% neededbyvars & "race3_hispanic" %in% neededbyvars) {
+    neededbyvars <- c(neededbyvars, 'race3')
+    message("\U00002139 Note: Adding 'race3' as a required variable because 'race3_hispanic' is present. These two variables work together to represent race/ethnicity.")
+  }
 
   neededvars <- unique(na.omit(c(ph.instructions$indicator_key, neededbyvars)))
 
   missingvars <- setdiff(neededvars, names(ph.data))
   if(length(missingvars) > 0 ){
-    stop(paste0("\n\U2620 ph.data is missing the following columns that are specified in ph.instructions: ", paste0(missingvars, collapse = ', '), ". ",
-                "\nIf `race3_hispanic` is listed, that is because, by definition, `race3` cannot have a Hispanic ethnicity in the same variable. So, two ",
-                "\nvariables (`race3` & `race3_hispanic`) will be processed and in the output, it will be called `race3`"))
+    stop(paste0("\n\U2620 ph.data is missing the following columns that are required: ", paste0(missingvars, collapse = ', ')))
   } else{message("\U0001f642 All specified variables exist in ph.data")}
 
   # Check to make sure all byvariables have the CHI specified encoding ----
