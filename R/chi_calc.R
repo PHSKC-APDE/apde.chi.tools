@@ -20,6 +20,7 @@
 #' \itemize{
 #'   \item{\code{data_source}} Data source (e.g., acs, brfss, etc.)
 #'   \item{\code{indicator_key}} Unique indicator key
+#'   \item{\code{level}} factor level of the indicator_key (e.g., Breech vs Cephalic vs other for fetal_pres in birth data)
 #'   \item{\code{tab}} Type of analysis (e.g., demgroups, _kingcounty, etc.)
 #'   \item{\code{year}} Year(s) of data
 #'   \item{\code{cat1}} Describes data field (e.g., Gender, Ethnicity, etc.)
@@ -49,10 +50,10 @@
 #'
 #' \code{\link{chi_generate_metadata}} for creating metadata from results
 #'
-#' @importFrom data.table setDT copy setnames := setorder set .SD data.table
-#' @importFrom rads calc compare_estimate suppress chi_cols round2
+#' @importFrom data.table setDT copy setnames := setorder set .SD data.table setcolorder
+#' @importFrom rads calc suppress round2
 #' @importFrom future.apply future_lapply
-#' @importFrom stats na.omit
+#' @importFrom stats na.omit qnorm
 #' @import progressr
 #' @export
 #'
@@ -250,6 +251,10 @@ chi_calc <- function(ph.data = NULL,
                    c("mean", "mean_lower", "mean_upper", "mean_se"),
                    c("result", "lower_bound", "upper_bound", "se"))
 
+          if(!"level" %in% names(tempest)) {
+            tempest[, level := NA_character_]
+          }
+
           # set correct data types for TSQL database
           tempest[, denominator := as.numeric(denominator)]
           tempest[, numerator := as.numeric(numerator)]
@@ -266,6 +271,23 @@ chi_calc <- function(ph.data = NULL,
 
     # drop when cat2_group is missing but cat2 is not missing ----
     tempCHIest <- tempCHIest[!(is.na(cat2_group) & !is.na(cat2))]
+
+    # Apply Wilson Score method for confidence intervals when result is 0% or 100% ----
+      # This handles cases where standard methods fail at the extremes by providing more appropriate
+      # bounds that don't exceed the logical limits while maintaining the specified confidence level
+
+      # Calculate z-value based on the provided confidence interval
+      z_value <- qnorm(1-0.5*(1-ci))
+
+      # Lower bound using Wilson Score method
+      tempCHIest[result %in% c(0, 1) & se == 0 & denominator != 0,
+                 lower_bound := (2 * numerator + z_value^2 - z_value * sqrt(z_value^2 + 4 * numerator * (1 - numerator/denominator))) /
+                   (2 * (denominator + z_value^2))]
+
+      # Upper bound using Wilson Score method
+      tempCHIest[result %in% c(0, 1) & se == 0 & denominator != 0,
+                 upper_bound := (2 * numerator + z_value^2 + z_value * sqrt(z_value^2 + 4 * numerator * (1 - numerator/denominator))) /
+                   (2 * (denominator + z_value^2))]
 
     # drop if cat1_group | cat2_group had `keepme == "No"` in the reference table ----
     dropme <- unique(stdbyvars[keepme == 'No'][, reference := NULL])
@@ -346,11 +368,14 @@ chi_calc <- function(ph.data = NULL,
 
 
     # Keep and order standard CHI columns ----
-    tempCHIest <- tempCHIest[, chi_get_cols(), with = F]
+    all_cols <- c(chi_get_cols(), "level")
+    all_cols <- unique(all_cols)  # In case level is already included
+    tempCHIest <- tempCHIest[, all_cols, with = F]
 
     tempCHIest <- tempCHIest[, cat1 := factor(cat1, levels = c("King County", sort(setdiff(unique(tempCHIest$cat1), "King County"))) )]
     tempCHIest <- tempCHIest[, tab := factor(tab, levels = c(c("_kingcounty","demgroups", "trends"),  sort(setdiff(unique(tempCHIest$tab), c("_kingcounty","demgroups", "trends")))) )]
     setorder(tempCHIest, indicator_key, tab, -year, cat1, cat1_group, cat2, cat2_group)
+    setcolorder(tempCHIest, c('data_source', 'indicator_key', 'level'))
 
   # return the CHI table ----
   return(tempCHIest)

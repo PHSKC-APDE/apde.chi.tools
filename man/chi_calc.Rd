@@ -46,6 +46,7 @@ A data.table containing CHI estimates with the following columns:
 \itemize{
   \item{\code{data_source}} Data source (e.g., acs, brfss, etc.)
   \item{\code{indicator_key}} Unique indicator key
+  \item{\code{level}} factor level of the indicator_key (e.g., Breech vs Cephalic vs other for fetal_pres in birth data)
   \item{\code{tab}} Type of analysis (e.g., demgroups, _kingcounty, etc.)
   \item{\code{year}} Year(s) of data
   \item{\code{cat1}} Describes data field (e.g., Gender, Ethnicity, etc.)
