@@ -187,12 +187,26 @@ chi_qa_tro <- function(CHIestimates,
     }
   }
 
-  for(mycol in c("result", "lower_bound", "upper_bound", "se", "rse", "numerator", "denominator", "chi", "source_date", "run_date")){
+  if(isFALSE(acs))
+  for(mycol in c("numerator", "denominator")){
     if(nrow(CHIestimates[is.na(get(mycol)) & is.na(suppression)]) > 0){
       status <- 0
       warning(paste0("\U00026A0 Warning: '", mycol, "' is missing in at least one row of the CHI data."))
     }
   }
+
+  for(mycol in c("result", "lower_bound", "upper_bound", "se", "chi", "source_date", "run_date")){
+    if(nrow(CHIestimates[is.na(get(mycol)) & is.na(suppression)]) > 0){
+      status <- 0
+      warning(paste0("\U00026A0 Warning: '", mycol, "' is missing in at least one row of the CHI data."))
+    }
+  }
+
+  if(nrow(CHIestimates[is.na(rse) & is.na(suppression) & numerator != 0]) > 0){
+    status <- 0
+    warning("\U00026A0 Warning: 'rse' is missing in at least one row of the CHI data where numerator is not 0.")
+  }
+
   for(mycol in names(unlist(chi_get_yaml()$metadata))){
     if(nrow(CHImetadata[is.na(get(mycol))]) > 0){
       status <- 0
@@ -290,7 +304,7 @@ chi_qa_tro <- function(CHIestimates,
     message("Checking that RSE is between 0 and 100")
   }
   # confirmed with Abby 2/7/2020 that want RSE * 100
-  if(nrow(CHIestimates[!rse %between% c(0, 100)]) > 0 ){
+  if(nrow(CHIestimates[!is.na(rse) & !rse %between% c(0, 100)]) > 0 ){
     status <- 0
     if(verbose){
       warning(paste("There is at least one row where the RSE (relative standard error) is outside the range of (0, 100].",
@@ -314,7 +328,7 @@ chi_qa_tro <- function(CHIestimates,
   if(verbose){
     message("Checking that caution flag exists if RSE >= 30%")
   }
-  if(nrow(CHIestimates[rse>=30 & (caution != "!" | is.na(caution)) ]) > 0 ){
+  if(nrow(CHIestimates[!is.na(rse) & rse>=30 & (caution != "!" | is.na(caution)) ]) > 0 ){
     status <- 0
     if(verbose){
       warning("There is at least one row where a caution flag ('!') is not used and rse >= 30% or is.na(rse) == T.
@@ -385,7 +399,7 @@ chi_qa_tro <- function(CHIestimates,
       }
     }
   }
-  if(acs==F){
+  if(isFALSE(acs)){
     if(nrow(CHIestimates[is.na(cat1_varname)]) > 0 ){
       status <- 0
       if(verbose){
@@ -403,7 +417,7 @@ chi_qa_tro <- function(CHIestimates,
       }
     }
   }
-  if(acs==F){
+  if(isFALSE(acs)){
     if(nrow(CHIestimates[tab=="crosstabs" & is.na(cat2_varname)]) > 0 ){
       status <- 0
       if(verbose){
@@ -416,13 +430,21 @@ chi_qa_tro <- function(CHIestimates,
   if(verbose){
     message("Checking that results are present if row is not suppressed")
   }
-  for(var in c("result", "lower_bound", "upper_bound", "se", "rse", "numerator", "denominator")){
+  for(var in c("result", "lower_bound", "upper_bound", "se", "numerator", "denominator")){
     if(nrow(CHIestimates[suppression != "^" & is.na(get(var))]) > 0 ){
       status <- 0
       if(verbose){
         warning(glue::glue("There is at least one row that is not suppressed & where '{var}' is missing.
                           Please fill in the missing value before rerunning chi_qa_tro()"))
       }
+    }
+  }
+
+  if(nrow(CHIestimates[suppression != "^" & is.na(rse) & numerator != 0]) > 0 ){
+    status <- 0
+    if(verbose){
+      warning(glue::glue("There is at least one row that is not suppressed, where 'rse' is missing and numerator is not 0.
+                      Please fill in the missing value before rerunning chi_qa_tro()"))
     }
   }
 
