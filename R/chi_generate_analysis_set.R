@@ -2,40 +2,45 @@
 #'
 #' @description
 #' Creates sets of indicator keys that share common analysis patterns within CHI
-#' (Community Health Indicators) data. This function reads the most recent production
-#' version of CHI estimates for a specified data source and groups indicators that
-#' use the same combinations of \code{cat1}, \code{cat1_varname}, and \code{trends}
-#' columns.
+#' (Community Health Indicators) data. This function can either:
+#'
+#' 1. Read the most recent production version of CHI estimates from the TSQL Production Server
+#'    for a specified data source, or
+#'
+#' 2. Process a provided data.table/data.frame containing CHI data
+#'
+#' It groups indicators that use the same combinations of \code{cat1}, \code{cat1_varname}, and
+#' tab columns (\code{_kingcounty}, \code{_wastate}, \code{demgroups}, \code{crosstabs}, \code{trends}).
 #'
 #' @param data_source Character string (length 1) specifying the data source to analyze
 #'   (e.g., \code{'birth'}, \code{'brfss'}, \code{'chars'}, \code{'death'}, \code{'hys'}). This corresponds to a table
-#'   name in the PHExtractStore database.
+#'   name in the PHExtractStore database on the TSQL Production Server. Required if \code{CHIestimates} is not provided.
+#' @param CHIestimates A data.table or data.frame containing CHI data to analyze. If provided, \code{data_source}
+#'   is ignored. Must comply with the latest CHI standard, which can be assessed/tested with the \code{chi_qa_tro} function in this package.
 #'
 #' @return A data.table containing analysis sets with the following columns:
 #'   \itemize{
 #'     \item \code{set}: Integer identifying groups of indicators with identical analysis patterns
 #'     \item \code{cat1}: Category name as expected in CHI TRO
 #'     \item \code{cat1_varname}: Category variable name as expected in CHI TRO
-#'     \item \code{_kingcounty}: \code{'x'} if analysis includes King County tab
-#'     \item \code{_wastate}: \code{'x'} if analysis includes Washington State tab
-#'     \item \code{demgroups}: \code{'x'} if analysis includes demographic groups
-#'     \item \code{crosstabs}: \code{'x'} if analysis includes crosstabulations
-#'     \item \code{trends}: \code{'x'} if analysis includes trends analysis
+#'     \item \code{_kingcounty}: \code{'x'} if analysis includes '_kingcounty' in the tab column
+#'     \item \code{_wastate}: \code{'x'} if analysis includes '_wastate' in the tab column
+#'     \item \code{demgroups}: \code{'x'} if analysis includes 'demgroups' in the tab column
+#'     \item \code{crosstabs}: \code{'x'} if analysis includes 'crosstabs'  in the tab column
+#'     \item \code{trends}: \code{'x'} if analysis includes 'trends' in the tab column
 #'     \item \code{set_indicator_keys}: Comma-separated list of indicator keys sharing the pattern
 #'   }
 #'
 #' @details
 #' This function generates a table for \code{\link{chi_generate_tro_shell}}, providing the
-#' structure required for generating analysis instructions. It connects to the
-#' \code{[PHExtractStore]} database on \code{KCITSQLPRPHIP40} to retrieve the latest production data.
+#' structure required for generating analysis instructions.
+#'
+#' When using \code{data_source}, the function connects to the
+#' \code{[PHExtractStore]} database on the TSQL Production Server \code{KCITSQLPRPHIP40} to retrieve the latest production estimates.
 #' Users need appropriate database credentials - contact your manager if you need access.
 #'
-#' Typically, the analysis will not change from year to year. However, you should
-#' compare the output of this function with the 'CHI-Variables_ByDataSource' worksheet
-#' in
-#' \href{https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady\%20Output.xlsx}{
-#' SharePoint > Community Health Indicators > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}
-#' and update it as necessary.
+#' When using \code{CHIestimates}, the provided estimates are processed directly, bypassing the database connection.
+#' The data must comply with the latest CHI standard, which can be assessed/tested with the \code{chi_qa_tro} function.
 #'
 #' The output structure directly informs \code{\link{chi_generate_tro_shell}} about which
 #' indicators should be analyzed together based on their shared patterns of
@@ -52,28 +57,46 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Generate analysis sets for birth data
+#' # Generate analysis sets for birth data from the database
 #' birth_sets <- chi_generate_analysis_set("birth")
 #'
-#' # Generate analysis sets for BRFSS data
+#' # Generate analysis sets for BRFSS data from the database
 #' brfss_sets <- chi_generate_analysis_set("brfss")
+#'
+#' # Generate analysis sets from an existing data.table
+#' my_data <- data.table::fread("my_chi_data.csv")
+#' custom_sets <- chi_generate_analysis_set(CHIestimates = my_data)
 #' }
 #'
-chi_generate_analysis_set <- function(data_source = NULL) {
-  # Input validation
-    if (is.null(data_source)) {
-      stop("\n\U1F6D1 data_source parameter must be provided")
+chi_generate_analysis_set <- function(data_source = NULL,
+                                      CHIestimates = NULL) {
+
+  # Input validation ----
+    if (is.null(data_source) && is.null(CHIestimates)) {
+      stop("\n\U1F6D1 Either data_source parameter or CHIestimates parameter must be provided")
     }
-    if (!is.character(data_source) || length(data_source) != 1) {
+
+    if (!is.null(data_source) && !is.null(CHIestimates)) {
+      warning("\n\U26A0 Both data_source and CHIestimates provided. Using CHIestimates and ignoring data_source.")
+    }
+
+    if (!is.null(data_source) && !(is.character(data_source) && length(data_source) == 1)) {
       stop("\n\U1F6D1 data_source must be a single character string, e.g., 'birth'")
     }
 
+    if (!is.null(CHIestimates) && !inherits(CHIestimates, c("data.table", "data.frame"))) {
+      stop("\n\U1F6D1 CHIestimates must be a data.table or data.frame")
+    }
+
   # Get data ----
-    # Construct the full table name for error messages
+    if (!is.null(CHIestimates)) {
+      CHIestimates <- data.table::setDT(data.table::copy(CHIestimates))
+    } else {
+      # Construct the full table name for error messages
       full_table_name <- paste0("[APDE].[", data_source, "_results]")
       server_info <- "KCITSQLPRPHIP40 > PHExtractStore"
 
-    # try to make a database connection
+      # try to make a database connection
       tryCatch({
         # Establish connection
         cnxn <- odbc::dbConnect(
@@ -92,55 +115,56 @@ chi_generate_analysis_set <- function(data_source = NULL) {
         }
       })
 
-
-    # Check if table exists before attempting query
+      # Check if table exists before attempting query
       table_exists <- DBI::dbExistsTable(
         conn = cnxn,
         name = paste0(data_source, "_results"),
         schema = "APDE"
       )
 
-    # If table exists, load into memory
+      # If table exists, load into memory
       if (!table_exists) {
         stop(paste0("\U1F6D1 You specified data_source = '", data_source,
                     "', which attempted to download ", full_table_name,
                     " from ", server_info, ". This table does not exist."))
       } else {
-      tempdt <- data.table::setDT(DBI::dbGetQuery(
-        conn = cnxn,
-        statement = paste0("SELECT * FROM ", full_table_name)
-      )) }
+        CHIestimates <- data.table::setDT(DBI::dbGetQuery(
+          conn = cnxn,
+          statement = paste0("SELECT * FROM ", full_table_name)
+        ))
+      }
 
-    # Close database connection
+      # Close database connection
       if (exists("cnxn") && !is.null(cnxn)) {
         DBI::dbDisconnect(cnxn)
       }
+    }
 
   # Recodes for race3 & race4 ----
     # Necessary because they are wonky as heck due to how APDE decided to code/display them
-      race3_remix1 <- tempdt[(grepl('race/ethnicity$', cat1, ignore.case = T) & cat1_varname == 'race3')]
-      tempdt <- rbind(
-        fsetdiff(tempdt, race3_remix1),
+      race3_remix1 <- CHIestimates[(grepl('race/ethnicity$', cat1, ignore.case = T) & cat1_varname == 'race3')]
+      CHIestimates <- rbind(
+        fsetdiff(CHIestimates, race3_remix1),
         copy(race3_remix1)[, cat1 := gsub('race/ethnicity$', 'race', cat1)][, cat1 := gsub('Race/ethnicity$', 'Race', cat1)],
         copy(race3_remix1)[, cat1 := gsub('race/ethnicity$', 'ethnicity', cat1)][, cat1 := gsub('Race/ethnicity$', 'Ethnicity', cat1)]
       )
 
-      race3_remix2 <- tempdt[(grepl('race/ethnicity$', cat2, ignore.case = T) & cat2_varname == 'race3')]
-      tempdt <- rbind(
-        fsetdiff(tempdt, race3_remix2),
+      race3_remix2 <- CHIestimates[(grepl('race/ethnicity$', cat2, ignore.case = T) & cat2_varname == 'race3')]
+      CHIestimates <- rbind(
+        fsetdiff(CHIestimates, race3_remix2),
         copy(race3_remix2)[, cat2 := gsub('race/ethnicity$', 'race', cat2)][, cat2 := gsub('Race/ethnicity$', 'Race', cat2)],
         copy(race3_remix2)[, cat2 := gsub('race/ethnicity$', 'ethnicity', cat2)][, cat2 := gsub('Race/ethnicity$', 'Ethnicity', cat2)]
       )
 
-      tempdt[cat1_varname == 'race4', cat1 := gsub('race$', 'race/ethnicity', cat1)]
-      tempdt[cat1_varname == 'race4', cat1 := gsub('Race$', 'Race/ethnicity', cat1)]
+      CHIestimates[cat1_varname == 'race4', cat1 := gsub('race$', 'race/ethnicity', cat1)]
+      CHIestimates[cat1_varname == 'race4', cat1 := gsub('Race$', 'Race/ethnicity', cat1)]
 
-      tempdt[cat2_varname == 'race4', cat2 := gsub('race$', 'race/ethnicity', cat2)]
-      tempdt[cat2_varname == 'race4', cat2 := gsub('Race$', 'Race/ethnicity', cat2)]
+      CHIestimates[cat2_varname == 'race4', cat2 := gsub('race$', 'race/ethnicity', cat2)]
+      CHIestimates[cat2_varname == 'race4', cat2 := gsub('Race$', 'Race/ethnicity', cat2)]
 
   # Table of categories and tabs per indicator ----
     # For cat1 combinations
-      tab_patterns <- tempdt[, list(
+      tab_patterns <- CHIestimates[, list(
         `_kingcounty` = fifelse(any(tab == "_kingcounty"), "x", ""),
         `_wastate` = fifelse(any(tab == "_wastate"), "x", ""),
         demgroups = fifelse(any(tab == "demgroups"), "x", ""),
@@ -149,7 +173,7 @@ chi_generate_analysis_set <- function(data_source = NULL) {
       ), by = list(indicator_key, cat1, cat1_varname)]
 
     # For cat2 combinations
-      tab_patterns2 <- tempdt[!is.na(cat2), list(
+      tab_patterns2 <- CHIestimates[!is.na(cat2), list(
         `_kingcounty` = fifelse(any(tab == "_kingcounty"), "x", ""),
         `_wastate` = fifelse(any(tab == "_wastate"), "x", ""),
         demgroups = fifelse(any(tab == "demgroups"), "x", ""),
