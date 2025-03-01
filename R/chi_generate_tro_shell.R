@@ -94,6 +94,8 @@ chi_generate_tro_shell <- function(ph.analysis_set,
   #advisory messages
   if("x" %in% ph.analysis_set$trends) {message("Note: trends are applied backwards from end.year")}
 
+  # Race / ethnicity is a chronic headache with CHI. Need to remove rows for race4 & Ethnicity because should be Race/ethnicity
+  ph.analysis_set <- ph.analysis_set[!(cat1_varname == 'race4' & cat1 == 'Ethnicity')]
 
   # apply the template generating function
   template <- rbindlist(
