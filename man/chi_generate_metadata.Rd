@@ -4,18 +4,28 @@
 \alias{chi_generate_metadata}
 \title{CHI Generate Metadata}
 \usage{
-chi_generate_metadata(meta.old = NULL, est.current = NULL)
+chi_generate_metadata(
+  meta.old = NULL,
+  est.current = NULL,
+  allowed_missing = list(list(indicator_key = "medinc", column = "latest_year_count")),
+  warn_only = FALSE
+)
 }
 \arguments{
 \item{meta.old}{Name of a data.table with the prior year's metadata}
 
 \item{est.current}{current year's tableau ready output with completed estimates}
+
+\item{allowed_missing}{A list of lists specifying allowed missing metadata values. Each inner list
+should have \code{indicator_key} and \code{column} elements.}
+
+\item{warn_only}{Logical, if TRUE, only warns about unexpected missing values instead of stopping}
 }
 \value{
 table of metadata
 }
 \description{
-function to generate metadata table combining existing metadata and latest estimates.
+Function to generate metadata table combining existing metadata and latest estimates.
 }
 \seealso{
 \code{\link{chi_calc}} for generating estimates
