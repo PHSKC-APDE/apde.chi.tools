@@ -266,6 +266,16 @@ chi_calc <- function(ph.data = NULL,
 
 
   # Tidy results ----
+    # When there are no observation in a row, rads::calc() gives NA for numerator, but want zero ----
+      tempCHIest[is.na(numerator), `:=` (
+        result = 0,
+        se = 0,
+        lower_bound = 0,
+        upper_bound = 0,
+        numerator = 0,
+        rse = NA # undefined because mean will be zero
+      )]
+
     # drop when cat1_group is missing (e.g., cat1 == 'Regions' and region is NA) ----
     tempCHIest <- tempCHIest[!is.na(cat1_group)]
 
@@ -280,12 +290,12 @@ chi_calc <- function(ph.data = NULL,
       z_value <- qnorm(1-0.5*(1-ci))
 
       # Lower bound using Wilson Score method
-      tempCHIest[result %in% c(0, 1) & se == 0 & denominator != 0,
+      tempCHIest[result %in% c(0, 1) & denominator > 10,
                  lower_bound := (2 * numerator + z_value^2 - z_value * sqrt(z_value^2 + 4 * numerator * (1 - numerator/denominator))) /
                    (2 * (denominator + z_value^2))]
 
       # Upper bound using Wilson Score method
-      tempCHIest[result %in% c(0, 1) & se == 0 & denominator != 0,
+      tempCHIest[result %in% c(0, 1) & denominator > 10,
                  upper_bound := (2 * numerator + z_value^2 + z_value * sqrt(z_value^2 + 4 * numerator * (1 - numerator/denominator))) /
                    (2 * (denominator + z_value^2))]
 
@@ -362,7 +372,7 @@ chi_calc <- function(ph.data = NULL,
                                    secondary_exclude = cat1_varname != 'race3')
     } else {tempCHIest[, suppression := NA_character_]}
 
-    tempCHIest[rse>=30, caution := "!"]
+    tempCHIest[rse>=30 | numerator == 0, caution := "!"]
 
     tempCHIest[, c('cat2', 'cat2_group', 'cat2_varname') := lapply(.SD, as.character), .SDcols = c('cat2', 'cat2_group', 'cat2_varname')]
 
