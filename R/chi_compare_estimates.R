@@ -35,7 +35,7 @@
 #' @seealso
 #' \code{\link{chi_qa_tro}} for validating individual datasets
 #'
-#' \code{\link{chi_sql_update}} for uploading validated results
+#' \code{\link{chi_update_sql}} for uploading validated results
 #'
 #' @return data.table ordered by absolute difference, containing:
 #' - Difference metrics (absolute_diff, relative_diff)

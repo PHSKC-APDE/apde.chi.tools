@@ -1,7 +1,7 @@
 #' Calculate CHI Estimates
 #'
 #' @description
-#' Generates CHI estimates from input data according to provided instructions. 
+#' Generates CHI estimates from input data according to provided instructions.
 #' Handles both proportions and rates, with options for suppression of small numbers.
 #'
 #' @param ph.data data.frame or data.table. Input data containing analytic read data.
@@ -14,11 +14,13 @@
 #' @param suppress_high numeric. Upper bound for suppression. Default: \code{9}.
 #' @param source_name character. Name of data source. Default: \code{NULL}.
 #' @param source_date Date. Date ph.data was created. Default: \code{NULL}.
+#' @param non_chi_byvars character vector. Variable names to exclude from CHI byvar encoding validation. Default: \code{NULL}.
 #'
 #' @return A data.table containing CHI estimates with the following columns:
 #' \itemize{
 #'   \item{\code{data_source}} Data source (e.g., acs, brfss, etc.)
 #'   \item{\code{indicator_key}} Unique indicator key
+#'   \item{\code{level}} factor level of the indicator_key (e.g., Breech vs Cephalic vs other for fetal_pres in birth data)
 #'   \item{\code{tab}} Type of analysis (e.g., demgroups, _kingcounty, etc.)
 #'   \item{\code{year}} Year(s) of data
 #'   \item{\code{cat1}} Describes data field (e.g., Gender, Ethnicity, etc.)
@@ -48,10 +50,10 @@
 #'
 #' \code{\link{chi_generate_metadata}} for creating metadata from results
 #'
-#' @importFrom data.table setDT copy setnames := setorder set .SD data.table
-#' @importFrom rads calc compare_estimate suppress chi_cols round2
+#' @importFrom data.table setDT copy setnames := setorder set .SD data.table setcolorder
+#' @importFrom rads calc suppress round2
 #' @importFrom future.apply future_lapply
-#' @importFrom stats na.omit
+#' @importFrom stats na.omit qnorm
 #' @import progressr
 #' @export
 #'
@@ -65,7 +67,8 @@ chi_calc <- function(ph.data = NULL,
                      suppress_low = 0,
                      suppress_high = 9,
                      source_name = NULL,
-                     source_date = NULL){
+                     source_date = NULL,
+                     non_chi_byvars = NULL){
   # Input validation ----
     if (is.null(ph.data)) stop("\n\U1F6D1 ph.data must be provided")
     if (!is.data.frame(ph.data)) stop("\n\U1F6D1 ph.data must be a data.frame or data.table")
@@ -102,6 +105,10 @@ chi_calc <- function(ph.data = NULL,
     if (is.null(source_date)) stop("\n\U1F6D1 source_date must be provided")
     if (!inherits(source_date, "Date")) stop("\n\U1F6D1 source_date must be a be a Date object")
 
+    # Validate non_chi_byvars
+    if(!is.null(non_chi_byvars)) {
+      if(!is.character(non_chi_byvars)) stop("\n\U1F6D1 non_chi_byvars must be a character vector")
+    }
 
   # Create 'Overall' if needed for crosstabs ----
     if(!'overall' %in% names(ph.data)){
@@ -110,28 +117,61 @@ chi_calc <- function(ph.data = NULL,
 
   # Check to make sure all variables needed exist in the data ----
   neededbyvars <- unique(na.omit(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)))
-  if("race3" %in% neededbyvars & !"race3_hispanic" %in% neededbyvars){neededbyvars <- c(neededbyvars, 'race3_hispanic')} # By definition, Hispanic cannot be contained within race3
+
+  # Handle the race3/race3_hispanic relationship
+  if("race3" %in% neededbyvars & !"race3_hispanic" %in% neededbyvars) {
+    neededbyvars <- c(neededbyvars, 'race3_hispanic')
+    message("\U00002139 Note: Adding 'race3_hispanic' as a required variable because 'race3' is present. By definition, race3 requires separate Hispanic ethnicity information.")
+  }
+
+  if(!"race3" %in% neededbyvars & "race3_hispanic" %in% neededbyvars) {
+    neededbyvars <- c(neededbyvars, 'race3')
+    message("\U00002139 Note: Adding 'race3' as a required variable because 'race3_hispanic' is present. These two variables work together to represent race/ethnicity.")
+  }
 
   neededvars <- unique(na.omit(c(ph.instructions$indicator_key, neededbyvars)))
 
   missingvars <- setdiff(neededvars, names(ph.data))
   if(length(missingvars) > 0 ){
-    stop(paste0("\n\U2620 ph.data is missing the following columns that are specified in ph.instructions: ", paste0(missingvars, collapse = ', '), ". ",
-                "\nIf `race3_hispanic` is listed, that is because, by definition, `race3` cannot have a Hispanic ethnicity in the same variable. So, two ",
-                "\nvariables (`race3` & `race3_hispanic`) will be processed and in the output, it will be called `race3`"))
+    stop(paste0("\n\U2620 ph.data is missing the following columns that are required: ", paste0(missingvars, collapse = ', ')))
   } else{message("\U0001f642 All specified variables exist in ph.data")}
 
   # Check to make sure all byvariables have the CHI specified encoding ----
-  stdbyvars <- rads.data::misc_chi_byvars[varname %in% unique(na.omit(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)))][, list(varname, group, keepme, reference = 1)]
-  stdbyvars[group %in% c("Hispanic", 'Non-Hispanic') & varname == 'race3', varname := 'race3_hispanic'] # necessary because race3 & Hispanic must be two distinct variables in raw data
-  phbyvars <- rbindlist(lapply(
-    X=as.list(neededbyvars),
-    FUN = function(X){data.table::data.table(varname = X, group = unique(na.omit(ph.data[[X]])), ph.data = 1)}))
-  compbyvars <- merge(stdbyvars, phbyvars, by = c('varname', 'group'), all = T)
-  if(nrow(compbyvars[is.na(reference)| is.na(ph.data)]) > 0){
-    print(compbyvars[is.na(reference)| is.na(ph.data)])
-    stop("\n\U2620 the table above shows the varname/group combinations that do not align between the reference table and your ph.data.")
-  } else {message("\U0001f642 All specified cat1_group and cat2_group values align with the reference standard.")}
+    # Filter out non-CHI variables if specified
+      chi_byvars <- neededbyvars
+      if(!is.null(non_chi_byvars)) {
+        chi_byvars <- setdiff(neededbyvars, non_chi_byvars)
+        if(length(setdiff(non_chi_byvars, neededbyvars)) > 0) {
+          message("\U00002139 Note: Some specified non_chi_byvars are not used in the analysis: ",
+                  paste0(setdiff(non_chi_byvars, neededbyvars), collapse = ", "))
+        }
+        if(length(setdiff(neededbyvars, chi_byvars)) > 0) {
+          message("\U00002139 Note: The following variables will be excluded from CHI encoding validation: ",
+                  paste0(setdiff(neededbyvars, chi_byvars), collapse = ", "))
+        }
+      }
+
+    # Only validate CHI variables
+      stdbyvars <- rads.data::misc_chi_byvars[varname %in% unique(na.omit(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)))]
+      stdbyvars <- stdbyvars[!varname %in% non_chi_byvars][, list(varname, group, keepme, reference = 1)]
+      stdbyvars[group %in% c("Hispanic", 'Non-Hispanic') & varname == 'race3', varname := 'race3_hispanic'] # necessary because race3 & Hispanic must be two distinct variables in raw data
+
+      phbyvars <- rbindlist(lapply(
+        X=as.list(chi_byvars),
+        FUN = function(X){data.table::data.table(varname = X, group = unique(na.omit(ph.data[[X]])), ph.data = 1)}))
+
+    # Skip validation if there are no CHI variables to validate after excluding non_chi_byvars
+      if(nrow(phbyvars) > 0 && nrow(stdbyvars) > 0) {
+        compbyvars <- merge(stdbyvars, phbyvars, by = c('varname', 'group'), all = T)
+        if(nrow(compbyvars[is.na(reference) | is.na(ph.data)]) > 0){
+          print(compbyvars[is.na(reference) | is.na(ph.data)])
+          stop("\n\U2620 the table above shows the varname/group combinations that do not align between the reference table and your ph.data.")
+        } else {message("\U0001f642 All specified cat1_group and cat2_group values align with the reference standard.")}
+      } else if(length(chi_byvars) > 0) {
+        message("\U00002139 Note: No CHI variables to validate after excluding non_chi_byvars.")
+      } else {
+        message("\U00002139 Note: No variables to validate for CHI encoding.")
+      }
 
   # Use rads::calc to generate estimates for each row of ph.instructions ----
   message("\U023F3 Be patient! The function is generating estimates for each row of ph.instructions.")
@@ -211,6 +251,10 @@ chi_calc <- function(ph.data = NULL,
                    c("mean", "mean_lower", "mean_upper", "mean_se"),
                    c("result", "lower_bound", "upper_bound", "se"))
 
+          if(!"level" %in% names(tempest)) {
+            tempest[, level := NA_character_]
+          }
+
           # set correct data types for TSQL database
           tempest[, denominator := as.numeric(denominator)]
           tempest[, numerator := as.numeric(numerator)]
@@ -222,11 +266,38 @@ chi_calc <- function(ph.data = NULL,
 
 
   # Tidy results ----
+    # When there are no observation in a row, rads::calc() gives NA for numerator, but want zero ----
+      tempCHIest[is.na(numerator), `:=` (
+        result = 0,
+        se = 0,
+        lower_bound = 0,
+        upper_bound = 0,
+        numerator = 0,
+        rse = NA # undefined because mean will be zero
+      )]
+
     # drop when cat1_group is missing (e.g., cat1 == 'Regions' and region is NA) ----
     tempCHIest <- tempCHIest[!is.na(cat1_group)]
 
     # drop when cat2_group is missing but cat2 is not missing ----
     tempCHIest <- tempCHIest[!(is.na(cat2_group) & !is.na(cat2))]
+
+    # Apply Wilson Score method for confidence intervals when result is 0% or 100% ----
+      # This handles cases where standard methods fail at the extremes by providing more appropriate
+      # bounds that don't exceed the logical limits while maintaining the specified confidence level
+
+      # Calculate z-value based on the provided confidence interval
+      z_value <- qnorm(1-0.5*(1-ci))
+
+      # Lower bound using Wilson Score method
+      tempCHIest[result %in% c(0, 1) & denominator > 10,
+                 lower_bound := (2 * numerator + z_value^2 - z_value * sqrt(z_value^2 + 4 * numerator * (1 - numerator/denominator))) /
+                   (2 * (denominator + z_value^2))]
+
+      # Upper bound using Wilson Score method
+      tempCHIest[result %in% c(0, 1) & denominator > 10,
+                 upper_bound := (2 * numerator + z_value^2 + z_value * sqrt(z_value^2 + 4 * numerator * (1 - numerator/denominator))) /
+                   (2 * (denominator + z_value^2))]
 
     # drop if cat1_group | cat2_group had `keepme == "No"` in the reference table ----
     dropme <- unique(stdbyvars[keepme == 'No'][, reference := NULL])
@@ -301,17 +372,20 @@ chi_calc <- function(ph.data = NULL,
                                    secondary_exclude = cat1_varname != 'race3')
     } else {tempCHIest[, suppression := NA_character_]}
 
-    tempCHIest[rse>=30, caution := "!"]
+    tempCHIest[rse>=30 | numerator == 0, caution := "!"]
 
     tempCHIest[, c('cat2', 'cat2_group', 'cat2_varname') := lapply(.SD, as.character), .SDcols = c('cat2', 'cat2_group', 'cat2_varname')]
 
 
     # Keep and order standard CHI columns ----
-    tempCHIest <- tempCHIest[, chi_get_cols(), with = F]
+    all_cols <- c(chi_get_cols(), "level")
+    all_cols <- unique(all_cols)  # In case level is already included
+    tempCHIest <- tempCHIest[, all_cols, with = F]
 
     tempCHIest <- tempCHIest[, cat1 := factor(cat1, levels = c("King County", sort(setdiff(unique(tempCHIest$cat1), "King County"))) )]
     tempCHIest <- tempCHIest[, tab := factor(tab, levels = c(c("_kingcounty","demgroups", "trends"),  sort(setdiff(unique(tempCHIest$tab), c("_kingcounty","demgroups", "trends")))) )]
     setorder(tempCHIest, indicator_key, tab, -year, cat1, cat1_group, cat2, cat2_group)
+    setcolorder(tempCHIest, c('data_source', 'indicator_key', 'level'))
 
   # return the CHI table ----
   return(tempCHIest)

@@ -217,7 +217,27 @@ Here are two rows from `myestimates` that will show the structure and contents o
 pretty_kable(head(myestimates[sample(1:.N, 2)]))
 ```
 
-# Tidying Race/Ethnicity Categories
+## Restoring Sequential Processing
+
+After completing the parallel processing job, it's important to restore the system returns to its normal state.
+
+```{r future-revert}
+future::plan(future::sequential)
+```
+
+# Tidying `chi_calc()` output
+
+## Drop the `level` column
+
+The `chi_calc()` function returns a column called `level`, which contains the specific factor level for categorical variables. For example, if `indicator_key == 'fetal_pres'`, the function would return separate rows for each possible presentation: a row with `level == 'Breech'`, another with `level == 'Cephalic'`, and another with `level == 'Other'`. In these cases, we would use the `level` column to filter for our factor level of interest.
+
+In our current example, since `bw_norm` is not a categorical variable, the `level` column contains only `NA` values and can be safely dropped.
+
+```{r tidy-level}
+myestimates[, level := NULL]
+```
+
+## Race/Ethnicity
 
 Due to the way that APDE decided to display race3 (Hispanic as ethnicity) and race4 (Hispanic as race), the calculation and preparation of these variables can be complex. We need to manipulate the results to align them with CHI standards.
 
@@ -227,26 +247,27 @@ For future reference, all CHI standards can be found in `rads.data::misc_chi_byv
 #| warning: false
 #| message: false
 
-# Update race4 categories
-myestimates[tab %in% c('demgroups', 'crosstabs') & cat1_varname == 'race4',
+# For race4 categories (both cat1 and cat2)
+myestimates[tab %in% c('demgroups', 'crosstabs') & cat1_varname == 'race4', 
             cat1 := "Birthing person's race"]
-myestimates[tab %in% c('demgroups', 'crosstabs') & cat2_varname == 'race4',
+myestimates[tab %in% c('demgroups', 'crosstabs') & cat2_varname == 'race4', 
             cat2 := "Birthing person's race"]
 
-# Update race3 categories - separate race and ethnicity
-myestimates[tab %in% c('demgroups', 'crosstabs') & cat1_varname == 'race3' & cat1_group != 'Hispanic',
+# For race3 categories - default to race, override for Hispanic ethnicity
+myestimates[tab %in% c('demgroups', 'crosstabs') & cat1_varname == 'race3', 
             cat1 := "Birthing person's race"]
-myestimates[tab %in% c('demgroups', 'crosstabs') & cat1_varname == 'race3' & cat1_group == 'Hispanic',
+myestimates[tab %in% c('demgroups', 'crosstabs') & cat1_varname == 'race3' & cat1_group == 'Hispanic', 
             cat1 := "Birthing person's ethnicity"]
-myestimates[tab %in% c('demgroups', 'crosstabs') & cat2_varname == 'race3' & cat2_group != 'Hispanic',
+
+myestimates[tab %in% c('demgroups', 'crosstabs') & cat2_varname == 'race3', 
             cat2 := "Birthing person's race"]
-myestimates[tab %in% c('demgroups', 'crosstabs') & cat2_varname == 'race3' & cat2_group == 'Hispanic',
+myestimates[tab %in% c('demgroups', 'crosstabs') & cat2_varname == 'race3' & cat2_group == 'Hispanic', 
             cat2 := "Birthing person's ethnicity"]
 
-# Update trend data labels
-myestimates[tab == 'trends' & cat1_varname %in% c('race3', 'race4'),
+# Update trend data labels (both race3 and race4 at once)
+myestimates[tab == 'trends' & cat1_varname %in% c('race3', 'race4'), 
             cat1 := "Birthing person's race/ethnicity"]
-myestimates[tab == 'trends' & cat2_varname %in% c('race3', 'race4'),
+myestimates[tab == 'trends' & cat2_varname %in% c('race3', 'race4'), 
             cat2 := "Birthing person's race/ethnicity"]
 ```
 
@@ -375,7 +396,7 @@ We need to save our results and metadata to the development SQL Server. Later, o
 ```{r save-sql}
 #| warning: false
 
-chi_sql_update(CHIestimates = myestimates,
+chi_update_sql(CHIestimates = myestimates,
                CHImetadata = mymetadata,
                table_name = 'junk', # replace with data source name, e.g., 'birth', 'brfss', etc.
                server = 'development', 
@@ -464,7 +485,7 @@ New functions you used:
 -   `chi_generate_metadata()` to create an updated metadata table
 -   `chi_qa_tro()` to perform quality assurance checks
 -   `chi_compare_estimates()` to identify notable differences compared to previous estimates
--   `chi_sql_update()` to save estimates and metadata to SQL Server
+-   `chi_update_sql()` to save estimates and metadata to SQL Server
 
 If you encounter issues or believe you've found a bug, please submit a GitHub issue at [Issues · PHSKC-APDE/apde.chi.tools](https://github.com/PHSKC-APDE/apde.chi.tools/issues).
 

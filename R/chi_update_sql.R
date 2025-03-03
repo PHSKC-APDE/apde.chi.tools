@@ -25,7 +25,7 @@
 #' @examples
 #' \dontrun{
 #' # Update development database
-#' chi_sql_update(
+#' chi_update_sql(
 #'   CHIestimates = final_estimates,
 #'   CHImetadata = final_metadata,
 #'   table_name = "birth",
@@ -52,7 +52,7 @@
 #'
 #' @export
 #'
-chi_sql_update <- function(CHIestimates = NULL,
+chi_update_sql <- function(CHIestimates = NULL,
                            CHImetadata = NULL,
                            table_name = NULL,
                            server = 'development', # options include c('development', 'production')
