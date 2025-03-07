@@ -1,7 +1,7 @@
 Package: apde.chi.tools
 Type: Package
 Title: Simplify Common Analytics Pipeline Procesees Of Public Health Seattle & King County's Assessment Policy Development and Evaluation Unit
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: person(
   "Ronald","Buie", 
   email = "rbuie@kingcounty.gov", 
