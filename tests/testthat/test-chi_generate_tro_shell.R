@@ -1,4 +1,12 @@
-test_that("injest template format", {
+test_that("chi_generate_tro_shell validates inputs correctly", {
+  test_data <- setup_test_data()
+
+  expect_error(chi_generate_tro_shell(), "ph.analysis_set must be provided")
+  expect_error(chi_generate_tro_shell(data.frame(), start.year = "2023"),
+               "start.year must be a single numeric value")
+})
+
+test_that("ingest template format", {
   set <- c(rep(1,7),rep(2,4))
   cat1 <- c("King County", "Cities/neighborhoods", "Poverty", "Race", "Race/ethnicity","Regions", "Big cities",
             "King County", "Poverty", "Race", "Regions")
@@ -11,7 +19,7 @@ test_that("injest template format", {
   trends <- c("x",NA,NA, "x","x", "x", "x",
               "x",NA,"x", "x")
   set_indicator_keys <- c(rep("key1, key2, key3",7),rep("key4, key5",4))
-  template <- data.table(set,
+  template <- data.table::data.table(set,
                          cat1,
                          cat1_varname,
                          kingCounty,
@@ -20,7 +28,12 @@ test_that("injest template format", {
                          crosstabs,
                          trends,
                          set_indicator_keys)
-  DT <- chi_generate_tro_shell(ph.analysis_set, 2021, 2022, 3, 5)
+  DT <- chi_generate_tro_shell(ph.analysis_set = template,
+                               start.year = 2021,
+                               end.year = 2022,
+                               year.span = 5,
+                               trend.span = 3,
+                               trend.periods = 5)
   expect_equal(nrow(DT), 264)
   expect_equal(length(unique(DT$indicator_key)),5)
   expect_equal(DT[tab == "trends",][1]$end - DT[tab == "trends",][1]$start,2)

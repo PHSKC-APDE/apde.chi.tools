@@ -1,6 +1,21 @@
+#' Generate Population Instructions for CHI Analysis
+#'
+#' @description
+#' Creates a instructions for rads::get_population() based on count data
+#' specifications. Handles various geographic types and demographic groupings.
+#'
+#' @param mycount.data Input data.table containing count data specifications
+#' @param povgeo Geographic level for poverty analysis (NA or 'zip')
+#'
+#' @return A data.table containing population processing instructions
+#' @importFrom data.table copy `:=` setorder tstrsplit
+#' @importFrom tools toTitleCase
+#' @export
+#'
+
 chi_generate_instructions_pop <- function(mycount.data, povgeo = NA){
   pop.template <- copy(mycount.data)
-  pop.template <- unique(copy(pop.template)[, .(year, cat1, cat1_varname, cat2, cat2_varname, tab)])
+  pop.template <- unique(copy(pop.template)[, list(year, cat1, cat1_varname, cat2, cat2_varname, tab)])
   pop.template[, c("start", "stop") := tstrsplit(year, split = '-') ]
   pop.template[is.na(stop), stop := start] # need to have an end date even if it is just one year
 
