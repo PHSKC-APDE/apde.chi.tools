@@ -462,10 +462,10 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
                                 paste0(other_cat_prefix, "_varname"),
                                 paste0(other_cat_prefix, "_group"))
 
-            unique_pop_data <- unique(population_data[, cols_to_select, with = FALSE][, key := 1])
+            unique_pop_data <- unique(population_data[, cols_to_select, with = FALSE][, mykey := 1])
 
-            complete_demographics <- unique_pop_data[age_groups[, key := 1], on = "key", allow.cartesian = TRUE]
-            complete_demographics[, key := NULL]
+            complete_demographics <- unique_pop_data[age_groups[, mykey := 1], on = "mykey", allow.cartesian = TRUE]
+            complete_demographics[, mykey := NULL]
 
             return(complete_demographics)
           }
