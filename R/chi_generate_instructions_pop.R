@@ -1,12 +1,12 @@
 #' Generate Population Instructions for CHI Analysis
 #'
 #' @description
-#' Creates instructions for \link{\code{CHI_get_proper_pop}} based on a table of count
+#' Creates instructions for \code{\link{chi_get_proper_pop}} based on a table of count
 #' data. These instructions configure appropriate demographic groupings,
 #' geographic types, and time periods for retrieving population denominators used
 #' in CHI rate calculations.
 #'
-#' @param mycount.data Input data.table produced by \link{\code{chi_count_by_age}},
+#' @param mycount.data Input data.table produced by \code{\link{chi_count_by_age}},
 #' containing the following columns:
 #'  \itemize{
 #'    \item indicator_key: indicator_key used by CHI
@@ -17,7 +17,7 @@
 #'    \item chi_age: Single year age
 #'    \item count: Count of events (births, death, hospitalizations, etc. )
 #'  }
-#' @param Geographic level for poverty analysis ('blk' or 'zip')
+#' @param povgeo Geographic level for poverty analysis ('blk' or 'zip')
 #'
 #' @return A data.table containing population processing instructions with columns:
 #'  \itemize{

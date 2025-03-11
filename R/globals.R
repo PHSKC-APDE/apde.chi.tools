@@ -49,6 +49,7 @@ utils::globalVariables(c(
   "latest_yearx",
   "level",
   "lower_bound",
+  "mykey",
   "notable",
   "numerator",
   "overall",
