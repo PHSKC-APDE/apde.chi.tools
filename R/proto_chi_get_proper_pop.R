@@ -402,7 +402,8 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
           population_data <- population_data[!is.na(cat1_group)]
 
         # Remove rows with missing secondary category group (when category exists)
-          population_data <- population_data[!is.na(cat2) | cat2 == 'NA' | (!is.na(cat2_group) & cat2_group != 'NA')]
+          population_data <- population_data[is.na(cat2) | cat2 == 'NA' |
+                                               (!is.na(cat2) & cat2 != 'NA' & !is.na(cat2_group) & cat2_group != 'NA'),]
 
       # Aggregate population data ----
         # Collapse to one row per demographic combination with sum of population
