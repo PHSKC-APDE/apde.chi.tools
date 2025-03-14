@@ -139,85 +139,84 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
 
       # Process demographic categories ----
       # Apply category grouping logic for both primary (cat1) and secondary (cat2) categories
-        for (catnum in c("1", "2")) {
+        for (catnum in c("cat1", "cat2")) {
           ## Add category information from template to result ----
-            temp.cat <- paste0("cat", catnum)
-            temp.varname <- paste0("cat", catnum, '_varname')
-            temp.group <- paste0("cat", catnum, '_group')
-            temp.groupby <- paste0("group_by", catnum)
+            catvarname <- paste0(catnum, '_varname')
+            catgroup <- paste0(catnum, '_group')
+            temp.groupby <- paste0("group_by", gsub('cat', '', catnum))
 
-            # had to use set function because regular := syntax caused errors b/c used temp.cat differently on both sides of :=
+            # had to use set function because regular := syntax caused errors b/c used catnum differently on both sides of :=
             data.table::set(population_data,
-                            j = temp.cat,
-                            value = current_row[[temp.cat]])
-
-            data.table::set(population_data,
-                            j = temp.varname,
-                            value = current_row[[temp.varname]])
+                            j = catnum,
+                            value = current_row[[catnum]])
 
             data.table::set(population_data,
-                            j = temp.group,
+                            j = catvarname,
+                            value = current_row[[catvarname]])
+
+            data.table::set(population_data,
+                            j = catgroup,
                             value = current_row[[temp.groupby]])
 
           ## Process geographic categories ----
             # King County
-            population_data[get(temp.cat) == "King County",
-                            c(temp.group) := "King County"]
+            population_data[get(catnum) == "King County",
+                            c(catgroup) := "King County"]
 
             # Washington State
-            population_data[get(temp.cat) == "Washington State",
-                            c(temp.group) := "Washington State"]
+            population_data[get(catnum) == "Washington State",
+                            c(catgroup) := "Washington State"]
 
             # Handle NA values
             suppressWarnings(
-              population_data[get(temp.cat) == "NA" | is.na(get(temp.cat)),
-                              c(temp.cat, temp.group, temp.varname) := "NA"]
+              population_data[get(catnum) == "NA" | is.na(get(catnum)),
+                              c(catnum, catgroup, catvarname) := "NA"]
             )
 
             # Cities/neighborhoods and Regions
-            population_data[get(temp.cat) %in% c("Cities/neighborhoods", "Regions") &
+            population_data[get(catnum) %in% c("Cities/neighborhoods", "Regions") &
                               current_row$geo_type != 'blk',
-                            c(temp.group) := geo_id]
+                            c(catgroup) := geo_id]
 
           ## Process gender ----
-            population_data[get(temp.cat) %in% c("Gender"), c(temp.group) := gender]
+            population_data[get(catnum) %in% c("Gender"), c(catgroup) := gender]
 
           ## Process 'Overall' ----
-            population_data[get(temp.cat) %in% c("Overall"), c(temp.group) := "Overall"]
+            population_data[get(catnum) %in% c("Overall"), c(catgroup) := "Overall"]
 
           ## Process race/ethnicity categories ----
-              population_data[get(temp.cat) == "Ethnicity" | get(temp.varname) %in% c('race4'),
-                              c(temp.group) := race_eth]
+              population_data[get(catnum) == "Ethnicity" | get(catvarname) %in% c('race4'),
+                              c(catgroup) := race_eth]
 
-              population_data[get(temp.cat) == 'Race' & get(temp.varname) %in% c('race3'),
-                              c(temp.group) := race]
+              population_data[get(catnum) == 'Race' & get(catvarname) %in% c('race3'),
+                              c(catgroup) := race]
 
-              population_data <- population_data[get(temp.cat) != "Ethnicity" | (get(temp.cat) == "Ethnicity" & get(temp.group) == 'Hispanic'), ]
+              population_data <- population_data[get(catnum) != "Ethnicity" | (get(catnum) == "Ethnicity" & get(catgroup) == 'Hispanic'), ]
 
-              population_data[get(temp.group) == "Multiple race",
-                              c(temp.group) := "Multiple"]
+              population_data[get(catgroup) == "Multiple race",
+                              c(catgroup) := "Multiple"]
 
           ## Process race_aic (alone or in combination) categories ----
             if (current_row$race_type == 'race_aic') {
               # Filter to keep only relevant race_aic combinations
               population_data <- population_data[
-                !(grepl('_aic_', get(temp.varname)) &
-                    !((get(temp.varname) == 'chi_race_aic_aian' & race_aic == 'AIAN') |
-                        (get(temp.varname) == 'chi_race_aic_asian' & race_aic == 'Asian') |
-                        (get(temp.varname) == 'chi_race_aic_black' & race_aic == 'Black') |
-                        (get(temp.varname) == 'chi_race_aic_his' & race_aic == 'Hispanic') |
-                        (get(temp.varname) == 'chi_race_aic_nhpi' & race_aic == 'NHPI') |
-                        (get(temp.varname) == 'chi_race_aic_wht' & race_aic == 'White'))
+                !(grepl('_aic_', get(catvarname)) &
+                    !((get(catvarname) == 'chi_race_aic_aian' & race_aic == 'AIAN') |
+                        (get(catvarname) == 'chi_race_aic_asian' & race_aic == 'Asian') |
+                        (get(catvarname) == 'chi_race_aic_black' & race_aic == 'Black') |
+                        (get(catvarname) == 'chi_race_aic_his' & race_aic == 'Hispanic') |
+                        (get(catvarname) == 'chi_race_aic_nhpi' & race_aic == 'NHPI') |
+                        (get(catvarname) == 'chi_race_aic_wht' & race_aic == 'White'))
                 )
               ]
 
               # Assign race_aic value to group
-              population_data[grep('_aic', get(temp.varname)),
-                              c(temp.group) := race_aic]
+              population_data[grep('_aic', get(catvarname)),
+                              c(catgroup) := race_aic]
             }
 
           ## Process HRAs ----
-            if (population_data[1, geo_type] == 'blk' & population_data[1, get(temp.cat)] == 'Cities/neighborhoods') {
+            if (population_data[1, geo_type] == 'blk' & population_data[1, get(catnum)] == 'Cities/neighborhoods') {
 
               hra_crosswalk <- rads.data::spatial_block20_to_hra20_to_region20[, list(geo_id = GEOID20, hra20_name)]
 
@@ -227,12 +226,12 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
                                        all.x = TRUE,
                                        all.y = FALSE)
 
-              population_data[, c(temp.group) := hra20_name]
+              population_data[, c(catgroup) := hra20_name]
             }
 
           ## Process Regions ----
             # Block to Region crosswalk
-              if (population_data[1, geo_type] == 'blk' & population_data[1, get(temp.cat)] == 'Regions') {
+              if (population_data[1, geo_type] == 'blk' & population_data[1, get(catnum)] == 'Regions') {
 
                   region_crosswalk <- rads.data::spatial_block20_to_hra20_to_region20[, list(geo_id = GEOID20, region_name)]
 
@@ -242,11 +241,11 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
                                            all.x = TRUE,
                                            all.y = FALSE)
 
-                  population_data[, c(temp.group) := region_name]
+                  population_data[, c(catgroup) := region_name]
               }
 
             # HRA to Region crosswalk
-              if (population_data[1, geo_type] == 'hra' & population_data[1, get(temp.cat)] == 'Regions') {
+              if (population_data[1, geo_type] == 'hra' & population_data[1, get(catnum)] == 'Regions') {
 
                   region_crosswalk <- rads.data::spatial_hra20_to_region20[, list(geo_id = hra20_name, region_name)]
 
@@ -256,11 +255,11 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
                                            all.x = TRUE,
                                            all.y = FALSE)
 
-                  population_data[, c(temp.group) := region_name]
+                  population_data[, c(catgroup) := region_name]
               }
 
             # ZIP to Region crosswalk with population weighting
-              if (population_data[1, geo_type] == 'zip' & population_data[1, get(temp.cat)] == 'Regions') {
+              if (population_data[1, geo_type] == 'zip' & population_data[1, get(catnum)] == 'Regions') {
 
                   # Create ZIP to region crosswalk with population weights
                   zip_region_crosswalk <- rads.data::spatial_zip_to_hra20_pop
@@ -282,11 +281,11 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
                                            all.y = FALSE,
                                            allow.cartesian = TRUE)
                   population_data[, pop := pop * s2t_fraction] # Apply weight to population
-                  population_data[, c(temp.group) := region]
+                  population_data[, c(catgroup) := region]
               }
 
           ## Process Big Cities ----
-            if (population_data[1, get(temp.cat)] == 'Big cities') {
+            if (population_data[1, get(catnum)] == 'Big cities') {
               # Block to big city crosswalk
               if (population_data[1, geo_type] == 'blk') {
 
@@ -319,50 +318,50 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
               }
 
               # Assign big city name to group
-              population_data[, c(temp.group) := bigcity]
+              population_data[, c(catgroup) := bigcity]
             }
 
           ## Process age groupings ----
             # Age 6 groups: <18, 18-24, 25-44, 45-64, 65-74, 75+
-              population_data[get(temp.varname) == "age6" & age %in% 0:17,
-                              c(temp.group) := "<18"]
-              population_data[get(temp.varname) == "age6" & age %in% 18:24,
-                              c(temp.group) := "18-24"]
-              population_data[get(temp.varname) == "age6" & age %in% 25:44,
-                              c(temp.group) := "25-44"]
-              population_data[get(temp.varname) == "age6" & age %in% 45:64,
-                              c(temp.group) := "45-64"]
-              population_data[get(temp.varname) == "age6" & age %in% 65:74,
-                              c(temp.group) := "65-74"]
-              population_data[get(temp.varname) == "age6" & age >= 75,
-                              c(temp.group) := "75+"]
+              population_data[get(catvarname) == "age6" & age %in% 0:17,
+                              c(catgroup) := "<18"]
+              population_data[get(catvarname) == "age6" & age %in% 18:24,
+                              c(catgroup) := "18-24"]
+              population_data[get(catvarname) == "age6" & age %in% 25:44,
+                              c(catgroup) := "25-44"]
+              population_data[get(catvarname) == "age6" & age %in% 45:64,
+                              c(catgroup) := "45-64"]
+              population_data[get(catvarname) == "age6" & age %in% 65:74,
+                              c(catgroup) := "65-74"]
+              population_data[get(catvarname) == "age6" & age >= 75,
+                              c(catgroup) := "75+"]
 
             # Maternal age 5 groups: 10-17, 18-24, 25-34, 35-44, 45+
-              population_data[get(temp.varname) == "mage5" & age %in% 10:17,
-                              c(temp.group) := "10-17"]
-              population_data[get(temp.varname) == "mage5" & age %in% 18:24,
-                              c(temp.group) := "18-24"]
-              population_data[get(temp.varname) == "mage5" & age %in% 25:34,
-                              c(temp.group) := "25-34"]
-              population_data[get(temp.varname) == "mage5" & age %in% 35:44,
-                              c(temp.group) := "35-44"]
-              population_data[get(temp.varname) == "mage5" & age >= 45,
-                              c(temp.group) := "45+"]
+              population_data[get(catvarname) == "mage5" & age %in% 10:17,
+                              c(catgroup) := "10-17"]
+              population_data[get(catvarname) == "mage5" & age %in% 18:24,
+                              c(catgroup) := "18-24"]
+              population_data[get(catvarname) == "mage5" & age %in% 25:34,
+                              c(catgroup) := "25-34"]
+              population_data[get(catvarname) == "mage5" & age %in% 35:44,
+                              c(catgroup) := "35-44"]
+              population_data[get(catvarname) == "mage5" & age >= 45,
+                              c(catgroup) := "45+"]
 
             # Youth age 4 groups: 0-4, 5-9, 10-14, 15-17
-              population_data[get(temp.varname) == "yage4" & age %in% 0:4,
-                              c(temp.group) := "0-4"]
-              population_data[get(temp.varname) == "yage4" & age %in% 5:9,
-                              c(temp.group) := "5-9"]
-              population_data[get(temp.varname) == "yage4" & age %in% 10:14,
-                              c(temp.group) := "10-14"]
-              population_data[get(temp.varname) == "yage4" & age %in% 15:17,
-                              c(temp.group) := "15-17"]
+              population_data[get(catvarname) == "yage4" & age %in% 0:4,
+                              c(catgroup) := "0-4"]
+              population_data[get(catvarname) == "yage4" & age %in% 5:9,
+                              c(catgroup) := "5-9"]
+              population_data[get(catvarname) == "yage4" & age %in% 10:14,
+                              c(catgroup) := "10-14"]
+              population_data[get(catvarname) == "yage4" & age %in% 15:17,
+                              c(catgroup) := "15-17"]
 
           ## Process poverty groupings ----
             # Block level poverty
               if (population_data[1, geo_type] == 'blk' &
-                  grepl("poverty$", population_data[1, get(temp.cat)], ignore.case = TRUE)) {
+                  grepl("poverty$", population_data[1, get(catnum)], ignore.case = TRUE)) {
                 # Extract tract ID from block ID (first 11 characters)
                 population_data[, geo_tract2020 := substr(geo_id, 1, 11)]
 
@@ -376,12 +375,12 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
                 )
 
                 # Assign poverty group
-                population_data[, c(temp.group) := pov200grp]
+                population_data[, c(catgroup) := pov200grp]
               }
 
             # ZIP level poverty
               if (population_data[1, geo_type] == 'zip' &
-                  grepl("poverty$", population_data[1, get(temp.cat)], ignore.case = TRUE)) {
+                  grepl("poverty$", population_data[1, get(catnum)], ignore.case = TRUE)) {
                 # Join poverty group data
                 population_data <- merge(
                   population_data,
@@ -392,7 +391,7 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
                 )
 
                 # Assign poverty group
-                population_data[, c(temp.group) := pov200grp]
+                population_data[, c(catgroup) := pov200grp]
               }
 
           } # close looping over cat1/cat2

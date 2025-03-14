@@ -74,23 +74,23 @@ chi_drop_illogical_ages <- function(ph.data, agevar = 'chi_age') {
   # Loop for cat1 and cat2
   for (catnum in c("cat1", "cat2")) {
     # Get column names for this category
-    catnum_group <- paste0(catnum, "_group")
-    temp_catnum_group <- paste0(catnum_group, "_temp")
+    catgroup <- paste0(catnum, "_group")
+    temp_catgroup <- paste0(catgroup, "_temp")
 
     # Create a standardized version of the age group
-    ph.data[, (temp_catnum_group) := data.table::fcase(
-      get(catnum_group) == '<1', '0-0',
+    ph.data[, (temp_catgroup) := data.table::fcase(
+      get(catgroup) == '<1', '0-0',
 
-      grepl("<", get(catnum_group)), gsub("<", "0-", get(catnum_group)),
+      grepl("<", get(catgroup)), gsub("<", "0-", get(catgroup)),
 
-      grepl("\\+", get(catnum_group)), gsub("\\+", "-120", get(catnum_group)),
+      grepl("\\+", get(catgroup)), gsub("\\+", "-120", get(catgroup)),
 
-      grepl('-', get(catnum_group)), get(catnum_group)
+      grepl('-', get(catgroup)), get(catgroup)
     )]
 
     # Extract min and max age
-    ph.data[, "min_age" := as.numeric(gsub("-.*", "", get(temp_catnum_group)))]
-    ph.data[, "max_age" := as.numeric(gsub(".*-", "", get(temp_catnum_group)))]
+    ph.data[, "min_age" := as.numeric(gsub("-.*", "", get(temp_catgroup)))]
+    ph.data[, "max_age" := as.numeric(gsub(".*-", "", get(temp_catgroup)))]
 
     # Keep rows where either:
     # 1. The cat is not age-related, OR
@@ -99,7 +99,7 @@ chi_drop_illogical_ages <- function(ph.data, agevar = 'chi_age') {
                          data.table::between(get(agevar), min_age, max_age)]
 
     # Clean up temporary columns
-    ph.data[, c(temp_catnum_group, "min_age", "max_age") := NULL]
+    ph.data[, c(temp_catgroup, "min_age", "max_age") := NULL]
   }
 
   return(ph.data)

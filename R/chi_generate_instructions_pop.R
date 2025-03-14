@@ -83,36 +83,35 @@ chi_generate_instructions_pop <- function(mycount.data,
                  "chi_race_aic_his", "chi_race_aic_nhpi", "chi_race_aic_wht")
 
     # Process both primary (cat1) and secondary (cat2) stratification variables
-    for(catnum in c("1", "2")) {
-      temp.cat <- paste0("cat", catnum)
-      temp.varname <- paste0(temp.cat, "_varname")
-      temp.groupby <- paste0("group_by", catnum)
+    for(catnum in c("cat1", "cat2")) {
+      catvarname <- paste0(catnum, "_varname")
+      temp.groupby <- paste0("group_by", gsub('cat', '', catnum))
 
       # Set geographic type based on category
-      pop.template[get(temp.cat) == "Cities/neighborhoods", geo_type := "hra"]
+      pop.template[get(catnum) == "Cities/neighborhoods", geo_type := "hra"]
 
       # Set race_type and group_by based on race/ethnicity variable
-      pop.template[get(temp.varname) == "race3", c("race_type", temp.groupby) := 'race']
-      pop.template[get(temp.varname) == "race4", c("race_type", temp.groupby) := 'race_eth']
-      pop.template[get(temp.varname) %in% omb_aic, c("race_type", temp.groupby) := 'race_aic']
+      pop.template[get(catvarname) == "race3", c("race_type", temp.groupby) := 'race']
+      pop.template[get(catvarname) == "race4", c("race_type", temp.groupby) := 'race_eth']
+      pop.template[get(catvarname) %in% omb_aic, c("race_type", temp.groupby) := 'race_aic']
 
       # Filter out non-standard AIC race/ethnicity categories that don't have population data
-      pop.template <- pop.template[!(grepl('_aic_', get(temp.varname)) &
-                                       !get(temp.varname) %in% omb_aic)]
+      pop.template <- pop.template[!(grepl('_aic_', get(catvarname)) &
+                                       !get(catvarname) %in% omb_aic)]
 
       # Set demographic grouping based on category label
-      pop.template[get(temp.cat) == "Ethnicity", c("race_type", temp.groupby) := 'race_eth']
-      pop.template[get(temp.cat) == "Gender", (temp.groupby) := 'genders']
-      pop.template[get(temp.cat) %in% c("Race", "Race/ethnicity") & get(temp.varname) == 'race4',
+      pop.template[get(catnum) == "Ethnicity", c("race_type", temp.groupby) := 'race_eth']
+      pop.template[get(catnum) == "Gender", (temp.groupby) := 'genders']
+      pop.template[get(catnum) %in% c("Race", "Race/ethnicity") & get(catvarname) == 'race4',
                    (temp.groupby) := 'race_eth']
-      pop.template[(get(temp.cat) == "Race" & get(temp.varname) == 'race3'),
+      pop.template[(get(catnum) == "Race" & get(catvarname) == 'race3'),
                    (temp.groupby) := 'race']
 
       # Set geographic type based on regions
-      pop.template[get(temp.cat) == "Regions" & (is.na(geo_type) | geo_type != 'hra'),
+      pop.template[get(catnum) == "Regions" & (is.na(geo_type) | geo_type != 'hra'),
                    geo_type := "region"]
-      pop.template[get(temp.cat) == "Big cities", geo_type := "hra"]
-      pop.template[get(temp.cat) == "Washington State", geo_type := "wa"]
+      pop.template[get(catnum) == "Big cities", geo_type := "hra"]
+      pop.template[get(catnum) == "Washington State", geo_type := "wa"]
     }
 
   # Handle special geographic cases ----
