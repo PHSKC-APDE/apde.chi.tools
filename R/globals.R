@@ -17,6 +17,7 @@ utils::globalVariables(c(
   "chi_age",
   "chi_geo_kc",
   "chi_year",
+  "combo_idx",
   "comparison_with_kc_sig",
   "count",
   "crosstabs",
@@ -48,8 +49,12 @@ utils::globalVariables(c(
   "latest_yearx",
   "level",
   "lower_bound",
+  "min_age",
+  "max_age",
+  "mykey",
   "notable",
   "numerator",
+  "overall",
   "pattern",
   "pop",
   "pov200grp",
@@ -91,5 +96,6 @@ utils::globalVariables(c(
   "_kingcounty.x",
   "_kingcounty.y",
   "_wastate.x",
-  "_wastate.y"
+  "_wastate.y",
+  ".I"
 ))
