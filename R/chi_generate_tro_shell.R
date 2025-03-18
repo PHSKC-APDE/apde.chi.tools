@@ -26,7 +26,6 @@
 #'   }
 #'
 #' @param ph.analysis_set name of data.table to parse
-#' @param start.year the earliest year to be used for estimates
 #' @param end.year the latest year to be used for aggregate estimates
 #' @param year.span the number of years to be included in a single non-trend period
 #' @param trend.span the number of years to be included in a single trend period
@@ -54,7 +53,6 @@
 #' @export
 #'
 chi_generate_tro_shell <- function(ph.analysis_set,
-                                      start.year,
                                       end.year,
                                       year.span = NULL,
                                       trend.span = NULL,
@@ -63,9 +61,6 @@ chi_generate_tro_shell <- function(ph.analysis_set,
   # Input validation
     if (missing(ph.analysis_set)) stop("\n\U1F6D1 ph.analysis_set must be provided")
     if (!is.data.frame(ph.analysis_set)) stop("\n\U1F6D1 ph.analysis_set must be a data.frame or data.table")
-
-    if (missing(start.year)) stop("\n\U1F6D1 start.year must be provided")
-    if (!is.numeric(start.year) || length(start.year) != 1) stop("\n\U1F6D1 start.year must be a single numeric value")
 
     if (missing(end.year)) stop("\n\U1F6D1 end.year must be provided")
     if (!is.numeric(end.year) || length(end.year) != 1) stop("\n\U1F6D1 end.year must be a single numeric value")
