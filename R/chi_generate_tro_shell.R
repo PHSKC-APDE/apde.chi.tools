@@ -53,48 +53,50 @@
 #' @export
 #'
 chi_generate_tro_shell <- function(ph.analysis_set,
-                                      end.year,
-                                      year.span = NULL,
-                                      trend.span = NULL,
-                                      trend.periods = NULL){
+                                   end.year,
+                                   year.span = NULL,
+                                   trend.span = NULL,
+                                   trend.periods = NULL){
 
   # Input validation
-    if (missing(ph.analysis_set)) stop("\n\U1F6D1 ph.analysis_set must be provided")
-    if (!is.data.frame(ph.analysis_set)) stop("\n\U1F6D1 ph.analysis_set must be a data.frame or data.table")
+  if (missing(ph.analysis_set)) stop("\n\U1F6D1 ph.analysis_set must be provided")
+  if (!is.data.frame(ph.analysis_set)) stop("\n\U1F6D1 ph.analysis_set must be a data.frame or data.table")
+  if (!("set" %in% names(ph.analysis_set)) | anyNA(ph.analysis_set$set)) {
+    stop("\n\u1F6D1 set number must be provided for all rows")
+  }
+  if (missing(end.year)) stop("\n\U1F6D1 end.year must be provided")
+  if (!is.numeric(end.year) || length(end.year) != 1) stop("\n\U1F6D1 end.year must be a single numeric value")
 
-    if (missing(end.year)) stop("\n\U1F6D1 end.year must be provided")
-    if (!is.numeric(end.year) || length(end.year) != 1) stop("\n\U1F6D1 end.year must be a single numeric value")
+  if (!is.null(year.span) && (!is.numeric(year.span) || length(year.span) != 1)) {
+    stop("\n\U1F6D1 year.span must be NULL or a single numeric value")
+  }
 
-    if (!is.null(year.span) && (!is.numeric(year.span) || length(year.span) != 1)) {
-      stop("\n\U1F6D1 year.span must be NULL or a single numeric value")
-    }
+  if (!is.null(trend.span) && (!is.numeric(trend.span) || length(trend.span) != 1)) {
+    stop("\n\U1F6D1 trend.span must be NULL or a single numeric value")
+  }
 
-    if (!is.null(trend.span) && (!is.numeric(trend.span) || length(trend.span) != 1)) {
-      stop("\n\U1F6D1 trend.span must be NULL or a single numeric value")
-    }
+  if (!is.null(trend.periods) && (!is.numeric(trend.periods) || length(trend.periods) != 1)) {
+    stop("\n\U1F6D1 trend.periods must be NULL or a single numeric value")
+  }
 
-    if (!is.null(trend.periods) && (!is.numeric(trend.periods) || length(trend.periods) != 1)) {
-      stop("\n\U1F6D1 trend.periods must be NULL or a single numeric value")
-    }
 
-    # Convert to data.table if needed
-    if (!is.data.table(ph.analysis_set)) setDT(ph.analysis_set)
+  # Convert to data.table if needed
+  if (!is.data.table(ph.analysis_set)) setDT(ph.analysis_set)
 
-  #parameterization checks
+  # parameterization checks
   if("x" %in% ph.analysis_set$trends & (is.null(trend.span) | is.null(trend.periods))) {stop("you have indicated that a trends analysis is to be conducted, but have not indicated both the span and number of periods for this analysis.")}
 
-  #ph.analysis_set checks
-
-
-  #advisory messages
+  # advisory messages
   if("x" %in% ph.analysis_set$trends) {message("Note: trends are applied backwards from end.year")}
 
   # Race / ethnicity is a chronic headache with CHI. Need to remove rows for race4 & Ethnicity because should be Race/ethnicity
   ph.analysis_set <- ph.analysis_set[!(cat1_varname == 'race4' & cat1 == 'Ethnicity')]
 
   # apply the template generating function
+  # generate vector of sets
+  sets <- unique(ph.analysis_set$set)
   template <- rbindlist(
-    lapply(X = seq(1, length(unique(ph.analysis_set$set))),
+    lapply(X = sets,
            FUN = chi_process_nontrends, ph.analysis_set = ph.analysis_set))
 
   # split trends from other tabs because processed for multiple years
@@ -112,9 +114,9 @@ chi_generate_tro_shell <- function(ph.analysis_set,
   # add years to template (trends)
   if(nrow(template.trends) > 0){
     trend.years <- chi_process_trends(indicator_key = intersect(unique(template$indicator_key), unique(template.trends$indicator_key)),
-                                            trend.span = trend.span,
-                                            end.year = end.year,
-                                            trend.periods = trend.periods)
+                                      trend.span = trend.span,
+                                      end.year = end.year,
+                                      trend.periods = trend.periods)
     template.trends <- merge(template.trends, trend.years, by = 'indicator_key', all = T, allow.cartesian = T)
 
     # append trends template to main template
