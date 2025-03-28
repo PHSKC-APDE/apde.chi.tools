@@ -29,7 +29,6 @@ test_that("ingest template format", {
                          trends,
                          set_indicator_keys)
   DT <- chi_generate_tro_shell(ph.analysis_set = template,
-                               start.year = 2021,
                                end.year = 2022,
                                year.span = 5,
                                trend.span = 3,
