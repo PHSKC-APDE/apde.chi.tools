@@ -6,7 +6,6 @@
 \usage{
 chi_generate_tro_shell(
   ph.analysis_set,
-  start.year,
   end.year,
   year.span = NULL,
   trend.span = NULL,
@@ -15,8 +14,6 @@ chi_generate_tro_shell(
 }
 \arguments{
 \item{ph.analysis_set}{name of data.table to parse}
-
-\item{start.year}{the earliest year to be used for estimates}
 
 \item{end.year}{the latest year to be used for aggregate estimates}
 

@@ -2,8 +2,8 @@ test_that("chi_generate_tro_shell validates inputs correctly", {
   test_data <- setup_test_data()
 
   expect_error(chi_generate_tro_shell(), "ph.analysis_set must be provided")
-  expect_error(chi_generate_tro_shell(data.frame(), start.year = "2023"),
-               "start.year must be a single numeric value")
+  expect_error(chi_generate_tro_shell(data.frame()),
+               "set number must be provided for all rows")
 })
 
 test_that("ingest template format", {
