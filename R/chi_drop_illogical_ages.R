@@ -79,14 +79,13 @@ chi_drop_illogical_ages <- function(ph.data, agevar = 'chi_age') {
 
     # Create a standardized version of the age group
     ph.data[, (temp_catgroup) := data.table::fcase(
-      get(catgroup) == '<1', '0-0',
+      get(catgroup) == '<1' & grepl(' age$|^age$', get(catnum), ignore.case = T), '0-0',
 
-      grepl("<", get(catgroup)), gsub("<", "0-", get(catgroup)),
+      grepl("<", get(catgroup)) &grepl(' age$|^age$', get(catnum), ignore.case = T), gsub("<", "0-", get(catgroup)),
 
-      grepl("\\+", get(catgroup)), gsub("\\+", "-120", get(catgroup)),
+      grepl("\\+", get(catgroup))& grepl(' age$|^age$', get(catnum), ignore.case = T), gsub("\\+", "-120", get(catgroup)),
 
-      grepl('-', get(catgroup)), get(catgroup)
-    )]
+      grepl('-', get(catgroup))& grepl(' age$|^age$', get(catnum), ignore.case = T), as.character(get(catgroup)))]
 
     # Extract min and max age
     ph.data[, "min_age" := as.numeric(gsub("-.*", "", get(temp_catgroup)))]
