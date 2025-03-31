@@ -148,7 +148,7 @@ chi_qa_tro <- function(CHIestimates,
     }
   }
 
-  missing.var <- setdiff(names(CHImetadata), names(unlist(chi_get_yaml()$metadata)))
+  missing.var <- setdiff(names(CHImetadata), chi_get_cols(metadata = TRUE))
   if(length(missing.var) > 0){
     status <- 0
     if(verbose){

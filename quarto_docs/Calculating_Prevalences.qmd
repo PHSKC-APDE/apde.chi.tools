@@ -132,7 +132,6 @@ To analyze our data consistently, we need to generate a structured set of calcul
 
 myinstructions <- chi_generate_tro_shell(
   ph.analysis_set = analysis_sets,
-  start.year = latest_year-4, # earliest year to be used for estimates
   end.year = latest_year,     # latest year to be used for aggregate estimates
   year.span = 5,              # number of years included in a single period
   trend.span = 3,             # number of years included in a trend single period
