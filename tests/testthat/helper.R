@@ -65,7 +65,7 @@ setup_test_data <- function() {
 
   # Sample estimates ----
     test_estimates <- data.table(
-      indicator_key = c("indicatorX"),
+      indicator_key = c("indicator1"),
       tab = c(rep('demgroups', 4), '_kingcounty'),
       year = c('2023'),
       cat1 = c('Region', 'Region', 'Region', 'Region', 'King County'),
