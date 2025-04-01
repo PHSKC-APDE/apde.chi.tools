@@ -28,6 +28,18 @@ setup_test_data <- function() {
 
   # Sample analysis set ----
     test_analysis_set <- data.table(
+      cat1 = c('Regions', 'Gender'),
+      cat1_varname = c('chi_geo_region', 'chi_sex'),
+      `_kingcounty` = c('x'),
+      `_wastate` = NA_character_,
+      demgroups = NA_character_,
+      crosstabs = NA_character_,
+      trends = NA_character_,
+      set = 1,
+      set_indicator_keys = 'indicator1, indicator2'
+    )
+
+    test_analysis_set_twosets <- data.table(
       cat1 = rep(c('Regions', 'Gender', 'Race/ethnicity'),2),
       cat1_varname = rep(c('chi_geo_region', 'chi_sex', 'race4'),2),
       `_kingcounty` = c('x'),
@@ -53,9 +65,9 @@ setup_test_data <- function() {
 
   # Sample estimates ----
     test_estimates <- data.table(
-      indicator_key = c(rep("indicator1",2), rep("indicator2",2)),
+      indicator_key = c("indicatorX"),
       tab = c(rep('demgroups', 4), '_kingcounty'),
-      year = c('2024'),
+      year = c('2023'),
       cat1 = c('Region', 'Region', 'Region', 'Region', 'King County'),
       cat1_group = c("East", "North", "Seattle", "South", 'King County'),
       cat1_varname = c('chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_kc'),
@@ -122,6 +134,7 @@ setup_test_data <- function() {
   # Return ----
   list(my.analytic = test_analytic,
        my.analysis_set = test_analysis_set,
+       my.analysis_set_twosets = test_analysis_set_twosets,
        my.estimate= test_estimates,
        my.estimate_old= test_estimates_old,
        my.metadata = test_metadata,
