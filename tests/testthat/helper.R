@@ -28,15 +28,15 @@ setup_test_data <- function() {
 
   # Sample analysis set ----
     test_analysis_set <- data.table(
-      cat1 = c('Regions', 'Gender'),
-      cat1_varname = c('chi_geo_region', 'chi_sex'),
+      cat1 = rep(c('Regions', 'Gender', 'Race/ethnicity'),2),
+      cat1_varname = rep(c('chi_geo_region', 'chi_sex', 'race4'),2),
       `_kingcounty` = c('x'),
-      `_wastate` = NA_character_,
-      demgroups = NA_character_,
-      crosstabs = NA_character_,
-      trends = NA_character_,
-      set = 1,
-      set_indicator_keys = 'indicator1, indicator2'
+      `_wastate` = rep(c(rep(NA_character_,2),"x"),2),
+      demgroups = rep(c(rep(NA_character_,2),"x"),2),
+      crosstabs = rep(c(rep(NA_character_,2),"x"),2),
+      trends = rep(c(rep(NA_character_,2),"x"),2),
+      set = c(rep(1,3), rep(2,3)),
+      set_indicator_keys = c(rep(c('indicator1, indicator2'),3), rep("indicator3",3))
     )
 
   # Sample instructions ----
@@ -53,9 +53,9 @@ setup_test_data <- function() {
 
   # Sample estimates ----
     test_estimates <- data.table(
-      indicator_key = c("indicatorX"),
+      indicator_key = c(rep("indicator1",2), rep("indicator2",2)),
       tab = c(rep('demgroups', 4), '_kingcounty'),
-      year = c('2023'),
+      year = c('2024'),
       cat1 = c('Region', 'Region', 'Region', 'Region', 'King County'),
       cat1_group = c("East", "North", "Seattle", "South", 'King County'),
       cat1_varname = c('chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_kc'),
