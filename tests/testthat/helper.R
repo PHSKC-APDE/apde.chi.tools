@@ -39,6 +39,83 @@ setup_test_data <- function() {
       set_indicator_keys = 'indicator1, indicator2'
     )
 
+    variable_modeller <- function(oneVariable, numberOfObservations) {
+      #if no match, report unmatched type
+      instructions <- FALSE
+
+      variableName <- sub(".*\\$.*?", "\\1", deparse(substitute(oneVariable)))
+
+      #factor
+      if(instructions == FALSE & is.factor(oneVariable)) {
+        orderTF <- is.ordered(oneVariable)
+        detectedLevels <- levels(oneVariable)
+        prop.table(table(oneVariable, useNA = "ifany"))
+        instructions <- paste0(variableName," = factor(sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),")), levels = c('",paste0(detectedLevels, collapse = "', '"),"'), ordered = ", orderTF,")", collapse = "")
+      }
+
+      #integer: categorical
+      if(instructions == FALSE & is.integer(oneVariable) & length(unique(oneVariable)) < 25) {
+        instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
+      }
+
+      #if unmatched
+      if(instructions == FALSE) {
+        instructions <- paste0("# data type of ",deparse(substitute(oneVariable)) ," not modelled")
+      }
+      return(instructions)
+    }
+
+
+
+    generate_test_data <- function(dataset = "generic", observations = 100, seed = 1000){
+      ### generates a synthetic data set appropriate for testing functions relying on APDE data structures and where you do not want to use real data
+      ### receives description of data set to emulate, number of observations to include, and a seed. If dataset is "generic" will returned structure will have idealized chi values and generic indicators
+      ### returns a data.table of synthetic data
+
+      # input validation
+      datasetOptions <- c("generic", "hys")
+      dataset <- tolower(dataset)
+      if(!(dataset %in% datasetOptions)) {
+        stop(paste0("dataset must be one of: '", paste(datasetOptions, collapse = "', '"),"'"))
+      }
+
+      set.seed(seed)
+      if(dataset == "generic") {
+        test_data <- data.table(
+          id = 1:observations,
+          chi_geo_kc = sample(c(0,1), observations, replace = T),
+          chi_race_4 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), numberOfObservations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
+          chi_sex = as.factor(sample(c("Male","Female"), observations, replace = T)),
+
+          chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T), levels = c("South","North","Seattle","East")),
+          indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations, replace = T)),
+          indicator2 = as.factor(sample(c(1,2,3,4, NA), observations, replace = T)),
+          indicator3 = as.factor(sample(c("<20","21-40","41-60","61<"),  observations, replace = T)),
+          chi_year = 2023)
+      } else if(dataset == "hys") {
+        test_data <- data.table(abusive_adult = sample(c('NA', '0', '1'), 100, replace = TRUE, prob = c(0.273034917704968, 0.054280110752192, 0.67268497154284)),
+                                chi_sex = factor(sample(c('Female', 'Male', 'NA'), 100, replace = TRUE, prob = c(0.491578218735579, 0.490924473157976, 0.0174973081064452)), levels = c('Female', 'Male'), ordered = FALSE)
+
+        )
+
+      } else if(dataset == "hysold") {
+        test_data <- data.table(
+          id = 1:observations,
+          chi_geo_kc = sample(c(0,1), observations, replace = T),
+          chi_race_eth8 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), numberOfObservations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
+          chi_sex = as.factor(sample(c("Male","Female"), observations, replace = T)),
+          chi_geo_region = as.factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T)),
+          indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations, replace = T)),
+          indicator2 = as.factor(sample(c(1,2,3,4, NA), observations, replace = T)),
+          indicator3 = as.factor(sample(c("<20","21-40","41-60","61<"),  observations, replace = T)),
+          chi_year = 202)
+
+      }
+      return(test_data)
+    }
+
+
+
     test_analysis_set_twosets <- data.table(
       cat1 = rep(c('Regions', 'Gender', 'Race/ethnicity'),2),
       cat1_varname = rep(c('chi_geo_region', 'chi_sex', 'race4'),2),
@@ -88,6 +165,33 @@ setup_test_data <- function() {
     test_estimates[, rse := 100 * se / result]
     test_estimates[, lower_bound := result - 1.96 * se]
     test_estimates[, upper_bound := result + 1.96 * se]
+
+    test_estimates_twosets <- data.table(
+      indicator_key = c("indicator1"),
+      tab = c(rep('demgroups', 4), '_kingcounty'),
+      year = c('2023'),
+      cat1 = c('Region', 'Region', 'Region', 'Region', 'King County'),
+      cat1_group = c("East", "North", "Seattle", "South", 'King County'),
+      cat1_varname = c('chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_kc'),
+      cat2 = NA_character_,
+      cat2_group = NA_character_,
+      cat2_varname = NA_character_,
+      data_source = 'JustTesting',
+      caution = NA_character_,
+      suppression = NA_character_,
+      chi = 1,
+      source_date = Sys.Date(),
+      run_date = Sys.Date(),
+      numerator = c(111, 175, 210, 600, 430000),
+      denominator = c(1000, 1500, 2000, 2500, 2200000)
+    )
+    test_estimates_twosets[, result := numerator / denominator]
+    test_estimates_twosets[, se := sqrt((result * (1-result)) / denominator)]
+    test_estimates_twosets[, rse := 100 * se / result]
+    test_estimates_twosets[, lower_bound := result - 1.96 * se]
+    test_estimates_twosets[, upper_bound := result + 1.96 * se]
+
+
 
     test_estimates_old <- data.table(
       indicator_key = c("indicatorX"),
