@@ -39,60 +39,81 @@ setup_test_data <- function() {
       set_indicator_keys = 'indicator1, indicator2'
     )
 
-    variable_modeller <- function(oneVariable, numberOfObservations) {
 
+
+    variable_modeller <- function(oneVariable, numberOfObservations, varName = NA, report_empty = TRUE) {
+      if(any(class(oneVariable) %in% "data.table")) {
+        if(ncol(oneVariable) == 1) {
+          message(class(oneVariable))
+          oneVariable <- oneVariable[,1][[1]]
+          message(class(oneVariable))
+          message("caught DT")
+        } else {
+          stop("more than 1 column passed. Only pass a vector or one column")
+        }
+      }
       #note : ooooooocurrently setting 61 as categorical threshold because of HRAs.
 
       #if no match, report unmatched type
-      instructions <- FALSE
+      instructions <- NA
 
-      variableName <- sub(".*\\$.*?", "\\1", deparse(substitute(oneVariable)))
+      if(is.na(varName)){
+        variableName <- sub(".*\\$.*?", "\\1", deparse(substitute(oneVariable)))
+      } else {
+        variableName <- varName
+      }
 
       #factor
-      if(instructions == FALSE & class(oneVariable) == "factor") {
+      if(is.na(instructions) & class(oneVariable) == "factor") {
         orderTF <- is.ordered(oneVariable)
         detectedLevels <- levels(oneVariable)
-        prop.table(table(oneVariable, useNA = "ifany"))
         instructions <- paste0(variableName," = factor(sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),")), levels = c('",paste0(detectedLevels, collapse = "', '"),"'), ordered = ", orderTF,")", collapse = "")
         instructions <- gsub("'NA'", "NA", instructions)
         instructions <- paste0(instructions, " # as a factor")
       }
 
       #integer: categorical
-      if(instructions == FALSE & class(oneVariable) == "numeric" & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
+      if(is.na(instructions) & (class(oneVariable) == "numeric" | class(oneVariable) == "integer") & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
         instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
         instructions <- gsub("'NA'", "NA", instructions)
         instructions <- paste0(instructions, " # as a categorical non factor")
       }
 
       #character: categorical
-      if(instructions == FALSE & class(oneVariable) == "character" & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
+      if(is.na(instructions) & class(oneVariable) == "character" & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
         instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
         instructions <- gsub("'NA'", "NA", instructions)
         instructions <- paste0(instructions, " # as a categorical non factor")
       }
 
       #continuous
-      if(instructions == FALSE & class(oneVariable) == "numeric" & (length(unique(oneVariable)) > 61 & length(oneVariable) > 61)) {
-        min(oneVariable)
-        max(oneVariable)
-        runif(numberOfObservations, min(oneVariable), max(oneVariable))
-
-        instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
-        instructions <- gsub("'NA'", "NA", instructions)
-        instructions <- paste0(instructions, " # as a categorical non factor")
+      if(is.na(instructions) & class(oneVariable) == "numeric" & (length(unique(oneVariable)) > 61 & length(oneVariable) > 61)) {
+        #uniform distribution
+        instructions <- paste0(variableName, " = runif(", numberOfObservations,", ", min(oneVariable), ", ", max(oneVariable),")")
+        instructions <- paste0(instructions, " # continuous with uniform distribution")
       }
 
       #if unmatched
-      if(instructions == FALSE) {
-        instructions <- paste0("# data type of ",deparse(substitute(oneVariable)) ," not modelled")
+      if(is.na(instructions) & report_empty) {
+        instructions <- paste0("# data type of ",variableName ," not modelled")
       }
-      return(instructions)
+
+      if(is.na(instructions)) {
+
+      } else{
+        return(instructions)
+      }
     }
 
-    oneVariable <- testHYS$abusive_intimate_partner
+    batch_variable_modeller <- function(x) {
+      variable_modeller(testHYS[,..x][[1]], 100, names(testHYS)[x], report_empty = FALSE)
+    }
 
-    lapply(testHYS ,variable_modeller, numberOfObservations = 100)
+    code <- lapply(seq_along(testHYS), batch_variable_modeller)
+
+    cat(unlist(code), sep = ",\n\n") #copy this into your DT generating code
+
+    test <- data.table( parse(text = cat(unlist(code), sep = ",\n\n")))
 
     generate_test_data <- function(dataset = "generic", observations = 100, seed = 1000){
       ### generates a synthetic data set appropriate for testing functions relying on APDE data structures and where you do not want to use real data
