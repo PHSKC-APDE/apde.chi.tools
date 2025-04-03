@@ -40,22 +40,47 @@ setup_test_data <- function() {
     )
 
     variable_modeller <- function(oneVariable, numberOfObservations) {
+
+      #note : ooooooocurrently setting 61 as categorical threshold because of HRAs.
+
       #if no match, report unmatched type
       instructions <- FALSE
 
       variableName <- sub(".*\\$.*?", "\\1", deparse(substitute(oneVariable)))
 
       #factor
-      if(instructions == FALSE & is.factor(oneVariable)) {
+      if(instructions == FALSE & class(oneVariable) == "factor") {
         orderTF <- is.ordered(oneVariable)
         detectedLevels <- levels(oneVariable)
         prop.table(table(oneVariable, useNA = "ifany"))
         instructions <- paste0(variableName," = factor(sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),")), levels = c('",paste0(detectedLevels, collapse = "', '"),"'), ordered = ", orderTF,")", collapse = "")
+        instructions <- gsub("'NA'", "NA", instructions)
+        instructions <- paste0(instructions, " # as a factor")
       }
 
       #integer: categorical
-      if(instructions == FALSE & is.integer(oneVariable) & length(unique(oneVariable)) < 25) {
+      if(instructions == FALSE & class(oneVariable) == "numeric" & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
         instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
+        instructions <- gsub("'NA'", "NA", instructions)
+        instructions <- paste0(instructions, " # as a categorical non factor")
+      }
+
+      #character: categorical
+      if(instructions == FALSE & class(oneVariable) == "character" & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
+        instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
+        instructions <- gsub("'NA'", "NA", instructions)
+        instructions <- paste0(instructions, " # as a categorical non factor")
+      }
+
+      #continuous
+      if(instructions == FALSE & class(oneVariable) == "numeric" & (length(unique(oneVariable)) > 61 & length(oneVariable) > 61)) {
+        min(oneVariable)
+        max(oneVariable)
+        runif(numberOfObservations, min(oneVariable), max(oneVariable))
+
+        instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
+        instructions <- gsub("'NA'", "NA", instructions)
+        instructions <- paste0(instructions, " # as a categorical non factor")
       }
 
       #if unmatched
@@ -65,7 +90,9 @@ setup_test_data <- function() {
       return(instructions)
     }
 
+    oneVariable <- testHYS$abusive_intimate_partner
 
+    lapply(testHYS ,variable_modeller, numberOfObservations = 100)
 
     generate_test_data <- function(dataset = "generic", observations = 100, seed = 1000){
       ### generates a synthetic data set appropriate for testing functions relying on APDE data structures and where you do not want to use real data
@@ -86,15 +113,14 @@ setup_test_data <- function() {
           chi_geo_kc = sample(c(0,1), observations, replace = T),
           chi_race_4 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), numberOfObservations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
           chi_sex = as.factor(sample(c("Male","Female"), observations, replace = T)),
-
           chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T), levels = c("South","North","Seattle","East")),
           indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations, replace = T)),
           indicator2 = as.factor(sample(c(1,2,3,4, NA), observations, replace = T)),
           indicator3 = as.factor(sample(c("<20","21-40","41-60","61<"),  observations, replace = T)),
           chi_year = 2023)
       } else if(dataset == "hys") {
-        test_data <- data.table(abusive_adult = sample(c('NA', '0', '1'), 100, replace = TRUE, prob = c(0.273034917704968, 0.054280110752192, 0.67268497154284)),
-                                chi_sex = factor(sample(c('Female', 'Male', 'NA'), 100, replace = TRUE, prob = c(0.491578218735579, 0.490924473157976, 0.0174973081064452)), levels = c('Female', 'Male'), ordered = FALSE)
+        test_data <- data.table(abusive_adult = sample(c(NA, '0', '1'), 100, replace = TRUE, prob = c(0.273034917704968, 0.054280110752192, 0.67268497154284)),
+                                chi_sex = factor(sample(c('Female', 'Male', NA), 100, replace = TRUE, prob = c(0.491578218735579, 0.490924473157976, 0.0174973081064452)), levels = c('Female', 'Male'), ordered = FALSE)
 
         )
 
