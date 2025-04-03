@@ -56,6 +56,7 @@
 #'
 #' @import data.table
 #' @import rads
+#' @importFrom utils capture.output
 #' @export
 chi_chars_ccs <- function(ph.indicator = NA,
                           ph.data = NULL,
@@ -356,12 +357,12 @@ chi_chars_ccs <- function(ph.indicator = NA,
 
   # Ensure we have complete data (for all ages withing the specified range) ----
   # This creates a template with all possible combinations to avoid gaps when needing to age standardize the results
-  template <- unique(result[, .(tab,
+  template <- unique(result[, list(tab,
                                 cat1, cat1_varname, cat1_group,
                                 cat2, cat2_varname, cat2_group,
                                 indicator_key = ph.indicator, year)])
 
-  template <- template[, .(chi_age = seq(age_start, age_end)), by = names(template)]
+  template <- template[, list(chi_age = seq(age_start, age_end)), by = names(template)]
 
   result <- merge(template,
                   result[, chi_age := as.numeric(chi_age)],
@@ -370,7 +371,7 @@ chi_chars_ccs <- function(ph.indicator = NA,
 
   result[is.na(hospitalizations), hospitalizations := 0]
 
-  result <- result[, .(indicator_key, year, chi_age = as.integer(chi_age), hospitalizations, tab, cat1, cat1_varname, cat1_group, cat2, cat2_varname, cat2_group)]
+  result <- result[, list(indicator_key, year, chi_age = as.integer(chi_age), hospitalizations, tab, cat1, cat1_varname, cat1_group, cat2, cat2_varname, cat2_group)]
 
   setorder(result, tab, year, cat1, cat1_varname, cat1_group, cat2, cat2_varname, cat2_group, chi_age, hospitalizations)
 
@@ -401,7 +402,7 @@ chi_chars_ccs <- function(ph.indicator = NA,
   if (nrow(unused_instructions) > 0) {
     # Capture the formatted output directly
     empty_table <- paste(
-      capture.output(
+      utils::capture.output(
         print(unused_instructions,
               row.names = FALSE,
               class = FALSE,
