@@ -41,7 +41,7 @@ setup_test_data <- function() {
 
 
 
-    variable_modeller <- function(oneVariable, numberOfObservations, varName = NA, report_empty = TRUE) {
+    variable_modeller <- function(oneVariable, numberOfObservations, varName = NA, report_empty = TRUE, comments = TRUE) {
       if(any(class(oneVariable) %in% "data.table")) {
         if(ncol(oneVariable) == 1) {
           message(class(oneVariable))
@@ -69,33 +69,44 @@ setup_test_data <- function() {
         detectedLevels <- levels(oneVariable)
         instructions <- paste0(variableName," = factor(sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),")), levels = c('",paste0(detectedLevels, collapse = "', '"),"'), ordered = ", orderTF,")", collapse = "")
         instructions <- gsub("'NA'", "NA", instructions)
-        instructions <- paste0(instructions, " # as a factor")
+        if(comments){
+          instructions <- paste0(instructions, " # as a factor")
+        }
       }
 
       #integer: categorical
       if(is.na(instructions) & (class(oneVariable) == "numeric" | class(oneVariable) == "integer") & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
         instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
         instructions <- gsub("'NA'", "NA", instructions)
-        instructions <- paste0(instructions, " # as a categorical non factor")
+        if(comments){
+          instructions <- paste0(instructions, " # as a categorical non factor")
+        }
       }
 
       #character: categorical
       if(is.na(instructions) & class(oneVariable) == "character" & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
         instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
         instructions <- gsub("'NA'", "NA", instructions)
-        instructions <- paste0(instructions, " # as a categorical non factor")
+        if(comments){
+
+          instructions <- paste0(instructions, " # as a categorical non factor")
+        }
       }
 
       #continuous
       if(is.na(instructions) & class(oneVariable) == "numeric" & (length(unique(oneVariable)) > 61 & length(oneVariable) > 61)) {
         #uniform distribution
-        instructions <- paste0(variableName, " = runif(", numberOfObservations,", ", min(oneVariable), ", ", max(oneVariable),")")
-        instructions <- paste0(instructions, " # continuous with uniform distribution")
+        instructions <- paste0(variableName, " = runif(", numberOfObservations,", ", min(oneVariable, na.rm = TRUE), ", ", max(oneVariable, na.rm = TRUE),")")
+        if(comments){
+          instructions <- paste0(instructions, " # continuous with uniform distribution")
+        }
       }
 
       #if unmatched
       if(is.na(instructions) & report_empty) {
-        instructions <- paste0("# data type of ",variableName ," not modelled")
+        if(comments){
+          instructions <- paste0("# data type of ",variableName ," not modelled")
+        }
       }
 
       if(is.na(instructions)) {
@@ -106,14 +117,16 @@ setup_test_data <- function() {
     }
 
     batch_variable_modeller <- function(x) {
-      variable_modeller(testHYS[,..x][[1]], 100, names(testHYS)[x], report_empty = FALSE)
+      variable_modeller(testHYS[,..x][[1]], 100, names(testHYS)[x], report_empty = FALSE, comments = FALSE)
     }
 
     code <- lapply(seq_along(testHYS), batch_variable_modeller)
 
-    cat(unlist(code), sep = ",\n\n") #copy this into your DT generating code
+    variablesToAdd <- paste(unlist(code), collapse =", ") #copy this into your DT generating code
 
-    test <- data.table( parse(text = cat(unlist(code), sep = ",\n\n")))
+
+
+    eval( parse(text =paste0(" test <- data.table(", variablesToAdd, ")",collapse =  "")))
 
     generate_test_data <- function(dataset = "generic", observations = 100, seed = 1000){
       ### generates a synthetic data set appropriate for testing functions relying on APDE data structures and where you do not want to use real data
@@ -157,6 +170,7 @@ setup_test_data <- function() {
           indicator3 = as.factor(sample(c("<20","21-40","41-60","61<"),  observations, replace = T)),
           chi_year = 202)
 
+      } else if(dataset == "hys") {
       }
       return(test_data)
     }
