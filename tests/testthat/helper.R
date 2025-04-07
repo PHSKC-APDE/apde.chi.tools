@@ -41,92 +41,118 @@ setup_test_data <- function() {
 
 
 
-    variable_modeller <- function(oneVariable, numberOfObservations, varName = NA, report_empty = TRUE, comments = TRUE) {
-      if(any(class(oneVariable) %in% "data.table")) {
-        if(ncol(oneVariable) == 1) {
-          message(class(oneVariable))
-          oneVariable <- oneVariable[,1][[1]]
-          message(class(oneVariable))
-          message("caught DT")
+
+    number_of_observations <- 100
+    comments <- TRUE
+    return_code <- FALSE
+
+    generate.test.data <- function(ph.data, number_of_observations, years, return_code = TRUE, comments = TRUE) {
+      ### given a data table of public health data, can return code or a DT of identical structure and similar, but non-correlated, values for each variable.
+      ### warning: r has a character limit of 4094 for executing a line of code in the console. If code is requested, and the resulting code is longer, you must break this into smaller chunks (and rbind the results) or source the code as a script (I need to test if this will work)
+      ### warning: currently will create multiple years, but reads the received data set as if it were one year, and models multiple years by repeating the model process with shifted seed
+      ### warning: number.of.observations is of the final dataset. If the requested number does not divide evenly across the number of years, the result will be rounded up and the user should remove observations if necessary
+      ### warning: the data returned is modelled on the data given but correlations between variables are not. This effectively anonymizes results as long as the underlying populations are diverse or large enough. A small enough population may provide sufficient certainty of the results. (build an example, like seperate runs of this with a mono-race table bound together, versus a multi race table)
+
+      if(!return_code & comments) {
+        message("user has requested data, comments set to FALSE")
+        comments <- FALSE
+      }
+
+      variable_modeller <- function(oneVariable, number_of_observations, varName = NA, comments = TRUE) {
+        if(any(class(oneVariable) %in% "data.table")) {
+          if(ncol(oneVariable) == 1) {
+            message(class(oneVariable))
+            oneVariable <- oneVariable[,1][[1]]
+            message(class(oneVariable))
+            message("caught DT")
+          } else {
+            stop("more than 1 column passed. Only pass a vector or one column")
+          }
+        }
+        #note : ooooooocurrently setting 61 as categorical threshold because of HRAs.
+
+        #if no match, report unmatched type
+        instructions <- NA
+
+        if(is.na(varName)){
+          variableName <- sub(".*\\$.*?", "\\1", deparse(substitute(oneVariable)))
         } else {
-          stop("more than 1 column passed. Only pass a vector or one column")
+          variableName <- varName
         }
-      }
-      #note : ooooooocurrently setting 61 as categorical threshold because of HRAs.
 
-      #if no match, report unmatched type
-      instructions <- NA
-
-      if(is.na(varName)){
-        variableName <- sub(".*\\$.*?", "\\1", deparse(substitute(oneVariable)))
-      } else {
-        variableName <- varName
-      }
-
-      #factor
-      if(is.na(instructions) & class(oneVariable) == "factor") {
-        orderTF <- is.ordered(oneVariable)
-        detectedLevels <- levels(oneVariable)
-        instructions <- paste0(variableName," = factor(sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),")), levels = c('",paste0(detectedLevels, collapse = "', '"),"'), ordered = ", orderTF,")", collapse = "")
-        instructions <- gsub("'NA'", "NA", instructions)
-        if(comments){
-          instructions <- paste0(instructions, " # as a factor")
+        #factor
+        if(is.na(instructions) & class(oneVariable) == "factor") {
+          orderTF <- is.ordered(oneVariable)
+          detectedLevels <- levels(oneVariable)
+          instructions <- paste0(variableName," = factor(sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),")), levels = c('",paste0(detectedLevels, collapse = "', '"),"'), ordered = ", orderTF,")", collapse = "")
+          instructions <- gsub("'NA'", "NA", instructions)
+          if(comments){
+            instructions <- paste0(instructions, " # as a factor")
+          }
         }
-      }
 
-      #integer: categorical
-      if(is.na(instructions) & (class(oneVariable) == "numeric" | class(oneVariable) == "integer") & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
-        instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
-        instructions <- gsub("'NA'", "NA", instructions)
-        if(comments){
-          instructions <- paste0(instructions, " # as a categorical non factor")
+        #integer: categorical
+        if(is.na(instructions) & (class(oneVariable) == "numeric" | class(oneVariable) == "integer") & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
+          instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
+          instructions <- gsub("'NA'", "NA", instructions)
+          if(comments){
+            instructions <- paste0(instructions, " # as a categorical non factor")
+          }
         }
-      }
 
-      #character: categorical
-      if(is.na(instructions) & class(oneVariable) == "character" & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
-        instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", numberOfObservations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
-        instructions <- gsub("'NA'", "NA", instructions)
-        if(comments){
+        #character: categorical
+        if(is.na(instructions) & class(oneVariable) == "character" & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
+          instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
+          instructions <- gsub("'NA'", "NA", instructions)
+          if(comments){
 
-          instructions <- paste0(instructions, " # as a categorical non factor")
+            instructions <- paste0(instructions, " # as a categorical non factor")
+          }
         }
-      }
 
-      #continuous
-      if(is.na(instructions) & class(oneVariable) == "numeric" & (length(unique(oneVariable)) > 61 & length(oneVariable) > 61)) {
-        #uniform distribution
-        instructions <- paste0(variableName, " = runif(", numberOfObservations,", ", min(oneVariable, na.rm = TRUE), ", ", max(oneVariable, na.rm = TRUE),")")
-        if(comments){
-          instructions <- paste0(instructions, " # continuous with uniform distribution")
+        #continuous
+        if(is.na(instructions) & class(oneVariable) == "numeric" & (length(unique(oneVariable)) > 61 & length(oneVariable) > 61)) {
+          #uniform distribution
+          instructions <- paste0(variableName, " = runif(", number_of_observations,", ", min(oneVariable, na.rm = TRUE), ", ", max(oneVariable, na.rm = TRUE),")")
+          if(comments){
+            instructions <- paste0(instructions, " # continuous with uniform distribution")
+          }
         }
-      }
 
-      #if unmatched
-      if(is.na(instructions) & report_empty) {
-        if(comments){
+        #if unmatched
+        if(is.na(instructions) & comments) {
           instructions <- paste0("# data type of ",variableName ," not modelled")
         }
+
+        if(is.na(instructions)) {
+
+        } else{
+          return(instructions)
+        }
       }
 
-      if(is.na(instructions)) {
-
-      } else{
-        return(instructions)
+      batch_variable_modeller <- function(x) {
+        variable_modeller(ph.data[,..x][[1]], number_of_observations, names(ph.data)[x], comments = comments)
       }
+
+      codeList <- lapply(seq_along(ph.data), batch_variable_modeller)
+
+      codeText <- paste(unlist(codeList), collapse =", \n" ) #copy this into your DT generating code
+
+      if(return_code) {
+
+        cat(codeText)
+
+      } else {
+
+
+        eval( parse(text = paste0("DT <- data.table(", codeText, ")",collapse =  "")))
+
+        return(DT)
+      }
+
     }
 
-    batch_variable_modeller <- function(x) {
-      variable_modeller(testHYS[,..x][[1]], 100, names(testHYS)[x], report_empty = FALSE, comments = FALSE)
-    }
-
-    code <- lapply(seq_along(testHYS), batch_variable_modeller)
-
-    variablesToAdd <- paste(unlist(code), collapse =", ") #copy this into your DT generating code
-
-
-
-    eval( parse(text =paste0(" test <- data.table(", variablesToAdd, ")",collapse =  "")))
 
     generate_test_data <- function(dataset = "generic", observations = 100, seed = 1000){
       ### generates a synthetic data set appropriate for testing functions relying on APDE data structures and where you do not want to use real data
@@ -145,7 +171,7 @@ setup_test_data <- function() {
         test_data <- data.table(
           id = 1:observations,
           chi_geo_kc = sample(c(0,1), observations, replace = T),
-          chi_race_4 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), numberOfObservations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
+          chi_race_4 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), number_of_observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
           chi_sex = as.factor(sample(c("Male","Female"), observations, replace = T)),
           chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T), levels = c("South","North","Seattle","East")),
           indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations, replace = T)),
@@ -162,7 +188,7 @@ setup_test_data <- function() {
         test_data <- data.table(
           id = 1:observations,
           chi_geo_kc = sample(c(0,1), observations, replace = T),
-          chi_race_eth8 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), numberOfObservations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
+          chi_race_eth8 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), number_of_observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
           chi_sex = as.factor(sample(c("Male","Female"), observations, replace = T)),
           chi_geo_region = as.factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T)),
           indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations, replace = T)),
