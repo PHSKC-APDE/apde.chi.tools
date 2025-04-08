@@ -46,7 +46,7 @@ setup_test_data <- function() {
     comments <- TRUE
     return_code <- FALSE
 
-    generate.test.data <- function(ph.data, number_of_observations, years, return_code = TRUE, comments = TRUE) {
+    data_modeller <- function(ph.data, number_of_observations, years, return_code = TRUE, comments = TRUE) {
       ### given a data table of public health data, can return code or a DT of identical structure and similar, but non-correlated, values for each variable.
       ### warning: r has a character limit of 4094 for executing a line of code in the console. If code is requested, and the resulting code is longer, you must break this into smaller chunks (and rbind the results) or source the code as a script (I need to test if this will work)
       ### warning: currently will create multiple years, but reads the received data set as if it were one year, and models multiple years by repeating the model process with shifted seed
@@ -120,8 +120,12 @@ setup_test_data <- function() {
         }
 
         #if unmatched
-        if(is.na(instructions) & comments) {
-          instructions <- paste0("# data type of ",variableName ," not modelled")
+        if(is.na(instructions)) {
+
+          instructions <- paste0("`",variableName,"`", " = NA")
+          if(comments){
+            instructions <- paste0(instructions, " # data type not modelled")
+          }
         }
 
         if(is.na(instructions)) {
@@ -137,11 +141,19 @@ setup_test_data <- function() {
 
       codeList <- lapply(seq_along(ph.data), batch_variable_modeller)
 
-      codeText <- paste(unlist(codeList), collapse =", \n" ) #copy this into your DT generating code
+      if(comments) {
+
+        codeListFormatted <- c(gsub(" #", ", #", codeList[1:(length(codeList)-1)]), codeList[length(codeList)])
+        codeText <- paste(unlist(codeListFormatted), collapse =" \n" ) #copy this into your DT generating code
+
+      } else {
+        codeText <- paste(unlist(codeList), collapse =", " ) #copy this into your DT generating code
+      }
 
       if(return_code) {
 
         cat(codeText)
+        return(codeList)
 
       } else {
 
@@ -153,6 +165,8 @@ setup_test_data <- function() {
 
     }
 
+test <- data_modeller(testHYS, number_of_observations = 1000, years = 2020, return_code = FALSE, comments = TRUE)
+testT <- data_modeller(testHYS, number_of_observations = 1000, years = 2020, return_code = TRUE, comments = TRUE)
 
     generate_test_data <- function(dataset = "generic", observations = 100, seed = 1000){
       ### generates a synthetic data set appropriate for testing functions relying on APDE data structures and where you do not want to use real data
