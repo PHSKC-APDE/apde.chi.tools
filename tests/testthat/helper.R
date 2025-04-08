@@ -48,10 +48,10 @@ setup_test_data <- function() {
 
     data_modeller <- function(ph.data, number_of_observations, years, return_code = TRUE, comments = TRUE) {
       ### given a data table of public health data, can return code or a DT of identical structure and similar, but non-correlated, values for each variable.
-      ### warning: r has a character limit of 4094 for executing a line of code in the console. If code is requested, and the resulting code is longer, you must break this into smaller chunks (and rbind the results) or source the code as a script (I need to test if this will work)
-      ### warning: currently will create multiple years, but reads the received data set as if it were one year, and models multiple years by repeating the model process with shifted seed
-      ### warning: number.of.observations is of the final dataset. If the requested number does not divide evenly across the number of years, the result will be rounded up and the user should remove observations if necessary
-      ### warning: the data returned is modelled on the data given but correlations between variables are not. This effectively anonymizes results as long as the underlying populations are diverse or large enough. A small enough population may provide sufficient certainty of the results. (build an example, like seperate runs of this with a mono-race table bound together, versus a multi race table)
+      ### warning: r has a run-instruction character limit of 4094. If code is requested, and the resulting instruction is longer, you must break this into seperate instructions, such making several smaller DTs and binding them together. (test if sourcing as a script is an exception to the limit)
+      ### warning: (not implemented) currently will create multiple years, but reads the received data set as if it were one year, and models multiple years by repeating the model process with shifted seed
+      ### warning: (not implemented) number.of.observations is of the final dataset. If the requested number does not divide evenly across the number of years, the result will be rounded up and the user should remove observations if necessary
+      ### warning: the data returned is modelled on the data given but correlations between variables are not. This effectively anonymizes results as long as the underlying populations are diverse or large enough. A small enough population may provide sufficient certainty of the results. (note to self for vignette: build an example showing seperate runs. One of a DT built from multiple mono-race reuslts bound together, versus building results from a table with observations from multiple races. Show how the results in the former more closely resembles results by race from actual data.)
 
       if(!return_code & comments) {
         message("user has requested data, comments set to FALSE")
