@@ -54,18 +54,26 @@ chi_generate_metadata <- function(meta.old = NULL,
   meta.new[!is.na(latest_year_countx), latest_year_count := latest_year_countx]
   meta.new[!is.na(latest_year_kc_popx), latest_year_kc_pop := latest_year_kc_popx]
   meta.new[, c("latest_yearx", "latest_year_resultx", "run_datex", "latest_year_countx", "latest_year_kc_popx") := NULL]
-  # update valid_years ----
-  meta.new[as.integer(latest_year) > suppressWarnings(as.integer(rads::substrRight(valid_years, 1, 4))),
-           valid_years := suppressWarnings(paste(as.integer(substr(valid_years, 1, 4)):as.integer(latest_year), collapse = " "))]
-  # Since trends only have 10 years of data, valid_years should be limited to 10 years max ----
-  meta.new[, valid_years := {
-    allyears <- sort(as.integer(strsplit(valid_years, " ")[[1]])) # convert valid_years to a vector of numbers
-    if(length(allyears) > 10) {
-      paste(tail(sort(allyears), 10), collapse = " ")
-    } else {
-      paste(allyears, collapse = " ")
-    }
-  }, by = indicator_key]
+
+  # Update valid_years & keep up to 10 years ----
+    meta.new[, valid_years := {
+      # Get current years as vector
+      years_vector <- as.integer(strsplit(valid_years, " ")[[1]])
+
+      # Add latest_year if it's not already there
+      if (!is.na(latest_year) && !latest_year %in% years_vector) {
+        years_vector <- c(years_vector, latest_year)
+      }
+
+      # Sort and keep only most recent 10 years if there are more than 10
+      years_vector <- sort(unique(years_vector))
+      if (length(years_vector) > 10) {
+        years_vector <- tail(years_vector, 10)
+      }
+
+      # Convert back to space-separated string
+      paste(years_vector, collapse = " ")
+    }, by = indicator_key]
 
   # Ensure there are no missing important metadata cells (with exceptions) ----
   unexpected_missing <- data.frame()
