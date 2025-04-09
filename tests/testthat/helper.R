@@ -40,14 +40,9 @@ setup_test_data <- function() {
     )
 
 
-
-
-    number_of_observations <- 100
-    comments <- TRUE
-    return_code <- FALSE
-
-    data_modeller <- function(ph.data, number_of_observations, years, return_code = TRUE, comments = TRUE) {
-      ### given a data table of public health data, can return code or a DT of identical structure and similar, but non-correlated, values for each variable.
+    data_modeller <- function(ph.data, number_of_observations, return_code = TRUE, comments = TRUE) {
+      ### receives a data table of public health data, number of observations and user decision if they want code (or a DT) and, if code, if it should be commented
+      ### returns code or a DT of identical structure and similar, but non-correlated, values for each variable provided that can be modeled. If comments are enabled, will return comment for non modeled variables.
       ### warning: r has a run-instruction character limit of 4094. If code is requested, and the resulting instruction is longer, you must break this into seperate instructions, such making several smaller DTs and binding them together. (test if sourcing as a script is an exception to the limit)
       ### warning: (not implemented) currently will create multiple years, but reads the received data set as if it were one year, and models multiple years by repeating the model process with shifted seed
       ### warning: (not implemented) number.of.observations is of the final dataset. If the requested number does not divide evenly across the number of years, the result will be rounded up and the user should remove observations if necessary
@@ -144,10 +139,10 @@ setup_test_data <- function() {
       if(comments) {
 
         codeListFormatted <- c(gsub(" #", ", #", codeList[1:(length(codeList)-1)]), codeList[length(codeList)])
-        codeText <- paste(unlist(codeListFormatted), collapse =" \n" ) #copy this into your DT generating code
+        codeText <- paste(unlist(codeListFormatted), collapse =" \n" )
 
       } else {
-        codeText <- paste(unlist(codeList), collapse =", " ) #copy this into your DT generating code
+        codeText <- paste(unlist(codeList), collapse =", " )
       }
 
       if(return_code) {
@@ -165,13 +160,11 @@ setup_test_data <- function() {
 
     }
 
-test <- data_modeller(testHYS, number_of_observations = 1000, years = 2020, return_code = FALSE, comments = TRUE)
-testT <- data_modeller(testHYS, number_of_observations = 1000, years = 2020, return_code = TRUE, comments = TRUE)
 
-    generate_test_data <- function(dataset = "generic", observations = 100, seed = 1000){
+    generate_test_data <- function(dataset = "generic", observations = 100, seed = 1000, years = 2023){
       ### generates a synthetic data set appropriate for testing functions relying on APDE data structures and where you do not want to use real data
-      ### receives description of data set to emulate, number of observations to include, and a seed. If dataset is "generic" will returned structure will have idealized chi values and generic indicators
-      ### returns a data.table of synthetic data
+      ### receives description of data set to emulate, number of observations to include, a seed and number of years.
+      ### returns a data.table of synthetic data. If dataset is "generic" the returned structure will have idealized chi values and generic indicators
 
       # input validation
       datasetOptions <- c("generic", "hys")
@@ -180,44 +173,52 @@ testT <- data_modeller(testHYS, number_of_observations = 1000, years = 2020, ret
         stop(paste0("dataset must be one of: '", paste(datasetOptions, collapse = "', '"),"'"))
       }
 
-      set.seed(seed)
-      if(dataset == "generic") {
-        test_data <- data.table(
-          id = 1:observations,
-          chi_geo_kc = sample(c(0,1), observations, replace = T),
-          chi_race_4 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), number_of_observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
-          chi_sex = as.factor(sample(c("Male","Female"), observations, replace = T)),
-          chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T), levels = c("South","North","Seattle","East")),
-          indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations, replace = T)),
-          indicator2 = as.factor(sample(c(1,2,3,4, NA), observations, replace = T)),
-          indicator3 = as.factor(sample(c("<20","21-40","41-60","61<"),  observations, replace = T)),
-          chi_year = 2023)
-      } else if(dataset == "hys") {
-        test_data <- data.table(abusive_adult = sample(c(NA, '0', '1'), 100, replace = TRUE, prob = c(0.273034917704968, 0.054280110752192, 0.67268497154284)),
-                                chi_sex = factor(sample(c('Female', 'Male', NA), 100, replace = TRUE, prob = c(0.491578218735579, 0.490924473157976, 0.0174973081064452)), levels = c('Female', 'Male'), ordered = FALSE)
+      year_iterator <- function(observations, seed, years) {
 
-        )
-
-      } else if(dataset == "hysold") {
-        test_data <- data.table(
-          id = 1:observations,
-          chi_geo_kc = sample(c(0,1), observations, replace = T),
-          chi_race_eth8 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), number_of_observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
-          chi_sex = as.factor(sample(c("Male","Female"), observations, replace = T)),
-          chi_geo_region = as.factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T)),
-          indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations, replace = T)),
-          indicator2 = as.factor(sample(c(1,2,3,4, NA), observations, replace = T)),
-          indicator3 = as.factor(sample(c("<20","21-40","41-60","61<"),  observations, replace = T)),
-          chi_year = 202)
-
-      } else if(dataset == "hys") {
       }
-      return(test_data)
+
+      if(dataset == "generic") {
+
+        for(year in years) {
+          seed <- seed*year
+          DTIteration <- data.table(
+            id = 1:observations,
+            chi_geo_kc = sample(c(0,1), observations, replace = T),
+            chi_race_4 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), number_of_observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
+            chi_sex = as.factor(sample(c("Male","Female"), observations, replace = T)),
+            chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T), levels = c("South","North","Seattle","East")),
+            indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations, replace = T)),
+            indicator2 = as.factor(sample(c(1,2,3,4, NA), observations, replace = T)),
+            indicator3 = as.factor(sample(c("<20","21-40","41-60","61<"),  observations, replace = T)),
+            chi_year = year)
+          if(exists("returnDT")) {
+            returnDT <- rbind(returnDT, DTIteration)
+          } else {
+            returnDT <- DTIteration
+          }
+        }
+      } else if(dataset == "hys") {
+        returnDT <- data.table()
+
+
+
+      }
+      return(returnDT)
     }
 
+    test_data_generic <- generate_test_data("generic", 100, 1000, c(2016:2023))
+    # testHYS <- get_data_hys()
+    # testBRFSS <- as_table_brfss(get_data_brfss())
+    #
+    #
+    # inputDT <- testHYS
+    #
+    # testDT <- data_modeller(inputDT, number_of_observations = 1000, years = 2020, return_code = FALSE, comments = TRUE)
+    # testCode <- data_modeller(inputDT, number_of_observations = 1000, years = 2020, return_code = TRUE, comments = TRUE)
 
 
     test_analysis_set_twosets <- data.table(
+      #this should work with the generic data set
       cat1 = rep(c('Regions', 'Gender', 'Race/ethnicity'),2),
       cat1_varname = rep(c('chi_geo_region', 'chi_sex', 'race4'),2),
       `_kingcounty` = c('x'),
@@ -228,6 +229,36 @@ testT <- data_modeller(testHYS, number_of_observations = 1000, years = 2020, ret
       set = c(rep(1,3), rep(2,3)),
       set_indicator_keys = c(rep(c('indicator1, indicator2'),3), rep("indicator3",3))
     )
+
+    test_analysis_set_twosets_estimates <- data.table(
+      for(indicator in c("indicator1","indicator2")) {
+        partialDT <- data.table(
+          tab = c(rep('demgroups', 4), '_kingcounty'),
+          year = c('2023'),
+          cat1 = c('Region', 'Region', 'Region', 'Region', 'King County'),
+          cat1_group = c("East", "North", "Seattle", "South", 'King County'),
+          cat1_varname = c('chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_kc'),
+          cat2 = NA_character_,
+          cat2_group = NA_character_,
+          cat2_varname = NA_character_,
+          data_source = 'JustTesting',
+          caution = NA_character_,
+          suppression = NA_character_,
+          chi = 1,
+          source_date = Sys.Date(),
+          run_date = Sys.Date(),
+          numerator = c(111, 175, 210, 600, 430000),
+          denominator = c(1000, 1500, 2000, 2500, 2200000)
+        )
+      }
+
+
+    )
+    test_estimates[, result := numerator / denominator]
+    test_estimates[, se := sqrt((result * (1-result)) / denominator)]
+    test_estimates[, rse := 100 * se / result]
+    test_estimates[, lower_bound := result - 1.96 * se]
+    test_estimates[, upper_bound := result + 1.96 * se]
 
   # Sample instructions ----
     test_instructions <- data.table(
@@ -340,6 +371,7 @@ testT <- data_modeller(testHYS, number_of_observations = 1000, years = 2020, ret
   list(my.analytic = test_analytic,
        my.analysis_set = test_analysis_set,
        my.analysis_set_twosets = test_analysis_set_twosets,
+       my.generic_data = test_data_generic,
        my.estimate= test_estimates,
        my.estimate_old= test_estimates_old,
        my.metadata = test_metadata,
