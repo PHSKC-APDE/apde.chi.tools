@@ -307,7 +307,7 @@ chi_chars_injury <- function(ph.indicator = NA,
 
     # Use fsetdiff to find instructions that didn't produce results
     unused_instructions <- fsetdiff(
-      setcolorder(instructions[, start := max(2012, start)], names(result_combos)),
+      setcolorder(instructions[, start := pmax(2012, start)], names(result_combos)),
       result_combos
     )
 
