@@ -302,8 +302,9 @@ chi_chars_injury <- function(ph.indicator = NA,
                                           start = as.numeric(substr(year, 1, 4)),
                                           end = as.numeric(substr(year, nchar(year) - 3, nchar(year))) )])
 
-    # Handle the special case for race3_hispanic
+    # Handle the special case for race3_hispanic (format it like the instructions)
     result_combos[cat1_varname == 'race3' & cat1 == 'Ethnicity', cat1_varname := 'race3_hispanic']
+    result_combos[cat2_varname == 'race3' & cat2 == 'Ethnicity', cat2_varname := 'race3_hispanic']
 
     # Use fsetdiff to find instructions that didn't produce results
     unused_instructions <- fsetdiff(
