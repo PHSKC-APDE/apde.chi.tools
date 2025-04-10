@@ -55,7 +55,10 @@ setup_test_data <- function() {
       if(inherits(number_of_observations, "character") & return_code == FALSE) {
         number_of_observations <- as.integer(number_of_observations)
         if(is.na(number_of_observations)) {
-          stop("user has requested data, but 'number_of_observations' could not be coerced to an integer. 'number_of_observations' must be an integer to perform calculations.")
+          stop("user has requested data, but 'number_of_observations' could not be coerced to an integer. 'number_of_observations' must be an integer.")
+        }
+        if(!(number_of_observations > 0)) {
+          stop("number_of_observations must be an integer greater than 0")
         }
       }
       #if(!return_code & comments) {
@@ -75,9 +78,7 @@ setup_test_data <- function() {
             stop("more than 1 column passed. Only pass a vector or one column")
           }
         }
-        #note : ooooooocurrently setting 61 as categorical threshold because of HRAs.
 
-        #if no match, report unmatched type
         instructions <- NA
 
         if(is.na(varName)){
@@ -86,8 +87,10 @@ setup_test_data <- function() {
           variableName <- varName
         }
 
+        oneVariableClass <- class(oneVariable)
+
         #factor
-        if(is.na(instructions) & class(oneVariable) == "factor") {
+        if(is.na(instructions) & inherits(oneVariable, "factor")) {
           orderTF <- is.ordered(oneVariable)
           detectedLevels <- levels(oneVariable)
           instructions <- paste0(variableName," = factor(sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),")), levels = c('",paste0(detectedLevels, collapse = "', '"),"'), ordered = ", orderTF,")", collapse = "")
@@ -98,8 +101,8 @@ setup_test_data <- function() {
         }
 
         #integer: categorical
-        if(is.na(instructions) & (class(oneVariable) == "numeric" | class(oneVariable) == "integer") & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
-          instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
+        if(is.na(instructions) & inherits(oneVariable, "integer") & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
+          instructions <- paste0(variableName," = as.integer(sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),")))", collapse = "")
           instructions <- gsub("'NA'", "NA", instructions)
           if(comments){
             instructions <- paste0(instructions, " # as a categorical non factor")
@@ -107,7 +110,7 @@ setup_test_data <- function() {
         }
 
         #character: categorical
-        if(is.na(instructions) & class(oneVariable) == "character" & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
+        if(is.na(instructions) & inherits(oneVariable, "character") & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
           instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
           instructions <- gsub("'NA'", "NA", instructions)
           if(comments){
@@ -116,12 +119,35 @@ setup_test_data <- function() {
           }
         }
 
-        #continuous
-        if(is.na(instructions) & class(oneVariable) == "numeric" & (length(unique(oneVariable)) > 61 & length(oneVariable) > 61)) {
+        #continuous integer
+        if(is.na(instructions) & inherits(oneVariable, "integer") & (length(unique(oneVariable)) > 61 & length(oneVariable) > 61)) {
           #uniform distribution
-          instructions <- paste0(variableName, " = runif(", number_of_observations,", ", min(oneVariable, na.rm = TRUE), ", ", max(oneVariable, na.rm = TRUE),")")
+          instructions <- paste0(variableName, " = as.integer(runif(", number_of_observations,", ", min(oneVariable, na.rm = TRUE), ", ", max(oneVariable, na.rm = TRUE),"))")
           if(comments){
-            instructions <- paste0(instructions, " # continuous with uniform distribution")
+            instructions <- paste0(instructions, " # continuous integer with uniform distribution")
+          }
+        }
+
+        #continuous double
+        if(is.na(instructions) & inherits(oneVariable, "double") & (length(unique(oneVariable)) > 61 & length(oneVariable) > 61)) {
+          count_decimal_places <- function(x) {
+            if (!is.numeric(x)) return(NA)
+            sapply(x, function(num) {
+              if (is.na(num)) return(NA)
+              str_num <- as.character(num)
+              if (grepl("\\.", str_num)) {
+                return(nchar(strsplit(str_num, "\\.")[[1]][2]))
+              } else {
+                return(0)
+              }
+            })
+          }
+          oneVariable[,RH := count_decimal_places(oneVariable[[1]])]
+          numberOfDecimals <- max(oneVariable$RH, na.rm = T)
+          #uniform distribution
+          instructions <- paste0(variableName, " = as.double(round(runif(", number_of_observations,", ", min(oneVariable, na.rm = TRUE), ", ", max(oneVariable, na.rm = TRUE),"),", numberOfDecimals , "))")
+          if(comments){
+            instructions <- paste0(instructions, " # continuous double with uniform distribution")
           }
         }
 
@@ -174,9 +200,11 @@ setup_test_data <- function() {
       }
 
     }
+rads::list_dataset_columns("birth")
 
     ph.data <- get_data_birth(cols = c('race4', 'chi_age', 'hra20_name', 'sex', 'birth_weight_grams'))
-
+    ph.data <- get_data_birth(cols = c('race4', 'chi_age', 'hra20_name', 'sex', 'birth_weight_grams', "time_of_birth", "mother_birthplace_country" ))
+    #ph.data <- get_data_birth()
     todo <- data_modeller(ph.data = ph.data, number_of_observations =  10000, return_code = F, comments = TRUE)
 
     tada <- data_modeller(ph.data = ph.data, number_of_observations =  10000, return_code = T, comments = TRUE)
