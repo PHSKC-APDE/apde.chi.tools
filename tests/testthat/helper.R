@@ -200,27 +200,27 @@ setup_test_data <- function() {
       }
 
     }
-rads::list_dataset_columns("birth")
 
-    ph.data <- get_data_birth(cols = c('race4', 'chi_age', 'hra20_name', 'sex', 'birth_weight_grams'))
-    ph.data <- get_data_birth(cols = c('race4', 'chi_age', 'hra20_name', 'sex', 'birth_weight_grams', "time_of_birth", "mother_birthplace_country" ))
-    #ph.data <- get_data_birth()
-    todo <- data_modeller(ph.data = ph.data, number_of_observations =  10000, return_code = F, comments = TRUE)
-
-    tada <- data_modeller(ph.data = ph.data, number_of_observations =  10000, return_code = T, comments = TRUE)
-
-    codeListParsed <- c(list("DT <- data.table("),gsub(" #", ", #", tada[1:(length(tada)-1)]), gsub(" #",") #",tada[length(tada)]))
-
-    codeText <- paste(unlist(codeListParsed), collapse =" \n" )
-
-    tada <- eval( parse(text = paste0(codeText)))
-
-
-
-    str(ph.data)
-    str(todo)
-    str(tada)
-
+#
+#     ph.data <- get_data_birth(cols = c('race4', 'chi_age', 'hra20_name', 'sex', 'birth_weight_grams'))
+#     ph.data <- get_data_birth(cols = c('race4', 'chi_age', 'hra20_name', 'sex', 'birth_weight_grams', "time_of_birth", "mother_birthplace_country" ))
+#     #ph.data <- get_data_birth()
+#     todo <- data_modeller(ph.data = ph.data, number_of_observations =  10000, return_code = F, comments = TRUE)
+#
+#     tada <- data_modeller(ph.data = ph.data, number_of_observations =  10000, return_code = T, comments = TRUE)
+#
+#     codeListParsed <- c(list("DT <- data.table("),gsub(" #", ", #", tada[1:(length(tada)-1)]), gsub(" #",") #",tada[length(tada)]))
+#
+#     codeText <- paste(unlist(codeListParsed), collapse =" \n" )
+#
+#     tada <- eval( parse(text = paste0(codeText)))
+#
+#
+#
+#     str(ph.data)
+#     str(todo)
+#     str(tada)
+#
 
     ################################ end migrate this out ###########################################################
 
@@ -373,19 +373,6 @@ rads::list_dataset_columns("birth")
     test_data_generic <- generate_test_data("generic", 100, 1000, c(2016:2023))
     test_data_brfss <- generate_test_data("brfss", 100, 1000, c(2016:2023))
     test_data_death <- generate_test_data("death", 100, 1000, c(2016:2023))
-
-    d1 <- get_data_brfss(cols = c("chi_year", "age", "age5_v2", "chi_sex", "race3",  "race4", "hispanic",
-                                  "income6b", "sexorien", "trnsgndr", "veteran3", "chi_geo_region",
-                                  "asthnow", "bphigh",  "cholchk5", "x_crcrec", "x_crcrec2", "cvdheart", "cvdstrk3", "denvst1", "diab2",
-                                  "exerany",  "disab2",   "ecignow1", "firearm4", "flushot7", "fnotlast", "sdhfood1", "genhlth2",
-                                  "mam2yrs", "medcost1", "x_pastaer", "fmd", "mjnow", "obese", "x_bmi5cat", "x_veglt1a",
-                                  "crvscrnx", "persdoc3", "x_pneumo3", "smoker1"),
-                         year = 2023)
-    d1 <- rads::as_table_brfss(d1)
-
-inputDT <- d1
-
-    testCode <- data_modeller(inputDT, number_of_observations = "observations", return_code = TRUE, comments = T)
 
     test_analysis_set_twosets <- data.table(
       #this should work with the generic data set
