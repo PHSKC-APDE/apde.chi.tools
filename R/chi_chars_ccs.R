@@ -419,6 +419,9 @@ chi_chars_ccs <- function(ph.indicator = NA,
 
   }
 
+  # Drop irrelevant ages ----
+  result <- chi_keep_proper_ages(result)
+
   # Return data.table ----
   return(result)
 }
