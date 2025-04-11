@@ -246,7 +246,7 @@ setup_test_data <- function() {
           DTIteration <- data.table(
             id = 1:observations,
             chi_geo_kc = sample(c(0,1), observations, replace = T),
-            chi_race_4 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
+            chi_race_7 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
             chi_sex = as.factor(sample(c("Male","Female"), observations, replace = T)),
             chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T), levels = c("South","North","Seattle","East")),
             indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations, replace = T)),
@@ -377,45 +377,51 @@ setup_test_data <- function() {
     test_analysis_set_twosets <- data.table(
       #this should work with the generic data set
       cat1 = rep(c('Regions', 'Gender', 'Race/ethnicity'),2),
-      cat1_varname = rep(c('chi_geo_region', 'chi_sex', 'race4'),2),
+      cat1_varname = rep(c('chi_geo_region', 'chi_sex', 'chi_race_7'),2),
       `_kingcounty` = c('x'),
-      `_wastate` = rep(c(rep(NA_character_,2),"x"),2),
-      demgroups = rep(c(rep(NA_character_,2),"x"),2),
-      crosstabs = rep(c(rep(NA_character_,2),"x"),2),
-      trends = rep(c(rep(NA_character_,2),"x"),2),
+      `_wastate` = NA_character_,
+      demgroups = c(rep(NA_character_,3),rep("x", 3)),
+      crosstabs = c(rep(NA_character_,3),rep("x", 3)),
+      trends = c(rep(NA_character_,3),rep("x", 3)),
       set = c(rep(1,3), rep(2,3)),
       set_indicator_keys = c(rep(c('indicator1, indicator2'),3), rep("indicator3",3))
     )
 
-    test_analysis_set_twosets_estimates <- data.table(
-      for(indicator in c("indicator1","indicator2")) {
-        partialDT <- data.table(
-          tab = c(rep('demgroups', 4), '_kingcounty'),
-          year = c('2023'),
-          cat1 = c('Region', 'Region', 'Region', 'Region', 'King County'),
-          cat1_group = c("East", "North", "Seattle", "South", 'King County'),
-          cat1_varname = c('chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_kc'),
-          cat2 = NA_character_,
-          cat2_group = NA_character_,
-          cat2_varname = NA_character_,
-          data_source = 'JustTesting',
-          caution = NA_character_,
-          suppression = NA_character_,
-          chi = 1,
-          source_date = Sys.Date(),
-          run_date = Sys.Date(),
-          numerator = c(111, 175, 210, 600, 430000),
-          denominator = c(1000, 1500, 2000, 2500, 2200000)
-        )
-      }
+    # create twoset analysis set
+    #remove("test_twoset_estimates")
+    for(indicator in c("indicator1","indicator2")) {
+      partialDT <- data.table(
+        indicator = indicator,
+        tab = c(rep('demgroups', 4), '_kingcounty'),
+        year = c('2023'),
+        cat1 = c('Region', 'Region', 'Region', 'Region', 'King County'),
+        cat1_group = c("East", "North", "Seattle", "South", 'King County'),
+        cat1_varname = c('chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_kc'),
+        cat2 = NA_character_,
+        cat2_group = NA_character_,
+        cat2_varname = NA_character_,
+        data_source = 'JustTesting',
+        caution = NA_character_,
+        suppression = NA_character_,
+        chi = 1,
+        source_date = Sys.Date(),
+        run_date = Sys.Date(),
+        numerator = c(111, 175, 210, 600, 430000),
+        denominator = c(1000, 1500, 2000, 2500, 2200000)
+      )
+      if(exists("test_twoset_estimates")) {
+        test_twoset_estimates <- rbind(test_twoset_estimates, partialDT)
+    } else {
+      test_twoset_estimates <- partialDT
+    }
+    }
+    test_twoset_estimates[, result := numerator / denominator]
+    test_twoset_estimates[, se := sqrt((result * (1-result)) / denominator)]
+    test_twoset_estimates[, rse := 100 * se / result]
+    test_twoset_estimates[, lower_bound := result - 1.96 * se]
+    test_twoset_estimates[, upper_bound := result + 1.96 * se]
 
 
-    )
-    test_estimates[, result := numerator / denominator]
-    test_estimates[, se := sqrt((result * (1-result)) / denominator)]
-    test_estimates[, rse := 100 * se / result]
-    test_estimates[, lower_bound := result - 1.96 * se]
-    test_estimates[, upper_bound := result + 1.96 * se]
 
   # Sample instructions ----
     test_instructions <- data.table(
@@ -454,32 +460,6 @@ setup_test_data <- function() {
     test_estimates[, rse := 100 * se / result]
     test_estimates[, lower_bound := result - 1.96 * se]
     test_estimates[, upper_bound := result + 1.96 * se]
-
-    test_estimates_twosets <- data.table(
-      indicator_key = c("indicator1"),
-      tab = c(rep('demgroups', 4), '_kingcounty'),
-      year = c('2023'),
-      cat1 = c('Region', 'Region', 'Region', 'Region', 'King County'),
-      cat1_group = c("East", "North", "Seattle", "South", 'King County'),
-      cat1_varname = c('chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_kc'),
-      cat2 = NA_character_,
-      cat2_group = NA_character_,
-      cat2_varname = NA_character_,
-      data_source = 'JustTesting',
-      caution = NA_character_,
-      suppression = NA_character_,
-      chi = 1,
-      source_date = Sys.Date(),
-      run_date = Sys.Date(),
-      numerator = c(111, 175, 210, 600, 430000),
-      denominator = c(1000, 1500, 2000, 2500, 2200000)
-    )
-    test_estimates_twosets[, result := numerator / denominator]
-    test_estimates_twosets[, se := sqrt((result * (1-result)) / denominator)]
-    test_estimates_twosets[, rse := 100 * se / result]
-    test_estimates_twosets[, lower_bound := result - 1.96 * se]
-    test_estimates_twosets[, upper_bound := result + 1.96 * se]
-
 
 
     test_estimates_old <- data.table(
