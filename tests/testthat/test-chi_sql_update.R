@@ -15,7 +15,7 @@ test_that("chi_update_sql validates inputs", {
       "Validation may be flawed for the following variables because they are 100% missing"
     )
   } else {
-    message("no connection to hhsaw available. skipping test of tsql validation")
+    message("connection test skipped")
   }
   expect_error(chi_update_sql(),
                "The results table to push to SQL \\(CHIestimates\\) is missing")
