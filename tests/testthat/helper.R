@@ -370,9 +370,9 @@ setup_test_data <- function() {
       return(returnDT)
     }
 
-    test_data_generic <- generate_test_data("generic", 100, 1000, c(2016:2023))
-    test_data_brfss <- generate_test_data("brfss", 100, 1000, c(2016:2023))
-    test_data_death <- generate_test_data("death", 100, 1000, c(2016:2023))
+    test_data_generic <- generate_test_data("generic", 10000, 1000, c(2016:2023))
+    test_data_brfss <- generate_test_data("brfss", 10000, 1000, c(2016:2023))
+    test_data_death <- generate_test_data("death", 10000, 1000, c(2016:2023))
 
     test_analysis_set_twosets <- data.table(
       #this should work with the generic data set
@@ -388,6 +388,7 @@ setup_test_data <- function() {
     )
 
     # create twoset analysis set
+    #not currently exported, may not be needed
     #remove("test_twoset_estimates")
     for(indicator in c("indicator1","indicator2")) {
       partialDT <- data.table(
@@ -404,23 +405,61 @@ setup_test_data <- function() {
         caution = NA_character_,
         suppression = NA_character_,
         chi = 1,
-        source_date = Sys.Date(),
-        run_date = Sys.Date(),
+        source_date = as.Date("2025-01-01"),
+        run_date = as.Date("2025-01-01"),
         numerator = c(111, 175, 210, 600, 430000),
         denominator = c(1000, 1500, 2000, 2500, 2200000)
       )
       if(exists("test_twoset_estimates")) {
         test_twoset_estimates <- rbind(test_twoset_estimates, partialDT)
-    } else {
-      test_twoset_estimates <- partialDT
+      } else {
+        test_twoset_estimates <- partialDT
+      }
     }
-    }
+    partialDT <- data.table(
+      indicator = "indicator3",
+      tab = c(rep('demgroups', 4), '_kingcounty'),
+      year = c('2023'),
+      cat1 = c('Region', 'Region', 'Region', 'Region', 'King County'),
+      cat1_group = c("East", "North", "Seattle", "South", 'King County'),
+      cat1_varname = c('chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_region', 'chi_geo_kc'),
+      cat2 = NA_character_,
+      cat2_group = NA_character_,
+      cat2_varname = NA_character_,
+      data_source = 'JustTesting',
+      caution = NA_character_,
+      suppression = NA_character_,
+      chi = 1,
+      source_date = as.Date("2025-01-01"),
+      run_date = as.Date("2025-01-01"),
+      numerator = c(111, 175, 210, 600, 430000),
+      denominator = c(1000, 1500, 2000, 2500, 2200000)
+    )
+    test_twoset_estimates <- rbind(test_twoset_estimates, partialDT)
+
     test_twoset_estimates[, result := numerator / denominator]
     test_twoset_estimates[, se := sqrt((result * (1-result)) / denominator)]
     test_twoset_estimates[, rse := 100 * se / result]
     test_twoset_estimates[, lower_bound := result - 1.96 * se]
     test_twoset_estimates[, upper_bound := result + 1.96 * se]
 
+
+    #twoset metadata should work with with the "generic" dataset
+    test_twoset_metadata <- data.table(
+      indicator_key = c("indicator1", "indicator2","indicator3"),
+      result_type = c("proportion"),
+      valid_years = c("2020 2021 2022 2022"),
+      latest_year = c(2022),
+      data_source = 'test',
+      valence = 'positive',
+      latest_year_result = 0.20,
+      latest_year_kc_pop = 2300000,
+      latest_year_count = 460000,
+      map_type = 'hra',
+      unit = 'person',
+      chi = 1,
+      run_date = as.Date("2025-01-01")
+    )
 
 
   # Sample instructions ----
@@ -450,8 +489,8 @@ setup_test_data <- function() {
       caution = NA_character_,
       suppression = NA_character_,
       chi = 1,
-      source_date = Sys.Date(),
-      run_date = Sys.Date(),
+      source_date = as.Date("2025-01-01"),
+      run_date = as.Date("2025-01-01"),
       numerator = c(111, 175, 210, 600, 430000),
       denominator = c(1000, 1500, 2000, 2500, 2200000)
     )
@@ -501,7 +540,7 @@ setup_test_data <- function() {
       map_type = 'hra',
       unit = 'person',
       chi = 1,
-      run_date = Sys.Date()
+      run_date = as.Date("2024-01-01")
       )
 
     validate_hhsaw_connection <- function(hhsaw_key = 'hhsaw'){
