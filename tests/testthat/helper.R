@@ -437,7 +437,7 @@ setup_test_data <- function() {
 
   # Sample estimates ----
     test_estimates <- data.table(
-      indicator_key = c("indicator1"),
+      indicator_key = c("indicatorX"),
       tab = c(rep('demgroups', 4), '_kingcounty'),
       year = c('2023'),
       cat1 = c('Region', 'Region', 'Region', 'Region', 'King County'),
@@ -504,6 +504,71 @@ setup_test_data <- function() {
       run_date = Sys.Date()
       )
 
+    validate_hhsaw_connection <- function(hhsaw_key = 'hhsaw'){
+      # Key should be a character string that can be used to generate a database connection
+      # Also have to allow for the option of interactive authentication
+      # TODO: Allow hhsaw_key to be a database connection itself
+      is.db = function(x){
+        r = try(dbIsValid(hhsaw_key))
+        if(inherits(r, 'try-error')){
+          r = FALSE
+        }
+        r
+      }
+      status <- 0
+      closeserver = TRUE
+      if(is.character(hhsaw_key)){
+        server <- grepl('server', tolower(Sys.info()['release']))
+        trykey <- try(keyring::key_get(hhsaw_key, keyring::key_list(hhsaw_key)[['username']]), silent = T)
+        if (inherits(trykey, "try-error")) warning(paste0("Your hhsaw keyring is not properly configured or you are not connected to the VPN. \n",
+                                                       "Please check your VPN connection and or set your keyring and run the function again. \n",
+                                                       paste0("e.g., keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov') \n"),
+                                                       "When prompted, be sure to enter the same password that you use to log into to your laptop. \n",
+                                                       "If you already have an hhsaw key on your keyring with a different name, you can specify it with the 'mykey = ...' or 'hhsaw_key = ...' argument \n"))
+        rm(trykey)
+
+        if(server == FALSE){
+          con <- try(con <- DBI::dbConnect(odbc::odbc(),
+                                           driver = getOption('rads.odbc_version'),
+                                           server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
+                                           database = 'hhs_analytics_workspace',
+                                           uid = keyring::key_list(hhsaw_key)[["username"]],
+                                           pwd = keyring::key_get(hhsaw_key, keyring::key_list(hhsaw_key)[["username"]]),
+                                           Encrypt = 'yes',
+                                           TrustServerCertificate = 'yes',
+                                           Authentication = 'ActiveDirectoryPassword'), silent = T)
+          if (inherits(con, "try-error")) warning(paste("Either your computer is not connected to KC systems (e.g. VPN is not connected), your hhsaw key is not properly configured, and/or your key value is outdated.",
+                                                     "To (re)set your hhsaw key use keyring::key_set('", hhsaw_key, "', username = 'ALastname@kingcounty.gov')"),
+                                               "When prompted, be sure to enter the same password that you use to log into to your laptop.")
+        }else{
+          message(paste0('Please enter the password you use for your laptop into the pop-up window. \n',
+                         'Note that the pop-up may be behind your Rstudio session. \n',
+                         'You will need to use your two factor authentication app to confirm your KC identity.'))
+          con <- DBI::dbConnect(odbc::odbc(),
+                                driver = getOption('rads.odbc_version'),
+                                server = "kcitazrhpasqlprp16.azds.kingcounty.gov",
+                                database = "hhs_analytics_workspace",
+                                uid = keyring::key_list(hhsaw_key)[["username"]],
+                                Encrypt = "yes",
+                                TrustServerCertificate = "yes",
+                                Authentication = "ActiveDirectoryInteractive")
+          status <- 1
+        }
+
+        # on.exit(DBI::dbDisconnect(con))
+
+      }else if(is.db(hhsaw_key)){
+        closeserver = FALSE
+        con = hhsaw_key
+        status <- 1
+      }else{
+        warning('`hhsaw_key` is not a reference to database connection or keyring')
+      }
+
+      return(status)
+
+    }
+
   # Return ----
   list(my.analytic = test_analytic,
        my.analysis_set = test_analysis_set,
@@ -514,5 +579,6 @@ setup_test_data <- function() {
        my.estimate= test_estimates,
        my.estimate_old= test_estimates_old,
        my.metadata = test_metadata,
-       my.instructions = test_instructions)
+       my.instructions = test_instructions,
+       my.hhsaw_status_test = validate_hhsaw_connection)
 }
