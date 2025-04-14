@@ -276,7 +276,7 @@ setup_test_data <- function() {
             chi_geo_region = sample(c(NA, 'Seattle', 'South', 'East', 'North'), observations, replace = TRUE, prob = c(0.204549990021952, 0.077230093793654, 0.287367790860108, 0.428124792123994, 0.00272733320029269)), # as a categorical non factor,
             wastate = sample(c('Washington State'), observations, replace = TRUE, prob = c(1)), # as a categorical non factor,
             `chi_age` = NA, # data type not modelled,
-            chi_year = sample(c(year), observations, replace = TRUE, prob = c(1)), # as a categorical non factor,
+            chi_year = year,
             race3_hispanic = sample(c(NA, 'Hispanic'), observations, replace = TRUE, prob = c(0.0392469899554314, 0.960753010044569)) # as a categorical non factor
           )
 
@@ -290,7 +290,7 @@ setup_test_data <- function() {
         for(year in years) {
           seed <- seed*year
           DTIteration <- data.table(
-            chi_year = sample(c(year), observations, replace = TRUE, prob = c(1)), # as a categorical non factor,
+            chi_year = year,
             age = runif(observations, 18, 99), # continuous with uniform distribution,
             age5_v2 = factor(sample(c('25-44', '45-64', '18-24', '75+', '65-74'), observations, replace = TRUE, prob = c(0.0619025944469731, 0.366257017144591, 0.320285237445001, 0.149294492489759, 0.102260658473676)), levels = c('18-24', '25-44', '45-64', '65-74', '75+'), ordered = FALSE), # as a factor,
             chi_sex = factor(sample(c('Female', 'Male'), observations, replace = TRUE, prob = c(0.504779244424215, 0.495220755575785)), levels = c('Male', 'Female'), ordered = FALSE), # as a factor,
