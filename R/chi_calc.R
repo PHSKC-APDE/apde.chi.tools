@@ -196,10 +196,11 @@ chi_calc <- function(ph.data = NULL,
           tempbv <- unique(na.omit(c(tempbv1, tempbv2)))
           tempend <- current_row$end
           tempstart <- current_row$start
+          temptab <- current_row$tab
 
           # use calc()----
           if(rate == FALSE){ # standard proportion analysis
-            if(any(grepl('wastate', tempbv))){
+            if(temptab == '_wastate'){
               tempest <- rads::calc(ph.data = ph.data[chi_year >= tempstart & chi_year <= tempend],
                               what = current_row$indicator_key,
                               by = tempbv,
@@ -214,7 +215,7 @@ chi_calc <- function(ph.data = NULL,
             }
           }
           if(rate == TRUE){
-            if(any(grepl('wastate', tempbv))){
+            if(temptab == '_wastate'){
               tempest <- rads::calc(ph.data = ph.data[chi_year >= tempstart & chi_year <= tempend],
                               what = current_row$indicator_key,
                               by = tempbv,
