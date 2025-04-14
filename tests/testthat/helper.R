@@ -224,6 +224,7 @@ setup_test_data <- function() {
 
     ################################ end migrate this out ###########################################################
 
+
     generate_test_data <- function(dataset = "generic", observations = 100, seed = 1000, years = 2023){
       ### generates a synthetic data set appropriate for testing functions relying on APDE data structures and where you do not want to use real data
       ### receives description of data set to emulate, number of observations to include, a seed and number of years.
@@ -234,10 +235,6 @@ setup_test_data <- function() {
       dataset <- tolower(dataset)
       if(!(dataset %in% datasetOptions)) {
         stop(paste0("dataset must be one of: '", paste(datasetOptions, collapse = "', '"),"'"))
-      }
-
-      year_iterator <- function(observations, seed, years) {
-
       }
 
       if(dataset == "generic") {
@@ -259,6 +256,9 @@ setup_test_data <- function() {
             returnDT <- DTIteration
           }
         }
+
+
+
       } else if(dataset == "death") {
         for(year in years) {
           seed <- seed*year
@@ -286,6 +286,9 @@ setup_test_data <- function() {
             returnDT <- DTIteration
           }
         }
+
+
+
       } else if(dataset == "brfss") {
         for(year in years) {
           seed <- seed*year
@@ -346,13 +349,15 @@ setup_test_data <- function() {
             `_id` = NA, # data type not modelled,
             chi_geo_region = sample(c(NA, 'South', 'East', 'North', 'Seattle'), observations, replace = TRUE, prob = c(0.230010620543165, 0.0650887573964497, 0.330602336519496, 0.284175390684266, 0.0901228948566227)) # as a categorical non factor
           )
-
           if(exists("returnDT")) {
             returnDT <- rbind(returnDT, DTIteration)
           } else {
             returnDT <- DTIteration
           }
         }
+
+
+
       } else if(dataset == "skeleton") {
         for(year in years) {
           seed <- seed*year
