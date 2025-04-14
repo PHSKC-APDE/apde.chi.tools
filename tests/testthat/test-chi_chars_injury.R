@@ -1,7 +1,3 @@
-library(testthat)
-library(data.table)
-library(rads)
-
 # Create mock_chars data for injury ----
 set.seed(98104)
 
