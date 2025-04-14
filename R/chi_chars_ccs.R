@@ -422,6 +422,12 @@ chi_chars_ccs <- function(ph.indicator = NA,
   # Drop irrelevant ages ----
   result <- chi_keep_proper_ages(result)
 
+  # Tidy year (e.g., '2025-2025' becomes just '2025') ----
+  result[, year := gsub("^(\\d{4})-(\\1)$", "\\1", year)] # \\1 is a back reference to what was found before hyphen
+
+  # Order columns ----
+  setcolorder(result, c("indicator_key", "year", "chi_age", "hospitalizations", "tab", "cat1", "cat1_varname", "cat1_group", "cat2", "cat2_varname", "cat2_group"))
+
   # Return data.table ----
   return(result)
 }
