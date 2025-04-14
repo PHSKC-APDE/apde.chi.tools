@@ -36,6 +36,7 @@ Remotes:
     github::PHSKC-APDE/rads, github::PHSKC-APDE/dtsurvey
 Suggests: 
     httr,
+    keyring,
     knitr,
     progress,
     rmarkdown,
