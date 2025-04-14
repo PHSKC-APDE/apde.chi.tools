@@ -4,10 +4,13 @@
 \alias{chi_get_cols}
 \title{Get CHI variable column names}
 \usage{
-chi_get_cols()
+chi_get_cols(metadata = FALSE)
+}
+\arguments{
+\item{metadata}{returns metadata column names instead of primary data}
 }
 \value{
-A character vector of column names
+A character vector of column names for the chi data (Default) or metadata
 }
 \description{
 Returns a character vector of column names defined in the CHI YAML reference file.
