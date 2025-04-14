@@ -122,6 +122,9 @@ chi_keep_proper_ages <- function(ph.data = NULL) {
   # Create reference table of age groups and corresponding min_age and max_age
   all_groups <- unique(c(ph.data$cat1_group[ph.data$cat1 == "Age"],
                          ph.data$cat2_group[ph.data$cat2 == "Age"]))
+
+  if(length(all_groups) == 0){return(ph.data)} # no need to continue if cat1 or cat2 are not 'Age'
+
   all_bounds <- rbindlist(lapply(all_groups, function(mygroup) {
     bounds <- parse_age_group(mygroup)[[1]]
     data.table(age_group = mygroup, min_age = bounds[1], max_age = bounds[2])
