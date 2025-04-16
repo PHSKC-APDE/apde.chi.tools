@@ -24,8 +24,7 @@ To install a particular branch, (for example, if participating in testing or nee
 Load [`apde.chi.tools`](https://github.com/PHSKC-APDE/apde.chi.tools) ... `library(apde.chi.tools)`
 
 
-
-## New for version 2025.0.0
+## New for version 2025.0.0 (and 2025.0.1)
 
 Our first full release!
 
@@ -37,6 +36,7 @@ If something doesn’t work or appears broken, let Danny or Ronald know, and sub
 
 Review documentation using '?[function_name]()' in R studio, as well as the [wiki](https://github.com/PHSKC-APDE/apde.chi.tools/wiki).
 
+Version 2025.0.1 includes minor patches and will require that you have RADS version 1.3.4 or later installed.
 
 ## Best Practices
 
