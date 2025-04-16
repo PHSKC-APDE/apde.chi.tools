@@ -1,7 +1,7 @@
 Package: apde.chi.tools
 Type: Package
-Title: Simplify Common Analytics Pipeline Procesees Of Public Health Seattle & King County's Assessment Policy Development and Evaluation Unit
-Version: 0.0.2
+Title: Simplify Community Health Indicators Analytics Pipeline for Public Health Seattle & King County's Assessment Policy Development and Evaluation Unit
+Version: 2025.0.1
 Authors@R: person(
   "Ronald","Buie", 
   email = "rbuie@kingcounty.gov", 
@@ -27,7 +27,7 @@ Imports:
     glue (>= 1.6.1),
     odbc (>= 1.2.2),
     progressr,
-    rads, 
+    rads (>= 1.3.4), 
     rads.data,
     stats,
     tidyr,
@@ -46,6 +46,6 @@ Suggests:
     srvyr,
     survey (>= 4.0)
 Depends: 
-    R (>= 4.1)
+    R (>= 4.4)
 Config/testthat/edition: 3
 RoxygenNote: 7.3.2
