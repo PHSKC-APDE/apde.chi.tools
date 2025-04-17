@@ -4,7 +4,12 @@
 \alias{chi_get_proper_pop}
 \title{Get Population Denominators for CHI Analysis}
 \usage{
-chi_get_proper_pop(pop.template = NULL, pop.genders = NULL, pop.ages = NULL)
+chi_get_proper_pop(
+  pop.template = NULL,
+  pop.genders = NULL,
+  pop.ages = NULL,
+  is_chars = FALSE
+)
 }
 \arguments{
 \item{pop.template}{A data.table produced by \code{\link{chi_generate_instructions_pop}},
@@ -25,6 +30,10 @@ Valid values are 'f', 'female', 'm', 'male'. If NULL (default), both genders are
 
 \item{pop.ages}{Optional integer vector specifying which ages to include.
 If NULL (default), ages 0-100 are included.}
+
+\item{is_chars}{Logical (T|F). If TRUE, will calculate King County population based
+on ZIP codes beginning with 980 or 981, which is necessary for CHARS data.
+Default = FALSE.}
 }
 \value{
 A data.table containing population counts with columns:
@@ -44,13 +53,21 @@ categories, geographic levels, and time periods to create appropriate
 population denominators for use in CHI rate calculations.
 }
 \details{
-The function performs multiple steps to generate proper population denominators:
-1. Validates input parameters
-2. Creates population tables for each row of the template using rads::get_population
-3. Handles special cases for various geographic aggregations and crosswalks
-4. Returns a comprehensive, tidy dataset with population counts
+The function:
+
+1. Validates inputs
+
+2. Batches similar population queries based on key parameters
+
+3. Makes minimal database calls to cover all required year ranges
+
+4. Post-processes data in R to match the original template requirements
+
+5. When is_chars=TRUE, uses a different approach for King County that aggregates
+   populations from ZIP codes starting with 980/981 instead of using the standard
+   King County boundary
 }
 \seealso{
 \code{\link{chi_generate_instructions_pop}} which generates the instructions used as input
-to this function
+to this function, \code{\link{chi_get_proper_pop}} the original implementation
 }
