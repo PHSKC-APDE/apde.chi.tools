@@ -84,8 +84,8 @@ chi_compare_estimates <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.y
 
     # calculate percent differences between old (x) and new(y)
       comp[, relative.diff := round2(abs((result.x - result.y) / result.x)*100, 1)]
-      comp[result_type != "rate", absolute.diff := round2(abs(result.x - result.y)*100, 1)]
-      comp[result_type == "rate", absolute.diff := round2(abs(result.x - result.y), 1)]
+      comp[grepl("mean|proportion", result_type, ignore.case = T), absolute.diff := round2(abs(result.x - result.y)*100, 1)]
+      comp[grepl("rate", result_type, ignore.case = T), absolute.diff := round2(abs(result.x - result.y), 1)]
       comp <- comp[!is.na(absolute.diff)]  # drop if absolute difference is NA
 
     # order variables
@@ -111,18 +111,18 @@ chi_compare_estimates <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.y
       # First, identify whether to use absolute or relative change for each indicator_key
         qa_type = NEW[tab=='_kingcounty']
         qa_type[, qa_type := 'relative']
-        qa_type[result_type=='proportion' & result >= 0.05, qa_type := 'absolute']
-        qa_type[result_type=='rate' & result >= 5, qa_type := 'absolute']
+        qa_type[grepl('mean|proportion', result_type, ignore.case = T) & result >= 0.05, qa_type := 'absolute']
+        qa_type[grepl('rate', result_type, ignore.case = T) & result >= 5, qa_type := 'absolute']
         qa_type <- qa_type[, list(indicator_key, qa_type)]
 
       # Merge on qa_type
         comp <- merge(comp, qa_type, by = 'indicator_key', all = T)
 
       # Identify notable changes
-        comp[qa_type == 'absolute' & result_type=='proportion' & absolute.diff >= 3, notable := 1] # absolute difference was multiplied by 100, so assess with >= 3
-        comp[qa_type == 'absolute' & result_type=='rate' & absolute.diff >= 3, notable := 1]
-        comp[qa_type == 'relative' & result_type=='proportion' & relative.diff >= 50, notable := 1] # absolute difference was multiplied by 100, so assess with >= 3
-        comp[qa_type == 'relative' & result_type=='rate' & relative.diff >= 50, notable := 1]
+        comp[qa_type == 'absolute' & grepl('mean|proportion', result_type, ignore.case = T) & absolute.diff >= 3, notable := 1] # absolute difference was multiplied by 100, so assess with >= 3
+        comp[qa_type == 'absolute' & grepl('rate', result_type, ignore.case = T) & absolute.diff >= 3, notable := 1]
+        comp[qa_type == 'relative' & grepl('mean|proportion', result_type, ignore.case = T) & relative.diff >= 50, notable := 1] # absolute difference was multiplied by 100, so assess with >= 3
+        comp[qa_type == 'relative' & grepl('rate', result_type, ignore.case = T) & relative.diff >= 50, notable := 1]
 
   # Return object ----
     return(comp)
