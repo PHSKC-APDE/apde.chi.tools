@@ -22,6 +22,9 @@
 #' Valid values are 'f', 'female', 'm', 'male'. If NULL (default), both genders are included.
 #' @param pop.ages Optional integer vector specifying which ages to include.
 #' If NULL (default), ages 0-100 are included.
+#' @param is_chars Logical (T|F). If TRUE, will calculate King County population based
+#' on ZIP codes beginning with 980 or 981, which is necessary for CHARS data.
+#' Default = FALSE.
 #'
 #' @return A data.table containing population counts with columns:
 #'  \itemize{
@@ -34,25 +37,41 @@
 #'  }
 #'
 #' @details
-#' The function performs multiple steps to generate proper population denominators:
-#' 1. Validates input parameters
-#' 2. Creates population tables for each row of the template using rads::get_population
-#' 3. Handles special cases for various geographic aggregations and crosswalks
-#' 4. Returns a comprehensive, tidy dataset with population counts
+#' The function:
+#'
+#' 1. Validates inputs
+#'
+#' 2. Batches similar population queries based on key parameters
+#'
+#' 3. Makes minimal database calls to cover all required year ranges
+#'
+#' 4. Post-processes data in R to match the original template requirements
+#'
+#' 5. When is_chars=TRUE, uses a different approach for King County that aggregates
+#'    populations from ZIP codes starting with 980/981 instead of using the standard
+#'    King County boundary
 #'
 #' @seealso
 #' \code{\link{chi_generate_instructions_pop}} which generates the instructions used as input
-#' to this function
+#' to this function, \code{\link{chi_get_proper_pop}} the original implementation
 #'
-#' @importFrom data.table setDT rbindlist `:=`
+#' @importFrom data.table setDT rbindlist `:=` copy setkey
 #' @importFrom future.apply future_lapply
 #' @importFrom tools toTitleCase
 #' @importFrom progressr handlers progressor with_progress
 #' @export
 #'
-chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages = NULL) {
-  # Validation of arguments ----
-    # pop.template
+chi_get_proper_pop <- function(pop.template = NULL,
+                                 pop.genders = NULL,
+                                 pop.ages = NULL,
+                                 is_chars = FALSE) {
+
+  #======================
+  # HELPER FUNCTIONS ----
+  #======================
+  # Input Validation: validate_inputs() ----
+    validate_inputs <- function(pop.template, pop.genders, pop.ages, is_chars) {
+      # pop.template
       if (is.null(pop.template)) {
         stop("\n\U1F6D1 pop.template parameter is required")
       }
@@ -73,7 +92,7 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
              paste(missing_columns, collapse = ", "))
       }
 
-    # pop.genders
+      # pop.genders
       if (is.null(pop.genders)) {
         gender_values <- c("f", "m")
       } else {
@@ -83,7 +102,8 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
           gender_values <- pop.genders
         }
       }
-    # pop.ages
+
+      # pop.ages
       if (is.null(pop.ages)) {
         age_values <- c(0:100)
       } else {
@@ -94,448 +114,698 @@ chi_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
         }
       }
 
-  # Define core population extraction function ----
-    get_population_for_template_row <- function(row_index, pop.template = NULL) {
-      # Status update with progress indicator ----
-        print(paste0("Process ID ", Sys.getpid(), ": Getting population ", row_index, " out of ", nrow(pop.template)))
+      # is_chars
+      if(!is.logical(is_chars)) {
+        stop("\n\U0001f47f The `is_chars` argument must be a logical, i.e., TRUE | FALSE")
+      }
+      if(length(is_chars) != 1) {
+        stop("\n\U0001f47f The `is_chars` argument must be of length 1")
+      }
 
-      # Extract current template row ----
-        current_row <- pop.template[row_index, ]
+      return(list(
+        pop.template = pop.template,
+        gender_values = gender_values,
+        age_values = age_values,
+        is_chars = is_chars
+      ))
+    }
 
-      # Standardize category names ----
-        # Remove birthing person prefixes to standardize maternal data categories
-          pop.template[grepl("birthing person", cat1, ignore.case = TRUE),
-                       cat1 := tools::toTitleCase(gsub("Birthing person's ", "", cat1))]
-          pop.template[grepl("birthing person", cat2, ignore.case = TRUE),
-                       cat2 := tools::toTitleCase(gsub("Birthing person's ", "", cat2))]
+  # Standardize Category Names: standardize_category_names() ----
+    standardize_category_names <- function(pop.template) {
+      # Remove birthing person prefixes to standardize maternal data categories
+      pop.template[grepl("birthing person", cat1, ignore.case = TRUE),
+                   cat1 := tools::toTitleCase(gsub("Birthing person's ", "", cat1))]
+      pop.template[grepl("birthing person", cat2, ignore.case = TRUE),
+                   cat2 := tools::toTitleCase(gsub("Birthing person's ", "", cat2))]
 
-      # Build grouping parameters for pop query ----
-          grouping_vars <- unique(c(
-            c("ages", "geo_id"),
-            setdiff(c(current_row$group_by1, current_row$group_by2), c(NA))
-          ))
+      return(pop.template)
+    }
 
-      # Use rads::get_population() ----
-        if (is.na(current_row$geo_type)) {
-          population_data <- rads::get_population(
-            group_by = grouping_vars,
-            race_type = current_row$race_type,
-            years = current_row$start:current_row$stop,
-            genders = gender_values,
-            ages = age_values,
-            round = FALSE
+  # Create Query Keys for Consolidation: create_query_keys() ----
+    create_query_keys <- function(pop.template) {
+      # Create a key to identify unique population query patterns
+      pop.template[, query_key := paste(
+        cat1, cat1_varname, cat2, cat2_varname,
+        race_type, geo_type,
+        ifelse(is.na(group_by1), "NA", group_by1),
+        ifelse(is.na(group_by2), "NA", group_by2),
+        sep = "||"
+      )]
+
+      setorder(pop.template, query_key) # for consistent representative_row_index
+
+      return(pop.template)
+    }
+
+  # Batch Similar Querys: batch_population_queries() ----
+    batch_population_queries <- function(pop.template) {
+      # For each unique query key, find the min start year and max stop year
+      batched_queries <- pop.template[, list(
+        min_start = min(start),
+        max_stop = max(stop),
+        representative_row_index = .I[1] # Keep representative row per pattern
+      ), by = query_key]
+
+      # Add a unique ID for each batched query
+      batched_queries[, batched_id := .I]
+
+      # Join back to original template
+      pop.template <- merge(
+        pop.template,
+        batched_queries[, list(query_key, batched_id, min_start, max_stop)],
+        by = "query_key"
+      )
+
+      return(list(
+        pop.template = pop.template,
+        batched_queries = batched_queries
+      ))
+    }
+
+  # Get Population Data for a batched Query: get_batched_population() ----
+    get_batched_population <- function(query_id,
+                                       pop.template,
+                                       batched_queries,
+                                       gender_values,
+                                       age_values,
+                                       is_chars) {
+      # Get the batched query info
+      current_query <- batched_queries[batched_id == query_id]
+
+      # Get a representative row from the original template
+      template_row <- pop.template[current_query$representative_row_index]
+
+      # Show progress
+      message(paste0("Process ID ", Sys.getpid(), ": get_population call ",
+                 query_id, " (covers ", sum(pop.template$batched_id == query_id),
+                 " original queries: ", current_query$query_key, ")"))
+
+      # Build grouping parameters for population query
+      grouping_vars <- unique(c(
+        c("ages", 'years', "geo_id"),
+        setdiff(c(template_row$group_by1, template_row$group_by2), c(NA))
+      ))
+
+      # Call get_population with the batched year range
+      if (is_chars && template_row$geo_type == 'kc') {
+        # For CHARS data, use ZIP aggregation method for King County
+        population_data <- rads::get_population(
+          kingco = FALSE, # intentionally FALSE to retrieve ALL ZIP codes, which we'll filter later
+          group_by = grouping_vars,
+          geo_type = 'zip', # note this is purposefully not 'kc'
+          race_type = template_row$race_type,
+          years = current_query$min_start:current_query$max_stop,
+          genders = gender_values,
+          ages = age_values,
+          round = FALSE
+        )
+
+        # Filter to Define King County as ZIPs that begin with 980/981
+        population_data <- population_data[grepl('^980|^981', geo_id)]
+
+        # Sum the population across all ZIP codes while maintaining other dimensions
+        group_cols <- setdiff(names(population_data), c("geo_id", "pop"))
+        population_data <- population_data[, list(pop = sum(pop)), by = group_cols]
+
+        # Add King County identifier for consistent processing
+        population_data[, geo_type := 'kc']
+        population_data[, geo_id := 'King County']
+      } else if (is.na(template_row$geo_type)) {
+        population_data <- rads::get_population(
+          group_by = grouping_vars,
+          race_type = template_row$race_type,
+          years = current_query$min_start:current_query$max_stop,
+          genders = gender_values,
+          ages = age_values,
+          round = FALSE
+        )
+      } else {
+        population_data <- rads::get_population(
+          group_by = grouping_vars,
+          geo_type = template_row$geo_type,
+          race_type = template_row$race_type,
+          years = current_query$min_start:current_query$max_stop,
+          genders = gender_values,
+          ages = age_values,
+          round = FALSE
+        )
+      }
+
+      # Add batched_id to population data for later processing
+      population_data[, batched_id := query_id]
+
+      return(population_data)
+    }
+
+  # Process Age Group Patterns: process_age_patterns() ----
+    process_age_patterns <- function(age_var) {
+      # Check if this age variable exists in misc_chi_byvars
+      chi_age_groups <- rads.data::misc_chi_byvars[cat == "Age" & varname == age_var]
+
+      if (nrow(chi_age_groups) == 0) {
+        stop(paste0("\n\U1F6D1 Age variable ", age_var, " not found in rads.data::misc_chi_byvars[cat == \"Age\"]"))
+      }
+
+      # Create a result table with age ranges
+      age_ranges <- data.table(group_value = character(), min_age = numeric(), max_age = numeric())
+
+      # Process each age group
+      for (g in unique(chi_age_groups$group)) {
+        # Pattern: "<#" (e.g., "<18")
+        if (grepl("^<\\d+$", g)) {
+          max_age <- as.numeric(gsub("<", "", g)) - 1
+          age_ranges <- rbind(age_ranges, data.table(group_value = g, min_age = 0, max_age = max_age))
+        }
+        # Pattern: "#-#" (e.g., "18-24")
+        else if (grepl("^\\d+-\\d+$", g)) {
+          range_parts <- as.numeric(strsplit(g, "-")[[1]])
+          min_age <- range_parts[1]
+          max_age <- range_parts[2]
+          age_ranges <- rbind(age_ranges, data.table(group_value = g, min_age = min_age, max_age = max_age))
+        }
+        # Pattern: "#+", (e.g., "75+")
+        else if (grepl("^\\d+\\+$", g)) {
+          min_age <- as.numeric(gsub("\\+", "", g))
+          age_ranges <- rbind(age_ranges, data.table(group_value = g, min_age = min_age, max_age = Inf))
+        }
+        # Other valid groups like "All", "Adults", "Children", "Seniors"
+        else if (g %in% c("All", "Adults", "Children", "Seniors")) {
+          if (g == "All") {
+            age_ranges <- rbind(age_ranges, data.table(group_value = g, min_age = 0, max_age = Inf))
+          } else if (g == "Adults") {
+            age_ranges <- rbind(age_ranges, data.table(group_value = g, min_age = 18, max_age = Inf))
+          } else if (g == "Children") {
+            age_ranges <- rbind(age_ranges, data.table(group_value = g, min_age = 0, max_age = 17))
+          } else if (g == "Seniors") {
+            age_ranges <- rbind(age_ranges, data.table(group_value = g, min_age = 65, max_age = Inf))
+          }
+        }
+        # Error for unrecognized patterns
+        else {
+          stop(paste0("\n\U1F6D1 Age group ", g, " in age_var = ", age_var,
+                      " does not follow the expected pattern (<#, #-#, or #+) and cannot be used",
+                      "\n Valid options are found in rads.data::misc_chi_byvars[cat == \"Age\"]"))
+        }
+      }
+
+      return(age_ranges)
+    }
+
+  # Assign Race/Ethnicity Categories: assign_race_ethnicity() ----
+    assign_race_ethnicity <- function(population_data, catnum, catvarname, catgroup, race_type) {
+      # Standardize race_eth into race
+      if('race' %in% names(population_data)) {
+        population_data[, race := as.character(race)]
+      }
+
+      if('race_eth' %in% names(population_data)) {
+        population_data[, race_eth := as.character(race_eth)]
+      }
+
+      if('race' %in% names(population_data) & 'race_eth' %in% names(population_data)) {
+        population_data[is.na(race) | race == 'NA', race := race_eth]
+      }
+
+      if(!'race' %in% names(population_data) & 'race_eth' %in% names(population_data)) {
+        setnames(population_data, 'race_eth', 'race')
+      }
+
+      # Process specific race/ethnicity groups
+      population_data[get(catvarname) %in% c('race4', 'race3'), (catgroup) := race]
+
+      # Filter out Ethnicity unless the group == 'Hispanic'
+      population_data <- population_data[get(catnum) != "Ethnicity" |
+                                           (get(catnum) == "Ethnicity" &
+                                              get(catgroup) == 'Hispanic'), ]
+
+      # Standardize "Multiple" label
+      population_data[get(catgroup) == "Multiple race", (catgroup) := "Multiple"]
+
+      # Process race_aic (alone or in combination) categories
+      if (race_type == 'race_aic') {
+        # Filter to keep only relevant race_aic combinations
+        population_data <- population_data[
+          !(grepl('_aic_', get(catvarname)) &
+              !((get(catvarname) == 'chi_race_aic_aian' & race_aic == 'AIAN') |
+                  (get(catvarname) == 'chi_race_aic_asian' & race_aic == 'Asian') |
+                  (get(catvarname) == 'chi_race_aic_black' & race_aic == 'Black') |
+                  (get(catvarname) == 'chi_race_aic_his' & race_aic == 'Hispanic') |
+                  (get(catvarname) == 'chi_race_aic_nhpi' & race_aic == 'NHPI') |
+                  (get(catvarname) == 'chi_race_aic_wht' & race_aic == 'White'))
           )
-        } else {
-          population_data <- rads::get_population(
-            group_by = grouping_vars,
-            geo_type = current_row$geo_type,
-            race_type = current_row$race_type,
-            years = current_row$start:current_row$stop,
-            genders = gender_values,
-            ages = age_values,
-            round = FALSE
-          )
+        ]
+
+        # Assign race_aic value to group
+        population_data[grep('_aic', get(catvarname)), (catgroup) := race_aic]
+      }
+
+      return(population_data)
+    }
+
+  # Assign Age Groupings using misc_chi_byvars:assign_age_groupings() ----
+    assign_age_groupings <- function(population_data, catnum, catvarname, catgroup) {
+      # Check if this is an age category
+      if (population_data[1, get(catnum)] == "Age") {
+        # Get the age variable name
+        age_var <- population_data[1, get(catvarname)]
+
+        # Get age ranges
+        age_ranges <- process_age_patterns(age_var)
+
+        # Assign each age range to the population data
+        for (i in 1:nrow(age_ranges)) {
+          group_value <- age_ranges[i, group_value]
+          min_age <- age_ranges[i, min_age]
+          max_age <- age_ranges[i, max_age]
+
+          if (is.infinite(max_age)) {
+            population_data[get(catvarname) == age_var & age >= min_age, (catgroup) := group_value]
+          } else {
+            population_data[get(catvarname) == age_var & age >= min_age & age <= max_age,
+                            (catgroup) := group_value]
+          }
+        }
+      }
+
+      return(population_data)
+    }
+
+  # Assign Geographic Crosswalks: assign_geographic_crosswalks() ----
+    assign_geographic_crosswalks <- function(population_data, catnum, catgroup, catvarname, geo_type) {
+      # Process HRAs
+      if (geo_type == 'blk' && population_data[1, get(catnum)] == 'Cities/neighborhoods') {
+        hra_crosswalk <- rads.data::spatial_block20_to_hra20_to_region20[,
+                                                                         list(geo_id = GEOID20,
+                                                                              hra20_name)]
+
+        population_data <- merge(population_data,
+                                 hra_crosswalk,
+                                 by = "geo_id",
+                                 all.x = TRUE,
+                                 all.y = FALSE)
+
+        population_data[, (catgroup) := hra20_name]
+      }
+
+      # Process Region crosswalks
+      # Block to Region
+      if (geo_type == 'blk' && population_data[1, get(catnum)] == 'Regions') {
+        region_crosswalk <- rads.data::spatial_block20_to_hra20_to_region20[,list(geo_id = GEOID20, region_name)]
+
+        population_data <- merge(population_data,
+                                 region_crosswalk,
+                                 by = 'geo_id',
+                                 all.x = TRUE,
+                                 all.y = FALSE)
+
+        population_data[, (catgroup) := region_name]
+      }
+
+      # HRA to Region
+      if (geo_type == 'hra' && population_data[1, get(catnum)] == 'Regions') {
+        region_crosswalk <- rads.data::spatial_hra20_to_region20[, list(geo_id = hra20_name, region_name)]
+
+        population_data <- merge(population_data,
+                                 region_crosswalk,
+                                 by = 'geo_id',
+                                 all.x = TRUE,
+                                 all.y = FALSE)
+
+        population_data[, (catgroup) := region_name]
+      }
+
+      # ZIP to Region with population weighting
+      if (geo_type == 'zip' && population_data[1, get(catnum)] == 'Regions') {
+        # Create ZIP to region crosswalk with population weights
+        zip_region_crosswalk <- rads.data::spatial_zip_to_hra20_pop
+
+        zip_region_crosswalk <- merge(zip_region_crosswalk,
+                                      rads.data::spatial_hra20_to_region20[, list(hra20_name, region = region_name)],
+                                      by = 'hra20_name',
+                                      all = TRUE)
+
+        # Aggregate fractional populations to region level
+        zip_region_crosswalk <- zip_region_crosswalk[,
+                                                     list(s2t_fraction = sum(s2t_fraction)),
+                                                     list(geo_id = as.character(source_id), region)]
+
+        # Assign population weighting by region
+        population_data <- merge(population_data,
+                                 zip_region_crosswalk,
+                                 by = "geo_id",
+                                 all.x = TRUE,
+                                 all.y = FALSE,
+                                 allow.cartesian = TRUE)
+        population_data[, pop := pop * s2t_fraction] # Assign weight to population
+        population_data[, (catgroup) := region]
+      }
+
+      # Process Big Cities
+      if (population_data[1, get(catnum)] == 'Big cities') {
+        # Block to big city crosswalk
+        if (geo_type == 'blk') {
+          # Two-step crosswalk: block to HRA to big city
+          block_to_hra <- rads.data::spatial_block20_to_hra20_to_region20[, list(geo_id = GEOID20, hra20_name)]
+          hra_to_bigcity <- rads.data::spatial_hra20_to_bigcities[, list(hra20_name, bigcity)]
+
+          block_to_bigcity <- merge(hra_to_bigcity,
+                                    block_to_hra,
+                                    by = 'hra20_name',
+                                    all.x = TRUE,
+                                    all.y = FALSE)[, hra20_name := NULL]
+
+          population_data <- merge(population_data,
+                                   block_to_bigcity,
+                                   by = "geo_id",
+                                   all.x = TRUE,
+                                   all.y = FALSE)
         }
 
+        # HRA to big city crosswalk
+        if (geo_type == 'hra') {
+          hra_to_bigcity <- rads.data::spatial_hra20_to_bigcities[, list(hra20_name, bigcity)]
+          population_data <- merge(population_data,
+                                   hra_to_bigcity,
+                                   by.x = 'geo_id',
+                                   by.y = 'hra20_name',
+                                   all.x = TRUE,
+                                   all.y = FALSE)
+        }
+
+        # Assign big city name to group
+        population_data[, (catgroup) := bigcity]
+      }
+
+      # Process poverty groupings
+      # Block level poverty
+      if (geo_type == 'blk' && population_data[1, get(catvarname)] == 'pov200grp') {
+        # Extract tract ID from block ID (first 11 characters)
+        population_data[, geo_tract2020 := substr(geo_id, 1, 11)]
+
+        # Join poverty group data
+        population_data <- merge(
+          population_data,
+          rads.data::misc_poverty_groups[geo_type == 'Tract'][, list(geo_tract2020 = geo_id, pov200grp)],
+          by = "geo_tract2020",
+          all.x = TRUE,
+          all.y = FALSE
+        )
+
+        # Assign poverty group
+        population_data[, (catgroup) := pov200grp]
+      }
+
+      # ZIP level poverty
+      if (geo_type == 'zip' && population_data[1, get(catvarname)] == 'pov200grp') {
+        # Join poverty group data
+        population_data <- merge(
+          population_data,
+          rads.data::misc_poverty_groups[geo_type == 'ZCTA'][,list(geo_id, pov200grp)],
+          by = 'geo_id',
+          all.x = TRUE,
+          all.y = FALSE
+        )
+
+        # Assign poverty group
+        population_data[, (catgroup) := pov200grp]
+      }
+
+      return(population_data)
+    }
+
+  # Create demographic shell for population analysis: create_demographic_shell() ----
+    create_demographic_shell <- function(population_data, template_row) {
+      # Function to handle age group processing
+      process_age_category <- function(population_data, cat_num) {
+        # Define prefix and complementary prefix
+        cat_prefix <- paste0("cat", cat_num)
+        other_cat_prefix <- if(cat_num == 1) "cat2" else "cat1"
+
+        # Get the variable name for this category
+        cat_varname <- population_data[1][[paste0(cat_prefix, "_varname")]]
+
+        # Create a data table with all possible ages
+        age_groups <- data.table(chi_age = 0:100)
+
+        # Get age ranges
+        age_ranges <- process_age_patterns(cat_varname)
+
+        # Assign each age range to the age groups table
+        for (i in 1:nrow(age_ranges)) {
+          group_value <- age_ranges[i, group_value]
+          min_age <- age_ranges[i, min_age]
+          max_age <- age_ranges[i, max_age]
+
+          if (is.infinite(max_age)) {
+            age_groups[chi_age >= min_age, paste0(cat_prefix, "_group") := group_value]
+          } else {
+            age_groups[chi_age >= min_age & chi_age <= max_age,
+                       paste0(cat_prefix, "_group") := group_value]
+          }
+        }
+
+        # Filter out ages without assigned groups
+        age_groups <- age_groups[!is.na(get(paste0(cat_prefix, "_group")))]
+
+        # Add category info
+        age_groups[, (cat_prefix) := "Age"]
+        age_groups[, paste0(cat_prefix, "_varname") := cat_varname]
+
+        # Combine demographic dimensions with age groups
+        cols_to_select <- c("year", other_cat_prefix,
+                            paste0(other_cat_prefix, "_varname"),
+                            paste0(other_cat_prefix, "_group"))
+
+        unique_pop_data <- unique(population_data[, cols_to_select, with = FALSE][, mykey := 1])
+
+        complete_demographics <- merge(unique_pop_data,
+                                       age_groups[, mykey := 1],
+                                       by = 'mykey',
+                                       allow.cartesian = TRUE)
+
+        complete_demographics[, mykey := NULL]
+
+        return(complete_demographics)
+      }
+
+      # Use function to handle age group processing
+      if (population_data[1]$cat1 == "Age") {
+        complete_demographics <- process_age_category(population_data, 1)
+      } else if (population_data[1]$cat2 == "Age") {
+        complete_demographics <- process_age_category(population_data, 2)
+      } else {
+        # Get unique cat1 groups
+        cat1_groups <- unique(population_data[, list(cat1, cat1_varname, cat1_group, mykey = 1)])
+
+        # Get unique cat2 groups
+        cat2_groups <- unique(population_data[, list(cat2, cat2_varname, cat2_group, mykey = 1)])
+
+        # All combos of cat1 and cat2 groups
+        complete_demographics <- merge(cat1_groups,
+                                       cat2_groups,
+                                       by = 'mykey',
+                                       allow.cartesian = TRUE)
+
+        # Create year and age combos
+        year_age <- data.table(year = as.character(template_row$year),
+                               chi_age = 0:100,
+                               mykey = 1)
+
+        # Get combos for each year/age cat1/cat2 combo
+        complete_demographics <- merge(complete_demographics,
+                                       year_age,
+                                       by = 'mykey',
+                                       allow.cartesian = TRUE)
+
+        # Drop key
+        complete_demographics[, mykey := NULL]
+      }
+
+      return(complete_demographics)
+    }
+
+  # Process a single template row: process_template_row() ----
+    process_template_row <- function(row_index, all_population_data, pop.template) {
+      # Basic subsetting tidying ----
+        current_row <- pop.template[row_index, ]
+
+        # Extract relevant population data for this template row
+        population_data <- all_population_data[
+          batched_id == current_row$batched_id &
+            year >= current_row$start &
+            year <= current_row$stop
+        ]
+
+        # Set the correct year format
+        population_data[, year := current_row$year]
+
       # Process demographic categories ----
-      # Apply category grouping logic for both primary (cat1) and secondary (cat2) categories
         for (catnum in c("cat1", "cat2")) {
-          ## Add category information from template to result ----
-            catvarname <- paste0(catnum, '_varname')
-            catgroup <- paste0(catnum, '_group')
-            temp.groupby <- paste0("group_by", gsub('cat', '', catnum))
+          # Define variable names
+          catvarname <- paste0(catnum, '_varname')
+          catgroup <- paste0(catnum, '_group')
+          temp.groupby <- paste0("group_by", gsub('cat', '', catnum))
 
-            # had to use set function because regular := syntax caused errors b/c used catnum differently on both sides of :=
-            data.table::set(population_data,
-                            j = catnum,
-                            value = current_row[[catnum]])
+          # Set basic category info from template
+          population_data[, (catnum) := current_row[[catnum]]]
+          population_data[, (catvarname) := current_row[[catvarname]]]
+          population_data[, (catgroup) := current_row[[temp.groupby]]]
 
-            data.table::set(population_data,
-                            j = catvarname,
-                            value = current_row[[catvarname]])
+          # Process standard geographic categories
+          # King County
+          population_data[get(catnum) == "King County", (catgroup) := "King County"]
 
-            data.table::set(population_data,
-                            j = catgroup,
-                            value = current_row[[temp.groupby]])
+          # Washington State
+          population_data[get(catnum) == "Washington State", (catgroup) := "Washington State"]
 
-          ## Process geographic categories ----
-            # King County
-            population_data[get(catnum) == "King County",
-                            c(catgroup) := "King County"]
+          # Handle NA values
+          suppressWarnings(
+            population_data[get(catnum) == "NA" | is.na(get(catnum)),
+                            c(catnum, catgroup, catvarname) := "NA"]
+          )
 
-            # Washington State
-            population_data[get(catnum) == "Washington State",
-                            c(catgroup) := "Washington State"]
+          # Cities/neighborhoods and Regions
+          population_data[get(catnum) %in% c("Cities/neighborhoods", "Regions") &
+                            current_row$geo_type != 'blk', (catgroup) := geo_id]
 
-            # Handle NA values
-            suppressWarnings(
-              population_data[get(catnum) == "NA" | is.na(get(catnum)),
-                              c(catnum, catgroup, catvarname) := "NA"]
-            )
+          # Process gender
+          population_data[get(catnum) %in% c("Gender"), (catgroup) := gender]
 
-            # Cities/neighborhoods and Regions
-            population_data[get(catnum) %in% c("Cities/neighborhoods", "Regions") &
-                              current_row$geo_type != 'blk',
-                            c(catgroup) := geo_id]
+          # Process 'Overall'
+          population_data[get(catnum) %in% c("Overall"), (catgroup) := "Overall"]
 
-          ## Process gender ----
-            population_data[get(catnum) %in% c("Gender"), c(catgroup) := gender]
+          # Process race/ethnicity categories
+          if (!is.na(population_data[1, get(catnum)]) &&
+              (population_data[1, get(catnum)] %in% c("Race", "Race/ethnicity", "Race/Ethnicity", "Ethnicity") ||
+               (current_row$race_type == 'race_aic' && grepl('_aic_', get(catvarname))))) {
+                  population_data <- assign_race_ethnicity(population_data,
+                                                           catnum,
+                                                           catvarname,
+                                                           catgroup,
+                                                           current_row$race_type)
+          }
 
-          ## Process 'Overall' ----
-            population_data[get(catnum) %in% c("Overall"), c(catgroup) := "Overall"]
+          # Assign geographic crosswalks
+          if (!is.na(population_data[1, get(catnum)]) &&
+              (population_data[1, get(catnum)] %in% c("Cities/neighborhoods", "Regions", "Big cities") ||
+               population_data[1, get(catvarname)] == 'pov200grp')) { # pov200grp is neighborhood poverty, so geography based
+                  population_data <- assign_geographic_crosswalks(population_data,
+                                                                  catnum,
+                                                                  catgroup,
+                                                                  catvarname,
+                                                                  current_row$geo_type)
+          }
 
-          ## Process race/ethnicity categories ----
-              population_data[get(catnum) == "Ethnicity" | get(catvarname) %in% c('race4'),
-                              c(catgroup) := race_eth]
-
-              population_data[get(catnum) == 'Race' & get(catvarname) %in% c('race3'),
-                              c(catgroup) := race]
-
-              population_data <- population_data[get(catnum) != "Ethnicity" | (get(catnum) == "Ethnicity" & get(catgroup) == 'Hispanic'), ]
-
-              population_data[get(catgroup) == "Multiple race",
-                              c(catgroup) := "Multiple"]
-
-          ## Process race_aic (alone or in combination) categories ----
-            if (current_row$race_type == 'race_aic') {
-              # Filter to keep only relevant race_aic combinations
-              population_data <- population_data[
-                !(grepl('_aic_', get(catvarname)) &
-                    !((get(catvarname) == 'chi_race_aic_aian' & race_aic == 'AIAN') |
-                        (get(catvarname) == 'chi_race_aic_asian' & race_aic == 'Asian') |
-                        (get(catvarname) == 'chi_race_aic_black' & race_aic == 'Black') |
-                        (get(catvarname) == 'chi_race_aic_his' & race_aic == 'Hispanic') |
-                        (get(catvarname) == 'chi_race_aic_nhpi' & race_aic == 'NHPI') |
-                        (get(catvarname) == 'chi_race_aic_wht' & race_aic == 'White'))
-                )
-              ]
-
-              # Assign race_aic value to group
-              population_data[grep('_aic', get(catvarname)),
-                              c(catgroup) := race_aic]
+          # Assign age groupings
+          if (!is.na(population_data[1, get(catnum)]) && population_data[1, get(catnum)] == "Age") {
+            population_data <- assign_age_groupings(population_data,
+                                                    catnum,
+                                                    catvarname,
+                                                    catgroup)
             }
 
-          ## Process HRAs ----
-            if (population_data[1, geo_type] == 'blk' & population_data[1, get(catnum)] == 'Cities/neighborhoods') {
-
-              hra_crosswalk <- rads.data::spatial_block20_to_hra20_to_region20[, list(geo_id = GEOID20, hra20_name)]
-
-              population_data <- merge(population_data,
-                                       hra_crosswalk,
-                                       by = "geo_id",
-                                       all.x = TRUE,
-                                       all.y = FALSE)
-
-              population_data[, c(catgroup) := hra20_name]
-            }
-
-          ## Process Regions ----
-            # Block to Region crosswalk
-              if (population_data[1, geo_type] == 'blk' & population_data[1, get(catnum)] == 'Regions') {
-
-                  region_crosswalk <- rads.data::spatial_block20_to_hra20_to_region20[, list(geo_id = GEOID20, region_name)]
-
-                  population_data <- merge(population_data,
-                                           region_crosswalk,
-                                           by = 'geo_id',
-                                           all.x = TRUE,
-                                           all.y = FALSE)
-
-                  population_data[, c(catgroup) := region_name]
-              }
-
-            # HRA to Region crosswalk
-              if (population_data[1, geo_type] == 'hra' & population_data[1, get(catnum)] == 'Regions') {
-
-                  region_crosswalk <- rads.data::spatial_hra20_to_region20[, list(geo_id = hra20_name, region_name)]
-
-                  population_data <- merge(population_data,
-                                           region_crosswalk,
-                                           by = 'geo_id',
-                                           all.x = TRUE,
-                                           all.y = FALSE)
-
-                  population_data[, c(catgroup) := region_name]
-              }
-
-            # ZIP to Region crosswalk with population weighting
-              if (population_data[1, geo_type] == 'zip' & population_data[1, get(catnum)] == 'Regions') {
-
-                  # Create ZIP to region crosswalk with population weights
-                  zip_region_crosswalk <- rads.data::spatial_zip_to_hra20_pop
-
-                  zip_region_crosswalk <- merge(zip_region_crosswalk,
-                                                rads.data::spatial_hra20_to_region20[, list(hra20_name, region = region_name)],
-                                                by = 'hra20_name',
-                                                all = TRUE)
-
-                  # Aggregate fractional populations to region level
-                  zip_region_crosswalk <- zip_region_crosswalk[,list(s2t_fraction = sum(s2t_fraction)),
-                                                               list(geo_id = as.character(source_id), region)]
-
-                  # Apply population weighting by region
-                  population_data <- merge(population_data,
-                                           zip_region_crosswalk,
-                                           by = "geo_id",
-                                           all.x = TRUE,
-                                           all.y = FALSE,
-                                           allow.cartesian = TRUE)
-                  population_data[, pop := pop * s2t_fraction] # Apply weight to population
-                  population_data[, c(catgroup) := region]
-              }
-
-          ## Process Big Cities ----
-            if (population_data[1, get(catnum)] == 'Big cities') {
-              # Block to big city crosswalk
-              if (population_data[1, geo_type] == 'blk') {
-
-                # Two-step crosswalk: block to HRA to big city
-                block_to_hra <- rads.data::spatial_block20_to_hra20_to_region20[, list(geo_id = GEOID20, hra20_name)]
-                hra_to_bigcity <- rads.data::spatial_hra20_to_bigcities[, list(hra20_name, bigcity)]
-
-                block_to_bigcity <- merge(hra_to_bigcity,
-                                          block_to_hra,
-                                          by = 'hra20_name',
-                                          all.x = T,
-                                          all.y = F)[, hra20_name := NULL]
-
-                population_data <- merge(population_data,
-                                         block_to_bigcity,
-                                         by = "geo_id",
-                                         all.x = TRUE,
-                                         all.y = FALSE)
-              }
-
-              # HRA to big city crosswalk
-              if (population_data[1, geo_type] == 'hra') {
-                hra_to_bigcity <- rads.data::spatial_hra20_to_bigcities[, list(hra20_name, bigcity)]
-                population_data <- merge(population_data,
-                                         hra_to_bigcity,
-                                         by.x = 'geo_id',
-                                         by.y = 'hra20_name',
-                                         all.x = TRUE,
-                                         all.y = FALSE)
-              }
-
-              # Assign big city name to group
-              population_data[, c(catgroup) := bigcity]
-            }
-
-          ## Process age groupings ----
-            # Age 6 groups: <18, 18-24, 25-44, 45-64, 65-74, 75+
-              population_data[get(catvarname) == "age6" & age %in% 0:17,
-                              c(catgroup) := "<18"]
-              population_data[get(catvarname) == "age6" & age %in% 18:24,
-                              c(catgroup) := "18-24"]
-              population_data[get(catvarname) == "age6" & age %in% 25:44,
-                              c(catgroup) := "25-44"]
-              population_data[get(catvarname) == "age6" & age %in% 45:64,
-                              c(catgroup) := "45-64"]
-              population_data[get(catvarname) == "age6" & age %in% 65:74,
-                              c(catgroup) := "65-74"]
-              population_data[get(catvarname) == "age6" & age >= 75,
-                              c(catgroup) := "75+"]
-
-            # Maternal age 5 groups: 10-17, 18-24, 25-34, 35-44, 45+
-              population_data[get(catvarname) == "mage5" & age %in% 10:17,
-                              c(catgroup) := "10-17"]
-              population_data[get(catvarname) == "mage5" & age %in% 18:24,
-                              c(catgroup) := "18-24"]
-              population_data[get(catvarname) == "mage5" & age %in% 25:34,
-                              c(catgroup) := "25-34"]
-              population_data[get(catvarname) == "mage5" & age %in% 35:44,
-                              c(catgroup) := "35-44"]
-              population_data[get(catvarname) == "mage5" & age >= 45,
-                              c(catgroup) := "45+"]
-
-            # Youth age 4 groups: 0-4, 5-9, 10-14, 15-17
-              population_data[get(catvarname) == "yage4" & age %in% 0:4,
-                              c(catgroup) := "0-4"]
-              population_data[get(catvarname) == "yage4" & age %in% 5:9,
-                              c(catgroup) := "5-9"]
-              population_data[get(catvarname) == "yage4" & age %in% 10:14,
-                              c(catgroup) := "10-14"]
-              population_data[get(catvarname) == "yage4" & age %in% 15:17,
-                              c(catgroup) := "15-17"]
-
-          ## Process poverty groupings ----
-            # Block level poverty
-              if (population_data[1, geo_type] == 'blk' &
-                  grepl("poverty$", population_data[1, get(catnum)], ignore.case = TRUE)) {
-                # Extract tract ID from block ID (first 11 characters)
-                population_data[, geo_tract2020 := substr(geo_id, 1, 11)]
-
-                # Join poverty group data
-                population_data <- merge(
-                  population_data,
-                  rads.data::misc_poverty_groups[geo_type == 'Tract'][, list(geo_tract2020 = geo_id, pov200grp)],
-                  by = "geo_tract2020",
-                  all.x = TRUE,
-                  all.y = FALSE
-                )
-
-                # Assign poverty group
-                population_data[, c(catgroup) := pov200grp]
-              }
-
-            # ZIP level poverty
-              if (population_data[1, geo_type] == 'zip' &
-                  grepl("poverty$", population_data[1, get(catnum)], ignore.case = TRUE)) {
-                # Join poverty group data
-                population_data <- merge(
-                  population_data,
-                  rads.data::misc_poverty_groups[geo_type == 'ZCTA'][, list(geo_id, pov200grp)],
-                  by = 'geo_id',
-                  all.x = TRUE,
-                  all.y = FALSE
-                )
-
-                # Assign poverty group
-                population_data[, c(catgroup) := pov200grp]
-              }
-
-          } # close looping over cat1/cat2
+        }
 
       # Filter and clean results ----
         # Remove rows with missing primary category group
-          population_data <- population_data[!is.na(cat1_group)]
+        population_data <- population_data[!is.na(cat1_group)]
 
         # Remove rows with missing secondary category group (when category exists)
-          population_data <- population_data[is.na(cat2) | cat2 == 'NA' |
-                                               (!is.na(cat2) & cat2 != 'NA' & !is.na(cat2_group) & cat2_group != 'NA'),]
+        population_data <- population_data[is.na(cat2) | cat2 == 'NA' |
+                                             (!is.na(cat2) & cat2 != 'NA' &
+                                                !is.na(cat2_group) & cat2_group != 'NA'),]
 
-      # Aggregate population data ----
-        # Collapse to one row per demographic combination with sum of population
-          population_data <- population_data[, list(pop = sum(pop)),
-                                             list(chi_age = age,
-                                                  year,
-                                                  cat1, cat1_varname, cat1_group,
-                                                  cat2, cat2_varname, cat2_group)]
+        # Aggregate population data
+        population_data <- population_data[, list(pop = sum(pop)),
+                                           list(chi_age = age,
+                                                year,
+                                                cat1, cat1_varname, cat1_group,
+                                                cat2, cat2_varname, cat2_group)]
 
-      # Generate complete demographic combinations ----
-        # Function to handle age group processing and demographic merging
-          process_age_category <- function(population_data, cat_num) {
-            # Define prefix and complementary prefix
-            cat_prefix <- paste0("cat", cat_num)
-            other_cat_prefix <- if(cat_num == 1) "cat2" else "cat1" # need to select the cat that does not have the age var
+        # Generate complete demographic combinations
+        complete_demographics <- create_demographic_shell(population_data, current_row)
 
-            # Get the variable name for this category
-            cat_varname <- population_data[1][[paste0(cat_prefix, "_varname")]]
+        # Merge population data with complete demographics grid
+        population_data <- suppressWarnings(merge(population_data,
+                                                  complete_demographics,
+                                                  all = TRUE))
 
-            # Create appropriate age groups based on cat_varname
-            if (cat_varname == 'age6') {
-              age_groups <- data.table(
-                chi_age = 0:100
-              )
-              age_groups[, paste0(cat_prefix, "_group") := cut(
-                chi_age,
-                breaks = c(-1, 17, 24, 44, 64, 74, 120),
-                labels = c("<18", "18-24", "25-44", "45-64", "65-74", "75+")
-              )]
-            } else if (cat_varname == 'mage5') {
-              age_groups <- data.table(
-                chi_age = 10:100
-              )
-              age_groups[, paste0(cat_prefix, "_group") := cut(
-                chi_age,
-                breaks = c(9, 17, 24, 34, 44, 120),
-                labels = c('10-17', '18-24', '25-34', '35-44', '45+')
-              )]
-            } else if (cat_varname == 'yage4') {
-              age_groups <- data.table(
-                chi_age = 0:17
-              )
-              age_groups[, paste0(cat_prefix, "_group") := cut(
-                chi_age,
-                breaks = c(-1, 4, 9, 14, 17),
-                labels = c('0-4', '5-9', '10-14', '15-17')
-              )]
-            }
+        # Fill missing population values with zero
+        population_data[is.na(pop), pop := 0]
 
-            # Add category info
-            age_groups[, (cat_prefix) := "Age"]
-            age_groups[, paste0(cat_prefix, "_varname") := cat_varname]
-
-            # Combine demographic dimensions with age groups
-            cols_to_select <- c("year", other_cat_prefix,
-                                paste0(other_cat_prefix, "_varname"),
-                                paste0(other_cat_prefix, "_group"))
-
-            unique_pop_data <- unique(population_data[, cols_to_select, with = FALSE][, mykey := 1])
-
-            complete_demographics <- unique_pop_data[age_groups[, mykey := 1], on = "mykey", allow.cartesian = TRUE]
-            complete_demographics[, mykey := NULL]
-
-            return(complete_demographics)
-          }
-
-        # Use function to handle age group processing
-          if (population_data[1]$cat1 == "Age") {
-            complete_demographics <- process_age_category(population_data, 1)
-          }
-
-          if (population_data[1]$cat2 == "Age") {
-            complete_demographics <- process_age_category(population_data, 2)
-          }
-
-          if (population_data[1]$cat1 != "Age" & population_data[1]$cat2 != "Age"){
-              # Get unique cat1 groups
-              cat1_groups <- unique(population_data[, list(cat1, cat1_varname, cat1_group, mykey = 1)])
-
-              # Get unique cat2 groups
-              cat2_groups <- unique(population_data[, list(cat2, cat2_varname, cat2_group, mykey = 1)])
-
-              # All combos of cat1 and cat2 groups
-              complete_demographics <- cat1_groups[cat2_groups, on = "mykey", allow.cartesian = TRUE]
-
-              # Create year and age combos
-              year_age <- data.table(year = as.character(current_row$year), chi_age = 0:100, mykey = 1)
-
-              # Get combos for each year/age cat1/cat2 combo
-              complete_demographics <- complete_demographics[year_age, on = "mykey", allow.cartesian = TRUE]
-
-              # Drop key
-              complete_demographics[, mykey := NULL]
-          }
-
-
-
-      # Merge population data with complete demographics grid ----
-        population_data <- suppressWarnings(merge(population_data, complete_demographics, all = TRUE))
-
-        population_data[is.na(pop), pop := 0] # Fill missing population values with zero
-
-      # Add tab column and finalize ----
+        # Add tab column
         population_data[, tab := current_row$tab]
 
-      # Convert placeholder "NA" strings back to true NA values ----
+        # Convert placeholder "NA" strings back to true NA values
         population_data[cat2 == "NA", c("cat2", "cat2_varname", "cat2_group") := NA]
 
-      # Return completed population dataset ----
-        return(population_data)
+      return(population_data)
     }
 
-  # Process all template rows in parallel ----
-    # Combine results from all template rows using future_lapply for parallel processing
-      progressr::handlers(handler_progress())
-      progressr::with_progress({
-        p <- progressr::progressor(nrow(pop.template))
-          all_population_data <- rbindlist(
-            future_lapply(
-              X = as.list(seq(1, nrow(pop.template))),
-              FUN = function(row_index) {
-                p(paste0("Processing row ", row_index, " of ", nrow(pop.template) ))
-                set.seed(98104) # Set consistent seed for reproducibility
-                get_population_for_template_row(row_index, pop.template = pop.template)
-              },
-              future.seed = 98104 # Set seed for parallel processes
-            )
-          )
-      }) # closet progressr::with_progress()
+  #=============================
+  # MAIN FUNCTION EXECUTION ----
+  #=============================
+  # STEP 1: Validate and prepare inputs ----
+  validated <- validate_inputs(pop.template, pop.genders, pop.ages, is_chars)
+  pop.template <- validated$pop.template
+  gender_values <- validated$gender_values
+  age_values <- validated$age_values
 
-    # Remove duplicate rows in final dataset
-      all_population_data <- unique(all_population_data)
+  # STEP 2: Batch similar queries ----
+  pop.template <- standardize_category_names(pop.template)
+  pop.template <- create_query_keys(pop.template)
+  batched <- batch_population_queries(pop.template)
+  pop.template <- batched$pop.template
+  batched_queries <- batched$batched_queries
 
-  # Return final population dataset ----
-  return(all_population_data)
+  # STEP 3: Get population data for batched queries ----
+  message("\U023F3 Pulling ", nrow(batched_queries), " population tables from SQL ... be patient!",
+          "\n Key: cat1||cat1_varname||cat2||cat2_varname||race_type||geo_type||group_by1||group_by2")
+  progressr::handlers(handler_progress())
+  progressr::with_progress({
+    p <- progressr::progressor(nrow(batched_queries))
+    all_population_data <- rbindlist(
+      future.apply::future_lapply(
+        X = batched_queries$batched_id,
+        FUN = function(query_id) {
+          p(paste0("Processing ", query_id, " of ",
+                   uniqueN(batched_queries$batched_id), ": ",
+                   batched_queries[batched_id == query_id]$query_key ))
+          get_batched_population(query_id,
+                                 pop.template,
+                                 batched_queries,
+                                 gender_values,
+                                 age_values,
+                                 is_chars)
+        },
+        future.seed = 98104 # Set seed for parallel processes
+      )
+      , fill = TRUE)
+  })
+
+  # STEP 4: Process each template row ----
+  message("\U023F3 Allocating populations to each row of the submitted pop.template")
+  progressr::handlers(handler_progress())
+  progressr::with_progress({
+    p <- progressr::progressor(nrow(pop.template))
+    final_population_data <- rbindlist(
+      future.apply::future_lapply(
+        X = as.list(seq(1, nrow(pop.template))),
+        FUN = function(row_index) {
+          p(paste0("Post-processing row ", row_index, " of ", nrow(pop.template)))
+          process_template_row(row_index,
+                               all_population_data,
+                               pop.template)
+        },
+        future.seed = 98104 # Set seed for parallel processes
+      )
+    )
+  })
+
+  # STEP 5: Finalize and return result ----
+  # Remove duplicate rows in final dataset
+  final_population_data <- unique(final_population_data)
+
+  # Return final population dataset
+  return(final_population_data)
 }
