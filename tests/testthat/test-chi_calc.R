@@ -7,7 +7,7 @@ test_that("chi_calc performs basic calculations correctly", {
   DTgeneric <- test_data$my.generic_data
   #make a denominator come out as 0
   DTgeneric$indicator
-  DTgeneric[chi_race_7 == "White" , indicator1 := "never"]
+  DTgeneric[race4 == "White" , indicator1 := "never"]
   result <- chi_calc(
     ph.data = DTgeneric,
     ph.instructions = instruction,
@@ -17,7 +17,6 @@ test_that("chi_calc performs basic calculations correctly", {
     source_date = Sys.Date(),
     small_num_suppress =  F
   )
-
 
   expect_s3_class(result, "data.table")
   expect_true(all(c("result", "lower_bound", "upper_bound") %in% names(result)))
