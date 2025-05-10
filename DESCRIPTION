@@ -35,6 +35,7 @@ Imports:
 Remotes:
     github::PHSKC-APDE/rads, github::PHSKC-APDE/dtsurvey
 Suggests: 
+    devtools, 
     httr,
     keyring,
     knitr,
