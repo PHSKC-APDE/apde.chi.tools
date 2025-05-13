@@ -123,7 +123,7 @@ chi_suppress_results  <- function(ph.data = NULL,
                                   denominator_col = "denominator",
                                   rse_col = "rse",
                                   columns_to_suppress = c("result", "lower_bound", "upper_bound", "se", "rse",
-                                                          "numerator", "denominator")){
+                                                          "numerator", "denominator", "comparison_with_kc")){
 
   ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
   numerator <- denominator <- suppression <- my.group <- my.order <- my.rowct <-
