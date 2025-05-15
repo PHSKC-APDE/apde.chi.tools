@@ -15,7 +15,7 @@ chi_suppress_results(
   denominator_col = "denominator",
   rse_col = "rse",
   columns_to_suppress = c("result", "lower_bound", "upper_bound", "se", "rse",
-    "numerator", "denominator")
+    "numerator", "denominator", "comparison_with_kc")
 )
 }
 \arguments{
