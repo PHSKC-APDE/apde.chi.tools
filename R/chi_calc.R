@@ -267,15 +267,32 @@ chi_calc <- function(ph.data = NULL,
 
 
   # Tidy results ----
-    # When there are no observation in a row, rads::calc() gives NA for numerator, but want zero ----
-      tempCHIest[is.na(numerator), `:=` (
+    # When we have no events, but a valid denominator ----
+    tempCHIest[
+      (is.na(numerator) | numerator == 0) & !is.na(denominator) & denominator > 0,
+      `:=` (
         result = 0,
         se = 0,
         lower_bound = 0,
         upper_bound = 0,
-        numerator = 0,
+        numerator = ifelse(is.na(numerator), 0, numerator),
         rse = NA # undefined because mean will be zero
-      )]
+      )
+    ]
+
+    # When we have no events in the denominator ----
+    tempCHIest[
+      (is.na(denominator) | denominator == 0),
+      `:=` (
+        result = NA,
+        se = NA,
+        lower_bound = NA,
+        upper_bound = NA,
+        numerator = 0,  # This might not be necessary depending on your needs
+        denominator = 0,  # Setting NA denominator to 0
+        rse = NA
+      )
+    ]
 
     # drop when cat1_group is missing (e.g., cat1 == 'Regions' and region is NA) ----
     tempCHIest <- tempCHIest[!is.na(cat1_group)]
@@ -367,10 +384,10 @@ chi_calc <- function(ph.data = NULL,
     tempCHIest[, data_source := source_name]
 
     if(small_num_suppress == TRUE){
-      tempCHIest <- rads::suppress(sup_data = tempCHIest,
-                                   suppress_range = c(suppress_low, suppress_high),
-                                   secondary = T,
-                                   secondary_exclude = cat1_varname != 'race3')
+      tempCHIest <- apde.chi.tools::chi_suppress_results(ph.data = tempCHIest,
+                                                         suppress_range = c(suppress_low, suppress_high),
+                                                         secondary = T,
+                                                         secondary_exclude = cat1_varname != 'race3')
     } else {tempCHIest[, suppression := NA_character_]}
 
     tempCHIest[rse>=30 | numerator == 0, caution := "!"]
