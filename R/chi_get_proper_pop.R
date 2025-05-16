@@ -187,8 +187,8 @@ chi_get_proper_pop <- function(pop.template = NULL,
       # Use a non-equi join to match all_population_data rows with pop.template rows
       # based on batched_id and proper year range
       population_subsets <- all_population_data[
-        pop.template[, .(batched_id, start, stop, row_index)],
-        on = .(batched_id == batched_id, year >= start, year <= stop),
+        pop.template[, list(batched_id, start, stop, row_index)],
+        on = list(batched_id == batched_id, year >= start, year <= stop),
         nomatch = 0  # Drop rows that don't match
       ]
 
