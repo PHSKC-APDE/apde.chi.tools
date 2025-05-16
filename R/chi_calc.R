@@ -80,6 +80,19 @@ chi_calc <- function(ph.data = NULL,
     if (nrow(ph.instructions) == 0) stop("\n\U1F6D1 ph.instructions is empty")
     if (!is.data.table(ph.instructions)) setDT(ph.instructions)
 
+    # Validate year range in ph.instructions
+    if (nrow(ph.instructions[end > max(ph.data[['chi_year']], na.rm = T), ]) > 0){
+      warning("\u26A0\ufe0f There are rows in ph.instructions where the end year is > the maximum chi_year in ph.data.\n",
+              "These rows have been dropped from your instructions.", immediate. = TRUE)
+      ph.instructions <- ph.instructions[!(end > max(ph.data[['chi_year']], na.rm = T)),]
+    }
+
+    if (nrow(ph.instructions[start < min(ph.data[['chi_year']], na.rm = T), ]) > 0){
+      warning("\u26A0\ufe0f There are rows in ph.instructions where the start year is < the minimum chi_year in ph.data.\n",
+              "These rows have been dropped from your instructions.", immediate. = TRUE)
+      ph.instructions <- ph.instructions[!(start < min(ph.data[['chi_year']], na.rm = T)),]
+    }
+
     # Validate ci parameter
     if (!is.numeric(ci)) stop("\n\U1F6D1 ci must be numeric")
     if (ci <= 0 || ci >= 1) stop("\n\U1F6D1 ci must be between 0 and 1")
