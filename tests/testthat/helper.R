@@ -243,7 +243,7 @@ setup_test_data <- function() {
           DTIteration <- data.table(
             id = 1:observations,
             chi_geo_kc = sample(c('King County',NA_character_), observations, replace = T),
-            chi_race_7 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
+            race4 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Multiple", NA), observations, replace = T, prob = c(.19,.01,.07,.11,.01,.42,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
             chi_sex = as.factor(sample(c("Male","Female"), observations, replace = T)),
             chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T), levels = c("South","North","Seattle","East")),
             indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations, replace = T)),
@@ -382,7 +382,7 @@ setup_test_data <- function() {
     test_analysis_set_twosets <- data.table(
       #this should work with the generic data set
       cat1 = rep(c('Regions', 'Gender', 'Race/ethnicity'),2),
-      cat1_varname = rep(c('chi_geo_region', 'chi_sex', 'chi_race_7'),2),
+      cat1_varname = rep(c('chi_geo_region', 'chi_sex', 'race4'),2),
       `_kingcounty` = c('x'),
       `_wastate` = NA_character_,
       demgroups = c(rep(NA_character_,3),rep("x", 3)),
