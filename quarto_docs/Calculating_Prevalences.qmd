@@ -1,5 +1,5 @@
 ---
-title: "Generating CHI Prevalence Estimates"
+title: "Generating CHI Estimates of Proportions and Means"
 format: gfm
 prefer-html: false
 self-contained: true
@@ -315,7 +315,7 @@ pretty_kable(head(mymetadata[]))
 
 # Quality Assurance
 
-After calculation, we need to perform quality assurance checks to ensure our estimates and metadata conform to CHI standards. `chi_qa_tro()` checks whether the CHI estimates and metadata are properly formatted, complete, and compliant with required standards, ensuring that column names, values, and data types meet specified criteria. The function returns 1 for pass and 0 for failures to meet CHI standards. The function also provides warnings when esstimates have unexpected patterns that do not not necessarily violate CHI standards.
+After calculation, we need to perform quality assurance checks to ensure our estimates and metadata conform to CHI standards. `chi_qa_tro()` checks whether the CHI estimates and metadata are properly formatted, complete, and compliant with required standards, ensuring that column names, values, and data types meet specified criteria. The function returns 1 for pass and 0 for failures to meet CHI standards. The function also provides warnings when estimates have unexpected patterns that do not not necessarily violate CHI standards.
 
 ::: callout-note
 ## What's going on under the hood?
