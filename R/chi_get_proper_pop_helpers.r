@@ -486,7 +486,10 @@
 # Create demographic shell for population analysis: create_demographic_shell() ----
 #' Create demographic shell for population analysis: create_demographic_shell() ----
 #' @noRd
-  create_demographic_shell <- function(population_data, template_row) {
+  create_demographic_shell <- function(population_data, template_row, age_values = NULL) {
+    # Use age_values if provided, otherwise default to 0:100
+    age_range <- if(!is.null(age_values)) age_values else 0:100
+
     # Function to handle age group processing
     process_age_category <- function(population_data, cat_num) {
       # Define prefix and complementary prefix
@@ -497,7 +500,7 @@
       cat_varname <- population_data[1][[paste0(cat_prefix, "_varname")]]
 
       # Create a data table with all possible ages
-      age_groups <- data.table(chi_age = 0:100)
+      age_groups <- data.table(chi_age = age_range) # age_range is defined above in create_demographic_shell
 
       # Get age ranges
       age_ranges <- process_age_patterns(cat_varname)
@@ -560,7 +563,7 @@
 
       # Create year and age combos
       year_age <- data.table(year = as.character(template_row$year),
-                             chi_age = 0:100,
+                             chi_age = age_range,
                              mykey = 1)
 
       # Get combos for each year/age cat1/cat2 combo
@@ -579,7 +582,7 @@
 # Process a single template row: process_template_row() ----
 #' Process a single template row: process_template_row() ----
 #' @noRd
-  process_template_row <- function(row_index, population_data, pop.template) {
+  process_template_row <- function(row_index, population_data, pop.template, age_values = NULL) {
     # Basic subsetting tidying ----
       current_row <- pop.template[row_index, ]
 
@@ -670,7 +673,8 @@
                                               cat2, cat2_varname, cat2_group)]
 
       # Generate complete demographic combinations
-      complete_demographics <- create_demographic_shell(population_data, current_row)
+      complete_demographics <- create_demographic_shell(population_data, current_row, age_values)
+
 
       # Merge population data with complete demographics grid
       population_data <- suppressWarnings(merge(population_data,
