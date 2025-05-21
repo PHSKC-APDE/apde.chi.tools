@@ -169,7 +169,7 @@ chi_get_proper_pop <- function(pop.template = NULL,
             ]
 
             # Process without temp files
-            process_template_row(row_index, filtered_population, pop.template)
+            process_template_row(row_index, filtered_population, pop.template, age_values)
           }
         )
       )
@@ -237,7 +237,8 @@ chi_get_proper_pop <- function(pop.template = NULL,
               result <- process_template_row(
                 row_index = row_index,
                 population_data = filtered_population,
-                pop.template = pop.template)
+                pop.template = pop.template,
+                age_values = age_values)
 
               return(result)
             },
