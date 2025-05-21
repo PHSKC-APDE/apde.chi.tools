@@ -99,12 +99,15 @@ Each CHI data source has an analysis set - a compact summary of all calculations
 analysis_sets <- chi_generate_analysis_set('birth')
 ```
 
-Curious what an analysis set looks like? Let's take a peek at the first two rows:
+Curious what an analysis set looks like? Let's take a peek at a few rows:
 
 ```{r}
 #| echo: false
 # Show the last few rows to display structure
-pretty_kable(head(analysis_sets[1:2]))
+pretty_kable(
+  rbind(analysis_sets[set == 1 & cat1_varname == 'bigcities'], 
+        analysis_sets[set==2 & cat1_varname %in% c('bigcities', 'pov200grp')])
+  )
 ```
 
 The analysis set contains important information about:
@@ -228,13 +231,15 @@ pretty_kable(
 
 ### Use `chi_generate_instructions_pop()`
 
-Pass `mycounts` to `chi_generate_instructions_pop()` to create instructions to pull corresponding population data.
+We pass `mycounts` to `chi_generate_instructions_pop()` to create instructions for downloading corresponding population data.
+
+Note that the `povgeo` parameter is dependent upon how the data source defines the `'pov200grp'` indicator in the ETL process. In birth data it is defined by blocks and some other data it is defined by ZIP codes.
 
 ```{r pop_instructions}
 #| warning: false
 #| message: false
 mypop.instructions <- chi_generate_instructions_pop(mycount.data = mycounts, 
-                                                  povgeo = 'blk') # pov200grp is defined by blocks in birth data and by ZIP in other data
+                                                    povgeo = 'blk') 
 ```
 
 Here are a few rows of `mypop.instructions` that will show the structure and contents of the `chi_generate_instructions_pop()` output:
@@ -251,23 +256,23 @@ pretty_kable(
 
 ### Use `chi_get_proper_pop()`
 
-Pass `mypop.instructions` to `chi_get_proper_pop()` to get structured population data from our servers.
+We can now pass `mypop.instructions` to `chi_get_proper_pop()` to download and structure population data.
 
 ```{r pop_pull}
 #| warning: false
 #| message: false
 mypop <- chi_get_proper_pop(pop.template = mypop.instructions, 
-                            pop.genders = 'f', # limit to female because women are the denominator
-                            pop.ages = 15:17,  # limit to ages the define adolescent births
-                            is_chars = FALSE)  # only set to TRUE if you need population denominators for CHARS
+                            pop.genders = 'f', # females are the denominator
+                            pop.ages = 15:17,  # limit to adolescents
+                            is_chars = FALSE)  # Not CHARS analysis, so FALSE
 ```
 
-Now let's view some of the resulting population table:
+Now let's peek at the population table to see what we've created::
 
 ```{r pop_pull_view}
 #| echo: false
 pretty_kable(
-  print(mypop[cat1_varname == 'bigcities' & cat2_group == 'Hispanic' & chi_age == 15][1:8])
+  mypop[cat1_varname == 'bigcities' & cat2_group == 'Hispanic' & chi_age == 15][1:8]
 )
 ```
 
@@ -275,7 +280,7 @@ pretty_kable(
 
 Race and ethnicity `cat1` and `cat2` values in `mypop` need to be brought into alignment with the values in the `mycounts`.
 
-```{r tidy-race_eth}
+```{r tidy-race_eth_1}
 #| warning: false
 #| message: false
 mypop[cat1 == 'Ethnicity', cat1 := "Birthing person's ethnicity"]
@@ -313,7 +318,7 @@ mycombo <- merge(mycounts,
 
 Tidy the combined data.
 
-```{r tidy-race_eth}
+```{r tidy-race_eth_2}
 #| warning: false
 #| message: false
 # There are zero 'Very high poverty areas' in North King County, so drop these cross-tabulations
@@ -321,7 +326,7 @@ droprows <- mycombo[(cat1_group == 'North' & cat2_group == 'Very high poverty ar
                           (cat2_group == 'North' & cat1_group == 'Very high poverty areas')]
 mycombo <- fsetdiff(mycombo, droprows) 
 
-# Need variable named 'age' for rads::age_standardize
+# We need a variable named 'age' for rads::age_standardize
 setnames(mycombo, 'chi_age', 'age') 
 ```
 
@@ -367,10 +372,13 @@ myrates <- rads::age_standardize(ph.data = mycombo,
                                  my.pop = 'pop',
                                  per = 1000, # adolescent birth rate is per 1,000, not 100,000
                                  conf.level = 0.90,
-                                 group_by = c("indicator_key", "year", "tab", "cat1", "cat1_group", "cat1_varname", "cat2", "cat2_group", "cat2_varname"))
+                                 group_by = c("indicator_key", "year", "tab", "cat1", "cat1_group", 
+                                              "cat1_varname", "cat2", "cat2_group", "cat2_varname"))
 ```
 
 ## Tidy Rates
+
+Since `rads::age_standardize()` is not specific to CHI, you will have to massage the estimates a bit to align them with CHI standards. If you are curious about the SE and RSE approximations below, you are encouraged to examine `?rads::age_standardize`.
 
 ```{r tidy_rates}
 #| warning: false
@@ -381,26 +389,33 @@ myrates <- myrates[, reference_pop := NULL]
 # Set constants
 myrates[, data_source := 'birth']
 myrates[, chi := 1]
-myrates[, source_date := max(mydata$creation_date)]
+myrates[, source_date := max(birthsdt$creation_date)]
 myrates[, run_date := as.Date(Sys.Date(), "%Y%m%d")]
 
-# Use CRUDE for rates, result & CI because they are for an age stratum, not all ages
-# CHI standard for rates is to round result to 1 decimal place, SE to 2, and RSE to 3
+# Use CRUDE estimates because these rates are for an age stratum, not all ages
+# In CHI, for rates we round results to 1 decimal place, SE to 2, and RSE to 3
 myrates[, result := round2(crude.rate, 1)]
 myrates[, lower_bound := round2(crude.lci, 1)]
 myrates[, upper_bound := round2(crude.uci, 1)]
-myrates[count != 0, se := round2(crude.rate / sqrt(count), 2)] # just an approximation because no real corresponding SE for the calculated CI
-myrates[count == 0 & (!is.na(pop) & pop != 0), se := 0] # if count is zero but there is a denominator population, the real variance is zero
-myrates[count != 0, rse := round2(100 / sqrt(count), 3)] # just an approximation because no real corresponding RSE for the calculated CI
 
+# Approximate the SE
+myrates[count != 0, se := round2(crude.rate / sqrt(count), 2)] 
+myrates[count == 0 & (!is.na(pop) & pop != 0), se := 0] 
+
+# Approximate the RSE
+myrates[count != 0, rse := round2(100 / sqrt(count), 3)] 
+
+# Set numerator and denominator
 myrates[, numerator := count]
 myrates[, denominator := round2(pop)]
 
 # Apply primary and secondary suppression
-myrates <- apde.chi.tools::chi_suppress_results(ph.data = myrates,
-                                                suppress_range = c(1, 9), 
-                                                secondary = T,
-                                                secondary_exclude = cat1_varname != 'race3') 
+myrates <- apde.chi.tools::chi_suppress_results(
+  ph.data = myrates,
+  suppress_range = c(1, 9),
+  secondary = T,
+  secondary_exclude = cat1_varname != 'race3') 
+
 # Only keep CHI columns
 myrates <- myrates[, chi_get_cols(), with = F]
 
