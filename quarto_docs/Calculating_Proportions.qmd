@@ -8,7 +8,7 @@ editor: visual
 
 # Introduction
 
-The `apde.chi.tools` package provides tools for a standardized workflow for preparing King County Community Health Indicators (CHI) estimates. This vignette demonstrates how to use the package's core functions to ***generate estimates of proportion and means*** from start to finish. If you need to [calculate rates](https://github.com/PHSKC-APDE/apde.chi.tools/wiki/Calculating_Rates) that use population denominators, please refer to the [separate vignette](https://github.com/PHSKC-APDE/apde.chi.tools/wiki/Calculating_Rates) for that purpose.
+The `apde.chi.tools` package provides tools for a standardized workflow for preparing King County Community Health Indicators (CHI) estimates. This vignette demonstrates how to use the package's core functions to ***generate estimates of proportion and means*** from start to finish. If you need to [calculate rates](https://github.com/PHSKC-APDE/apde.chi.tools/wiki/Calculating_Rates) that use population denominators, please refer to the [separate vignette](https://github.com/PHSKC-APDE/apde.chi.tools/wiki/Calculating_Rates) for that purpose. To view a complete list of documented functions available from the `apde.chi.tools` package, enter `help(package = 'apde.chi.tools')` at the R prompt.
 
 We'll walk through an analysis pipeline using birth data as an example, but the same workflow applies to other standardized datasets like ACS PUMS, BRFSS, and HYS.
 
@@ -512,4 +512,4 @@ If you encounter issues or believe you've found a bug, please submit a GitHub is
 
 Remember that this workflow is specifically for calculations of proportion and means. For rate calculations that use population denominators, please refer to the dedicated [dedicated rate calculation vignette](https://github.com/PHSKC-APDE/apde.chi.tools/wiki/Calculating_Rates).
 
--- *Updated `r Sys.Date()`*
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (apde.chi.tools v', packageVersion('apde.chi.tools'), ')')`*

@@ -8,9 +8,9 @@ editor: visual
 
 # Introduction
 
-The `apde.chi.tools` package provides tools for a standardized workflow for preparing King County Community Health Indicators (CHI) estimates. This vignette demonstrates how to use the package's core functions to generate estimates of ***rates that use population denominators***. If you need to calculate prevalences, proportions, or means, please refer to the [separate vignette](https://github.com/PHSKC-APDE/apde.chi.tools/wiki/Calculating_Prevalences) for that purpose.
+The `apde.chi.tools` package provides tools for a standardized workflow for preparing King County Community Health Indicators (CHI) estimates. This vignette demonstrates how to use the package's core functions to generate estimates of ***rates that use population denominators***. If you need to calculate prevalences, proportions, or means, please refer to the [separate vignette](https://github.com/PHSKC-APDE/apde.chi.tools/wiki/Calculating_Proportions) for that purpose.
 
-For the sake of simplicity, we'll walk through the analysis pipeline for calculating the adolescent birth rate as an example. However, estimation of CHARS and death rates follows the same basic process, albeit with some additional complexity that can be observed in the most recent code in the [CHI repository](https://github.com/PHSKC-APDE/chi). In addition, at the bottom of this wiki, we will briefly describe some additional functions that should be used for those analyses.
+For the sake of simplicity, we'll walk through the analysis pipeline for calculating the adolescent birth rate as an example. However, estimation of CHARS and death rates follows the same basic process, albeit with some additional complexity that can be observed in the most recent code in the [CHI repository](https://github.com/PHSKC-APDE/chi). To view a complete list of documented functions available from the `apde.chi.tools` package, enter `help(package = 'apde.chi.tools')` at the R prompt.
 
 The CHI standards are documented in [SharePoint \> Community Health Indicators \> CHI-Vizes](https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/Forms/AllItems.aspx) \> CHI-Standards-TableauReady Output.xlsx. We'll follow those standards throughout our analysis.
 
@@ -141,6 +141,7 @@ As stated in the introduction, for this vignette we will focus on the adolescent
 
 myinstructions <- myinstructions[indicator_key == 'teen1517']
 ```
+
 Let's examine the top six rows of our instructions:
 
 ```{r}
@@ -194,7 +195,7 @@ options(future.globals.maxSize = future.GB * 1024^3)
 
 ## Calculating the Numerator with `chi_count_by_age()`
 
-As its name implies, `chi_count_by_age()` creates a detailed breakdown of counts by age for CHI data analysis. Summing the data by age is critical for calculating [age-adjusted](https://github.com/PHSKC-APDE/rads/wiki/calculating_rates_with_rads) rates after merging with population denominators. Like [`chi_calc()`](https://github.com/PHSKC-APDE/apde.chi.tools/wiki/Calculating_Prevalences), which is used for proportions and means, `chi_count_by_age()` processes data according to the instructions created by `chi_generate_tro_shell()` and handles demographic groupings with special treatment for race and ethnicity variables.
+As its name implies, `chi_count_by_age()` creates a detailed breakdown of counts by age for CHI data analysis. Summing the data by age is critical for calculating [age-adjusted](https://github.com/PHSKC-APDE/rads/wiki/calculating_rates_with_rads) rates after merging with population denominators. Like [`chi_calc()`](https://github.com/PHSKC-APDE/apde.chi.tools/wiki/Calculating_Proportions), which is used for proportions and means, `chi_count_by_age()` processes data according to the instructions created by `chi_generate_tro_shell()` and handles demographic groupings with special treatment for race and ethnicity variables.
 
 ::: callout-note
 ## What's going on under the hood?
@@ -279,7 +280,7 @@ pretty_kable(
 
 ### Tidy `chi_get_proper_pop()` output
 
-Race and ethnicity `cat1` and `cat2` values in `mypop` need to be brought into alignment with the values in the `mycounts`. This is specific to the quirks of the CHI birth standards. 
+Race and ethnicity `cat1` and `cat2` values in `mypop` need to be brought into alignment with the values in the `mycounts`. This is specific to the quirks of the CHI birth standards.
 
 ```{r tidy-race_eth_1}
 #| warning: false
@@ -381,21 +382,19 @@ myrates <- rads::age_standardize(ph.data = mycombo,
 
 ## Tidy Rates
 
-Since `rads::age_standardize()` is not specific to CHI, you will have to massage the estimates a bit to align them with CHI standards. 
+Since `rads::age_standardize()` is not specific to CHI, you will have to massage the estimates a bit to align them with CHI standards.
 
 ::: callout-note
 ## Approximating the standard error (SE) and relative standard error (RSE)
 
 The method APDE uses to calculate the confidence intervals for rates is that recommended by WA DOH, i.e., the [Fay-Feuer method](https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf). You can find our implementation by typing `View(rads::adjust_direct)` in your R console. While our confidence intervals align perfectly with those from DOH (when given the same underlying data), this method does not have a corresponding SE. APDE consulted with a WA DOH biostatistician who said, **"*SE’s are not particularly useful for approximating the sampling distribution on the scale of adjusted rates*."** We therefore calculate **approximations** of the SE and RSE, as suggested by various state health departments. This means that the SE will be internally inconsistent with the confidence intervals ... *c'est la vie!*
 
-Though it is embedded in `rads::adjust_direct()`, for reference, here are the approximations: 
+Though it is embedded in `rads::adjust_direct()`, for reference, here are the approximations:
 
-$$SE = {\text{adjusted rate} \over{\sqrt{{\text{number of cases}}}}}$$ 
+$$SE = {\text{adjusted rate} \over{\sqrt{{\text{number of cases}}}}}$$
 
 $$RSE = {1 \over{\sqrt{\text{number of cases}}}}$$
-
 :::
-
 
 ```{r tidy_rates}
 #| warning: false
@@ -558,7 +557,7 @@ openxlsx::writeDataTable(wb, "Estimates",
                          x = myrates,
                          tableStyle = "TableStyleMedium9")
 
-# Add mettadata worksheet and write data
+# Add metadata worksheet and write data
 openxlsx::addWorksheet(wb, "Metadata")
 openxlsx::writeDataTable(wb, "Metadata",
                          x = mymetadata,
@@ -671,6 +670,6 @@ New functions you used:
 
 If you encounter issues or believe you've found a bug, please submit a GitHub issue at [Issues · PHSKC-APDE/apde.chi.tools](https://github.com/PHSKC-APDE/apde.chi.tools/issues).
 
-Remember that this workflow is specifically for rate calculations. For calculations of proportions or means, please refer to the dedicated [dedicated vignette](https://github.com/PHSKC-APDE/apde.chi.tools/wiki/Calculating_Prevalences).
+Remember that this workflow is specifically for rate calculations. For calculations of proportions or means, please refer to the dedicated [dedicated vignette](https://github.com/PHSKC-APDE/apde.chi.tools/wiki/Calculating_Proportions).
 
--- *Updated `r Sys.Date()`*
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (apde.chi.tools v', packageVersion('apde.chi.tools'), ')')`*
