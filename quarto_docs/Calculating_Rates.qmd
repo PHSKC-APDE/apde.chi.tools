@@ -389,7 +389,7 @@ Since `rads::age_standardize()` is not specific to CHI, you will have to massage
 
 The method APDE uses to calculate the confidence intervals for rates is that recommended by WA DOH, i.e., the [Fay-Feuer method](https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf). You can find our implementation by typing `View(rads::adjust_direct)` in your R console. While our confidence intervals align perfectly with those from DOH (when given the same underlying data), this method does not have a corresponding SE. APDE consulted with a WA DOH biostatistician who said, **"*SE’s are not particularly useful for approximating the sampling distribution on the scale of adjusted rates*."** We therefore calculate **approximations** of the SE and RSE, as suggested by various state health departments. This means that the SE will be internally inconsistent with the confidence intervals ... *c'est la vie!*
 
-Though it is embedded in `rads::adjust_direct()`, for reference, here are the approximations:
+For reference, here are the approximations:
 
 $$SE = {\text{adjusted rate} \over{\sqrt{{\text{number of cases}}}}}$$
 
