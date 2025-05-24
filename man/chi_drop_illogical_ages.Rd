@@ -7,9 +7,12 @@
 chi_drop_illogical_ages(ph.data, agevar = "chi_age")
 }
 \arguments{
-\item{ph.data}{A data.table or data.frame containing category and age data to be filtered.}
+\item{ph.data}{A data.table or data.frame containing category and age data to
+be filtered. Must contain the following columns: \code{cat1}, \code{cat1_group},
+\code{cat2}, \code{cat2_group}, and the age variable specified by \code{agevar}.}
 
-\item{agevar}{Character string specifying the name of the age variable column.
+\item{agevar}{Character string specifying the name of the age variable column,
+which must be encoded as an integer.
 
 Default: \code{agevar = 'chi_age'}}
 }
@@ -17,36 +20,65 @@ Default: \code{agevar = 'chi_age'}}
 A filtered data.table with only logically consistent age values
 }
 \description{
-This function filters a data.table to remove rows with inconsistent age values.
-It compares the single year age value (specified by \code{agevar}) against age
-ranges defined in \code{cat1_group} and \code{cat2_group} columns, keeping only
-those rows where:
+This function filters a data.table to remove rows with incompatible / illogical
+age values. It compares the single year age value (specified by \code{agevar})
+against age ranges defined in \code{cat1_group} and \code{cat2_group} columns,
+keeping only those rows where:
 \itemize{
   \item The categorical variable is not age-related, OR
   \item The age value falls within the range specified by the corresponding age group
 }
 
 Age groups are expected to be in formats like "10-17", "<5", or "45+", which
-the function automatically parses into numeric ranges.
+the function automatically parses into numeric ranges. When neither \code{cat1}
+nor \code{cat2} contains age categories, the function returns the data unchanged.
 }
 \details{
 The function interprets special formats in age group strings:
 \itemize{
+  \item "0" is treated as age "0-0" (age zero)
   \item "<1" is treated as age "0-0" (age zero)
-  \item "<N" is converted to "0-N" (ages 0 through N)
+  \item "<N" is converted to "0-(N-1)" (ages 0 through N-1)
   \item "N+" is converted to "N-120" (ages N through 120)
+  \item "N-M" ranges are used as-is (ages N through M)
 }
+
+Input validation ensures proper column types and structure before processing.
+Age categories are identified by checking if \code{cat1} or \code{cat2} values
+match "age" or "* age" (case-insensitive).
+
+If invalid age group formats are detected, a warning is issued showing the
+specific problematic combinations. Age validation is skipped for those specific
+combinations while continuing to process other valid age categories normally.
 }
 \examples{
 \dontrun{
-# Assuming infmort_combo is a data.frame or data.table with age, cat1,
-# cat1_group, cat2, cat2_group columns:
+library(data.table)
 
-filtered_data <- chi_drop_illogical_ages(ph.data = infmort_combo, agevar = 'age')
+# Create sample data with age inconsistencies
+test_data <- data.table(
+  cat1 = "Gender",
+  cat1_group = c("Female", "Male"),
+  cat2 = "Age",
+  cat2_group = c("<5", "5-9", "10-14", "15-25", "25+"),
+  chi_age = sample(1:100, 1000, replace = T),
+  count = 1
+)
+
+# Filter to keep only consistent rows
+filtered_data <- chi_drop_illogical_ages(ph.data = test_data,
+                                         agevar = 'chi_age')
+
+# Confirm data was filtered correctly
+unique(test_data[, .(min_age = min(chi_age), max_age = max(chi_age)),
+                 cat2_group])
+unique(filtered_data[, .(min_age = min(chi_age), max_age = max(chi_age)),
+                 cat2_group])
 }
 
 }
 \seealso{
-\code{\link{chi_count_by_age}} and \code{\link{chi_get_proper_pop}} - This function
-is typically applied to tables resulting from merging the output of these two functions.
+\code{\link{chi_count_by_age}} and \code{\link{chi_get_proper_pop}} - This
+function is typically applied to tables resulting from merging the output of
+these two functions.
 }
