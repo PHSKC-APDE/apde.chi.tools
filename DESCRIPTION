@@ -1,7 +1,7 @@
 Package: apde.chi.tools
 Type: Package
 Title: Simplify Community Health Indicators Analytics Pipeline for Public Health Seattle & King County's Assessment Policy Development and Evaluation Unit
-Version: 2025.0.2
+Version: 2025.0.3
 Authors@R: person(
   "Ronald","Buie", 
   email = "rbuie@kingcounty.gov", 

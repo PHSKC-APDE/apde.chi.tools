@@ -420,7 +420,7 @@ chi_chars_ccs <- function(ph.indicator = NA,
   }
 
   # Drop irrelevant ages ----
-  result <- chi_keep_proper_ages(result)
+  result <- chi_drop_illogical_ages(result)
 
   # Tidy year (e.g., '2025-2025' becomes just '2025') ----
   result[, year := gsub("^(\\d{4})-(\\1)$", "\\1", year)] # \\1 is a back reference to what was found before hyphen
