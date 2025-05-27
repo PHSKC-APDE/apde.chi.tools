@@ -1,4 +1,5 @@
 # APDE CHI Tools
+An R package for performing CHI analyses from start to finish
 
 ## Purpose
 
