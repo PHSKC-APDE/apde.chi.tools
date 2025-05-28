@@ -38,18 +38,16 @@
 #'
 #' @details
 #' The function:
-#'
-#' 1. Validates inputs
-#'
-#' 2. Batches similar population queries based on key parameters
-#'
-#' 3. Makes minimal database calls to cover all required year ranges
-#'
-#' 4. Post-processes data in R to match the original template requirements
-#'
-#' 5. When is_chars=TRUE, uses a different approach for King County that aggregates
+#' \enumerate{
+#'    \item Validates inputs
+#'    \item Batches similar population queries based on key parameters
+#'    \item Makes minimal database calls to cover all required year ranges
+#'    \item Post-processes data in R to match the original template requirements
+#'    \item When \code{is_chars=TRUE}, uses a different approach for King County that aggregates
 #'    populations from ZIP codes starting with 980/981 instead of using the standard
 #'    King County boundary
+#' }
+#'
 #'
 #' For better performance, we recommended using futures for parallel processing. Here is one suggested set up:
 #'
