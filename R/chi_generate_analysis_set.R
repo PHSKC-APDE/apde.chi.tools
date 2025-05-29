@@ -4,10 +4,10 @@
 #' Creates sets of indicator keys that share common analysis patterns within CHI
 #' (Community Health Indicators) data. This function can either:
 #'
-#' \enumerate{
-#'    \item Read the most recent production version of CHI estimates from the TSQL Production Server for a specified data source, or
-#'    \item Process a provided data.table/data.frame containing CHI data
-#' }
+#' 1. Read the most recent production version of CHI estimates from the TSQL Production Server
+#'    for a specified data source, or
+#'
+#' 2. Process a provided data.table/data.frame containing CHI data
 #'
 #' It groups indicators that use the same combinations of \code{cat1}, \code{cat1_varname}, and
 #' tab columns (\code{_kingcounty}, \code{_wastate}, \code{demgroups}, \code{crosstabs}, \code{trends}).

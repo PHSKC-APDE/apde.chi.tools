@@ -15,12 +15,10 @@
 #'
 #' @details
 #' The function performs the following operations:
-#' \enumerate{
-#'   \item Merges datasets using CHI-specific identifiers (indicator_key, tab, cat1, cat2, etc.)
-#'   \item Calculates absolute differences (percentage points for non-rates, raw for rates)
-#'   \item Calculates relative differences as percentages
-#'   \item Identifies notable differences needing further exploration using standard CHI criteria
-#' }
+#' 1. Merges datasets using CHI-specific identifiers (indicator_key, tab, cat1, cat2, etc.)
+#' 2. Calculates absolute differences (percentage points for non-rates, raw for rates)
+#' 3. Calculates relative differences as percentages
+#' 4. Identifies notable differences needing further exploration using standard CHI criteria
 #'
 #' @examples
 #' \dontrun{
@@ -40,13 +38,10 @@
 #' \code{\link{chi_update_sql}} for uploading validated results
 #'
 #' @return data.table ordered by absolute difference, containing:
-#'
-#' \itemize{
-#'   \item Difference metrics (absolute_diff, relative_diff)
-#'   \item All matching identifiers and categories
-#'   \item Original values and metadata from both datasets
-#'   \item Diagnostic information (bounds, numerators, denominators, standard errors)
-#' }
+#' - Difference metrics (absolute_diff, relative_diff)
+#' - All matching identifiers and categories
+#' - Original values and metadata from both datasets
+#' - Diagnostic information (bounds, numerators, denominators, standard errors)
 #'
 #' @importFrom data.table data.table setnames ":=" setDT copy
 #' @export
