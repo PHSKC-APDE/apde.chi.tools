@@ -23,7 +23,7 @@
 #'
 #' Default: \code{agevar = 'chi_age'}
 #'
-#' @return A filtered data.table with only logically consistent age values
+#' @return Returns a filtered data.table with only logically consistent age values
 #'
 #' @details
 #' The function interprets special formats in age group strings:
@@ -44,9 +44,11 @@
 #' combinations while continuing to process other valid age categories normally.
 #'
 #' @seealso
-#' \code{\link{chi_count_by_age}} and \code{\link{chi_get_proper_pop}} - This
-#' function is typically applied to tables resulting from merging the output of
-#' these two functions.
+#' \code{\link{chi_chars_ccs}} and \code{\link{chi_chars_injury}} which use this
+#' function internally
+#'
+#' \code{\link{chi_count_by_age}} and \code{\link{chi_get_proper_pop}} whose
+#' results are often filtered with this function
 #'
 #' @examples
 #' \dontrun{

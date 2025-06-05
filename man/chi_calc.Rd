@@ -42,7 +42,25 @@ chi_calc(
 \item{non_chi_byvars}{character vector. Variable names to exclude from CHI byvar encoding validation. Default: \code{NULL}.}
 }
 \value{
-A data.table containing CHI estimates with the following columns:
+Returns a data.table containing CHI estimates
+}
+\description{
+Generates CHI estimates from input data according to provided instructions.
+Handles both proportions and means, with options for suppression of small numbers.
+}
+\details{
+Uses \code{ph.instructions} created by \code{\link{chi_generate_tro_shell}} to
+generate standard CHI output following \href{https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady\%20Output.xlsx}{
+SharePoint > Community Health Indicators > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}.
+The exception is the inclusion of the column \code{'level'}, which contains
+the specific factor level for categorical variables. For example, if
+\code{indicator_key == 'fetal_pres'}, the function would return separate rows
+for each possible presentation: a row with \code{level == 'Breech'}, another
+with \code{level == 'Cephalic'}, and another with \code{level == 'Other'}. In
+these cases, we would use the level column to filter for our factor level of
+interest.
+
+For convenience, details of the returned column are presented here:
 \itemize{
   \item{\code{data_source}} Data source (e.g., acs, brfss, etc.)
   \item{\code{indicator_key}} Unique indicator key
@@ -68,10 +86,6 @@ A data.table containing CHI estimates with the following columns:
   \item{\code{source_date}} date analytic ready data was created
   \item{\code{run_date}} date of this analysis
 }
-}
-\description{
-Generates CHI estimates from input data according to provided instructions.
-Handles both proportions and rates, with options for suppression of small numbers.
 }
 \seealso{
 \code{\link{chi_generate_tro_shell}} for creating calculation instructions

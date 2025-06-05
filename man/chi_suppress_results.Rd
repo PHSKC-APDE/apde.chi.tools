@@ -60,7 +60,7 @@ suppressed should be flagged without setting estimates to NA}
 suppression is flagged. Default includes common result columns.}
 }
 \value{
-A data.table with suppression applied to CHI standard columns.
+Returns a data.table with suppression applied to CHI standard columns.
 }
 \description{
 This function applies primary data suppression based on the numerator and

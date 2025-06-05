@@ -7,24 +7,29 @@
 chi_generate_analysis_set(data_source = NULL, CHIestimates = NULL)
 }
 \arguments{
-\item{data_source}{Character string (length 1) specifying the data source to analyze
-(e.g., \code{'birth'}, \code{'brfss'}, \code{'chars'}, \code{'death'}, \code{'hys'}). This corresponds to a table
-name in the PHExtractStore database on the TSQL Production Server. Required if \code{CHIestimates} is not provided.}
+\item{data_source}{Character string (length 1) specifying the data source to
+analyze (e.g., \code{'birth'}, \code{'brfss'}, \code{'chars'}, \code{'death'},
+\code{'hys'}). This corresponds to a table name in the PHExtractStore database
+on the TSQL Production Server. Required if \code{CHIestimates} is not provided.}
 
-\item{CHIestimates}{A data.table or data.frame containing CHI data to analyze. If provided, \code{data_source}
-is ignored. Must comply with the latest CHI standard, which can be assessed/tested with the \code{chi_qa_tro} function in this package.}
+\item{CHIestimates}{A data.table or data.frame containing CHI data to analyze.
+If provided, \code{data_source} is ignored. Must comply with the latest CHI
+standard, which can be assessed/tested with the \code{\link{chi_qa_tro}}
+function in this package.}
 }
 \value{
-A data.table containing analysis sets with the following columns:
+Returns a data.table containing analysis sets with the following columns:
   \itemize{
+    \item \code{cat1}: character. A standard value from the \code{'cat'} column
+    of \code{\link[rads.data]{misc_chi_byvars}}, e.g. \code{'Gender'}
+    \item \code{cat1_varname}: character. A standard value from the \code{'varname'}
+    column of \code{\link[rads.data]{misc_chi_byvars}}, e.g., \code{'chi_sex'}
+    \item \code{_kingcounty}: character \code{'x'}. Is the analysis for King County as a whole?
+    \item \code{_wastate}: character \code{'x'}. Is the analysis is for WA state as a whole?
+    \item \code{demgroups}: character \code{'x'}. Is the analysis for demgroups?
+    \item \code{crosstabs}: character \code{'x'}. Is the analysis for crosstabs?
+    \item \code{trends}: character \code{'x'}, Is the the analysis for trends?
     \item \code{set}: Integer identifying groups of indicators with identical analysis patterns
-    \item \code{cat1}: Category name as expected in CHI TRO
-    \item \code{cat1_varname}: Category variable name as expected in CHI TRO
-    \item \code{_kingcounty}: \code{'x'} if analysis includes '_kingcounty' in the tab column
-    \item \code{_wastate}: \code{'x'} if analysis includes '_wastate' in the tab column
-    \item \code{demgroups}: \code{'x'} if analysis includes 'demgroups' in the tab column
-    \item \code{crosstabs}: \code{'x'} if analysis includes 'crosstabs'  in the tab column
-    \item \code{trends}: \code{'x'} if analysis includes 'trends' in the tab column
     \item \code{set_indicator_keys}: Comma-separated list of indicator keys sharing the pattern
   }
 }
@@ -44,16 +49,14 @@ tab columns (\code{_kingcounty}, \code{_wastate}, \code{demgroups}, \code{crosst
 This function generates a table for \code{\link{chi_generate_tro_shell}}, providing the
 structure required for generating analysis instructions.
 
-When using \code{data_source}, the function connects to the
-\code{[PHExtractStore]} database on the TSQL Production Server \code{KCITSQLPRPHIP40} to retrieve the latest production estimates.
-Users need appropriate database credentials - contact your manager if you need access.
+When using \code{data_source}, the function connects to the \code{[PHExtractStore]}
+database on the TSQL Production Server \code{KCITSQLPRPHIP40} to retrieve the
+latest production estimates. Users need appropriate database credentials - contact
+your manager if you need access.
 
-When using \code{CHIestimates}, the provided estimates are processed directly, bypassing the database connection.
-The data must comply with the latest CHI standard, which can be assessed/tested with the \code{chi_qa_tro} function.
-
-The output structure directly informs \code{\link{chi_generate_tro_shell}} about which
-indicators should be analyzed together based on their shared patterns of
-categories and analysis types.
+When using \code{CHIestimates}, the provided estimates are processed directly,
+bypassing the database connection. The data must comply with the latest CHI
+standard, which can be assessed/tested with the \code{\link{chi_qa_tro}} function.
 }
 \examples{
 \dontrun{
@@ -70,5 +73,6 @@ custom_sets <- chi_generate_analysis_set(CHIestimates = my_data)
 
 }
 \seealso{
-\code{\link{chi_generate_tro_shell}} for generating TRO shell from these analysis sets
+\code{\link{chi_generate_tro_shell}} for generating calculation instructions
+from these analysis sets
 }

@@ -9,7 +9,7 @@
 #'        should have \code{indicator_key} and \code{column} elements.
 #' @param warn_only Logical, if TRUE, only warns about unexpected missing values instead of stopping
 #'
-#' @return table of metadata
+#' @return Returns a table of metadata
 #'
 #' @seealso
 #' \code{\link{chi_calc}} for generating estimates

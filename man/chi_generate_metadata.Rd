@@ -22,7 +22,7 @@ should have \code{indicator_key} and \code{column} elements.}
 \item{warn_only}{Logical, if TRUE, only warns about unexpected missing values instead of stopping}
 }
 \value{
-table of metadata
+Returns a table of metadata
 }
 \description{
 Function to generate metadata table combining existing metadata and latest estimates.

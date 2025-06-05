@@ -39,7 +39,7 @@
 #'
 #' \code{\link{chi_compare_estimates}} for comparing with existing data
 #'
-#' @return status message indicating success and location, or failure, of upload
+#' @return Returns a status message indicating success and location, or failure, of upload
 #'
 #' @keywords CHI, Tableau, Production
 #'

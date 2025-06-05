@@ -13,54 +13,63 @@ chi_generate_tro_shell(
 )
 }
 \arguments{
-\item{ph.analysis_set}{name of data.table to parse}
+\item{ph.analysis_set}{name of a formal \code{analysis_set} as described in the
+\strong{Details} section below}
 
 \item{end.year}{the latest year to be used for aggregate estimates}
 
-\item{year.span}{the number of years to be included in a single non-trend period}
+\item{year.span}{the number of years to be included in a single non-trend period.
+e.g. if \code{end.year = 2023} & \code{year.span = 5}, calculations would be
+performed for 2019-2023}
 
 \item{trend.span}{the number of years to be included in a single trend period}
 
-\item{trend.periods}{the number of periods to be included in a trend}
+\item{trend.periods}{the number of periods to be included in a trend series,
+e.g., if \code{end.year = 2023} & \code{trend.span = 2} & \code{trend.periods = 5},
+then trends would be calculated for c('2023-2022', '2022-2021', '2021-2020',
+'2019-2020', '2018-2019')}
 }
 \value{
-A data table containing calculation instructions with columns:
+Returns a data table of calculation instructions with columns:
 \itemize{
-  \item{indicator_key} Unique identifier for each indicator
-  \item{tab} Analysis type (_kingcounty, demgroups, trends, etc.)
-  \item{year} Time period for analysis
-  \item{Additional columns} As specified in analysis_set input
+  \item \code{indicator_key} Unique identifier for each indicator
+  \item \code{tab} Analysis type (_kingcounty, demgroups, trends, etc.)
+  \item \code{cat1} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
+  \item \code{cat1_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
+  \item \code{cat2} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
+  \item \code{cat2_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
+  \item \code{start} Starting year of the time period to be analyzed
+  \item \code{end} Ending year of the time period to be analyzed
 }
 }
 \description{
-This function takes an analysis set file and indicator of which set should be
-processed. It returns a skeleton of CHI Tableau Ready Output, which is used
-as an instruction set for \code{\link{chi_calc}}.
+This function takes an analysis set table created by \code{\link{chi_generate_analysis_set}}
+and specified time period parameters to generate a complete set of analysis
+instructions which can be used by \code{\link{chi_calc}}, \code{\link{chi_count_by_age}},
+\code{\link{chi_chars_ccs}}, and \code{\link{chi_chars_injury}}.
 }
 \details{
-It takes in a data.table containing a compact list of \code{indicator_keys},
-byvariables, and analysis types, and returns a shell table of the rows and columns expected
-in a CHI Tableau ready output. For details on TRO format, review here:
-\href{https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady\%20Output.xlsx}{
-SharePoint > Community Health Indicators > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}
-
 The expected format of \code{ph.analysis_set} is:
   \itemize{
+    \item \code{cat1}: character. A standard value from the \code{'cat'} column
+    of \code{\link[rads.data]{misc_chi_byvars}}, e.g. \code{'Gender'}
+    \item \code{cat1_varname}: character. A standard value from the \code{'varname'}
+    column of \code{\link[rads.data]{misc_chi_byvars}}, e.g., \code{'chi_sex'}
+    \item \code{_kingcounty}: character \code{'x'}. Is the analysis for King County as a whole?
+    \item \code{_wastate}: character \code{'x'}. Is the analysis is for WA state as a whole?
+    \item \code{demgroups}: character \code{'x'}. Is the analysis for demgroups?
+    \item \code{crosstabs}: character \code{'x'}. Is the analysis for crosstabs?
+    \item \code{trends}: character \code{'x'}, Is the the analysis for trends?
     \item \code{set}: Integer identifying groups of indicators with identical analysis patterns
-    \item \code{cat1}: Category name as expected in CHI TRO
-    \item \code{cat1_varname}: Category variable name as expected in CHI TRO
-    \item \code{_kingcounty}: \code{'x'} if analysis includes King County tab
-    \item \code{_wastate}: \code{'x'} if analysis includes Washington State tab
-    \item \code{demgroups}: \code{'x'} if analysis includes demographic groups
-    \item \code{crosstabs}: \code{'x'} if analysis includes crosstabulations
-    \item \code{trends}: \code{'x'} if analysis includes trends analysis
     \item \code{set_indicator_keys}: Comma-separated list of indicator keys sharing the pattern
   }
 }
 \seealso{
 \code{\link{chi_generate_analysis_set}} for creating analysis sets
 
-\code{\link{chi_calc}} for performing calculations using these instructions
+\code{\link{chi_calc}}, \code{\link{chi_count_by_age}}, \code{\link{chi_chars_ccs}},
+and \code{\link{chi_chars_injury}} for performing
+calculations using the output of \code{chi_generate_analysis_set}
 }
 \keyword{CHI,}
 \keyword{Production}

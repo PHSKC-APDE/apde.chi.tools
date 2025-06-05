@@ -25,7 +25,7 @@ chi_compare_estimates(
 result_type columns for classifying comparison results}
 }
 \value{
-data.table ordered by absolute difference, containing:
+Returns a data.table ordered by absolute differences, containing:
 
 \itemize{
   \item Difference metrics (absolute_diff, relative_diff)

@@ -7,10 +7,9 @@
 chi_get_yaml()
 }
 \value{
-A list containing the parsed YAML configuration
+Returns a list containing the parsed YAML configuration
 }
 \description{
-Returns the complete CHI YAML configuration as a list.
 This helper function provides access to the full YAML configuration
 which contains variable definitions and other CHI-related settings.
 }
