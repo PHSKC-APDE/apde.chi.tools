@@ -22,28 +22,43 @@ which must exist in the chars.defs data table.}
 Default is the output from \code{\link{chi_generate_tro_shell}}.}
 
 \item{chars.defs}{A data.table containing definitions for each indicator. It
-should have the following columns: `indicator_name`, `indicator_key`, `intent`,
-`mechanism`, `age_start`, and `age_end`.}
+should have the following columns: \code{indicator_name}, \code{indicator_key}, \code{intent},
+\code{mechanism}, \code{age_start}, and \code{age_end}.}
 
 \item{def}{A character string indicating which injury definition to use.
 Default is \code{def = 'narrow'}.}
 }
 \value{
-A data.table containing the summarized CHARS injury hospitalization data for the
-        specified indicator, stratified by the requested demographic variables.
+Returns a data.table containing the summarized CHARS injury hospitalization
+data for the specified indicator_key, stratified by the requested demographic
+variables:
+ \itemize{
+   \item \code{indicator_key}: Injury type identifier
+   \item \code{year}: Year range of data (e.g., "2019-2021", "2023", etc.)
+   \item \code{chi_age}: Age value (0-100)
+   \item \code{hospitalizations}: Number of injury hospitalizations for that
+   indicator_key x demographic x age group
+   \item \code{tab}: Visualization tab type (e.g., "_kingcounty", "demgroups",
+   etc.)
+   \item \code{cat1}, \code{cat1_varname}, \code{cat1_group}: Primary
+   stratification variable details
+   \item \code{cat2}, \code{cat2_varname}, \code{cat2_group}: Secondary
+   stratification variable details (if applicable)
+ }
 }
 \description{
-Generate hospitalization counts from Comprehensive Hospital Abstract Reporting
-System (CHARS) data for injury indicators including falls, poisoning,
-self-harm, and other injury mechanisms for CHI. This function processes
-instructions for specific indicators and summarizes CHARS data accordingly.
+Generate hospitalization age-specific counts from Comprehensive Hospital
+Abstract Reporting System (CHARS) data for injury indicators including falls,
+poisoning, self-harm, and other injury mechanisms for CHI. This function
+processes instructions for specific indicators and summarizes CHARS data
+accordingly.
 }
 \details{
-This function processes instructions for a specific indicator sequentially.
-
-Note that injury data is only available for 2012 and later years. Unlike chi_chars_ccs(),
-this function doesn't need to handle the ICD-9 to ICD-10 transition explicitly as the
-mechanism and intent columns have been standardized across coding systems.
+Note that injury data is only available for 2012 and later years. Unlike
+\code{\link{chi_chars_ccs}}, this function doesn't need to handle the ICD-9
+to ICD-10 transition explicitly since the mechanism and intent columns have
+been standardized across coding systems. Results will returned stratified by
+age to perform age-standardization.
 }
 \examples{
 \dontrun{
@@ -70,7 +85,8 @@ plan(sequential)
 \seealso{
 \code{\link[rads]{get_data_chars}}, which provides creates ph.data
 
-\code{\link[rads]{chars_injury_matrix_count}}, which is the engine used by this function
+\code{\link[rads]{chars_injury_matrix_count}}, in the rads package, which is
+the engine used by this function
 
 \code{\link{chi_generate_tro_shell}}, which creates myinstructions
 }

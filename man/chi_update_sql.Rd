@@ -30,7 +30,7 @@ update matching rows and insert new data
 Default \code{replace_table = FALSE}}
 }
 \value{
-status message indicating success and location, or failure, of upload
+Returns a status message indicating success and location, or failure, of upload
 }
 \description{
 Function to update (or replace) results and metadata in APDE PHExtractStore

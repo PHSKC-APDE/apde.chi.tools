@@ -21,13 +21,31 @@ chi_process_trends(
 \item{trend.periods}{number of periods to calculate}
 }
 \value{
-TRO with rows for each indicator key and span of years within the provided time frame
+Returns a data table of trend calculation instructions with columns:
+\itemize{
+  \item \code{indicator_key} Unique identifier for each indicator
+  \item \code{tab} Always \code{'trends'}
+  \item \code{cat1} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
+  \item \code{cat1_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
+  \item \code{cat2} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
+  \item \code{cat2_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
+  \item \code{start} Starting year of the time period to be analyzed
+  \item \code{end} Ending year of the time period to be analyzed
+}
 }
 \description{
-helper function for chi_generate_tro_shell
+\strong{Internal}, used by \code{\link{chi_generate_tro_shell}}
 }
 \details{
-called by chi_generate_tro_shell to calculate and create rows for expected trends analyses.
+This function is used internally by \code{\link{chi_generate_analysis_set}}
+to create instructions for trend analyses.
+}
+\seealso{
+\code{\link{chi_generate_tro_shell}}, which calls on this function to create
+ph.instructions
+
+\code{\link{chi_process_nontrends}}, which is a counterpart to this function and
+is also an internal function used by \code{\link{chi_generate_analysis_set}}
 }
 \keyword{CHI,}
 \keyword{Production,}

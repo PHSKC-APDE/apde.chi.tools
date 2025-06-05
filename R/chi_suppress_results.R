@@ -51,7 +51,7 @@
 #' @param columns_to_suppress Character vector of column names to be suppressed (set to NA) when
 #' suppression is flagged. Default includes common result columns.
 #'
-#' @return A data.table with suppression applied to CHI standard columns.
+#' @return Returns a data.table with suppression applied to CHI standard columns.
 #'
 #' @export
 #'

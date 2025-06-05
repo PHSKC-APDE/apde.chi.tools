@@ -39,7 +39,7 @@
 #'
 #' \code{\link{chi_update_sql}} for uploading validated results
 #'
-#' @return data.table ordered by absolute difference, containing:
+#' @return Returns a data.table ordered by absolute differences, containing:
 #'
 #' \itemize{
 #'   \item Difference metrics (absolute_diff, relative_diff)

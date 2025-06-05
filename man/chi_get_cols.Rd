@@ -10,11 +10,12 @@ chi_get_cols(metadata = FALSE)
 \item{metadata}{returns metadata column names instead of primary data}
 }
 \value{
-A character vector of column names for the chi data (Default) or metadata
+Returns a character vector of column names for the chi data (Default) or metadata
 }
 \description{
 Returns a character vector of column names defined in the CHI YAML reference file.
-This helper function provides easy access to the standardized CHI variable names.
+This helper function provides easy access to the standardized CHI Tableau
+Ready Output variable names.
 }
 \examples{
 cols <- chi_get_cols()

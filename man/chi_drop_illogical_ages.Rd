@@ -17,7 +17,7 @@ which must be encoded as an integer.
 Default: \code{agevar = 'chi_age'}}
 }
 \value{
-A filtered data.table with only logically consistent age values
+Returns a filtered data.table with only logically consistent age values
 }
 \description{
 This function filters a data.table to remove rows with incompatible / illogical
@@ -78,7 +78,9 @@ unique(filtered_data[, .(min_age = min(chi_age), max_age = max(chi_age)),
 
 }
 \seealso{
-\code{\link{chi_count_by_age}} and \code{\link{chi_get_proper_pop}} - This
-function is typically applied to tables resulting from merging the output of
-these two functions.
+\code{\link{chi_chars_ccs}} and \code{\link{chi_chars_injury}} which use this
+function internally
+
+\code{\link{chi_count_by_age}} and \code{\link{chi_get_proper_pop}} whose
+results are often filtered with this function
 }

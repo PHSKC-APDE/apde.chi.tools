@@ -36,7 +36,7 @@ on ZIP codes beginning with 980 or 981, which is necessary for CHARS data.
 Default \code{is_chars = FALSE}.}
 }
 \value{
-A data.table containing population counts with columns:
+Returns a data.table containing population counts with columns:
  \itemize{
    \item \code{chi_age}: Single year age
    \item \code{year}: Year
@@ -79,5 +79,5 @@ plan(multisession(workers = num.cores[1])) # set up a multisession plan
 }
 \seealso{
 \code{\link{chi_generate_instructions_pop}} which generates the instructions used as input
-to this function, \code{\link{chi_get_proper_pop}} the original implementation
+for this function
 }

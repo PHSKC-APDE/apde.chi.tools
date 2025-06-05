@@ -1,18 +1,36 @@
 #' CHI Generate Trend Years
 #'
+#' @description
+#' \strong{Internal}, used by \code{\link{chi_generate_tro_shell}}
+#'
 #' @param indicator_key chi indicator key variable
 #' @param trend.span the number of years to be included in a single trend period
 #' @param end.year last year of a trend year time series
 #' @param trend.periods number of periods to calculate
 #'
-#' @description
-#' helper function for chi_generate_tro_shell
-#'
 #' @details
-#' called by chi_generate_tro_shell to calculate and create rows for expected trends analyses.
+#' This function is used internally by \code{\link{chi_generate_analysis_set}}
+#' to create instructions for trend analyses.
 #'
+#' @return Returns a data table of trend calculation instructions with columns:
+#' \itemize{
+#'   \item \code{indicator_key} Unique identifier for each indicator
+#'   \item \code{tab} Always \code{'trends'}
+#'   \item \code{cat1} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
+#'   \item \code{cat1_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
+#'   \item \code{cat2} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
+#'   \item \code{cat2_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
+#'   \item \code{start} Starting year of the time period to be analyzed
+#'   \item \code{end} Ending year of the time period to be analyzed
+#' }
 #'
-#' @returns TRO with rows for each indicator key and span of years within the provided time frame
+#' @seealso
+#' \code{\link{chi_generate_tro_shell}}, which calls on this function to create
+#' ph.instructions
+#'
+#' \code{\link{chi_process_nontrends}}, which is a counterpart to this function and
+#' is also an internal function used by \code{\link{chi_generate_analysis_set}}
+#'
 #' @keywords CHI, Tableau, Production, internal
 #' @importFrom data.table setDT setorder
 #' @importFrom tidyr crossing

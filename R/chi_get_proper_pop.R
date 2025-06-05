@@ -26,7 +26,7 @@
 #' on ZIP codes beginning with 980 or 981, which is necessary for CHARS data.
 #' Default \code{is_chars = FALSE}.
 #'
-#' @return A data.table containing population counts with columns:
+#' @return Returns a data.table containing population counts with columns:
 #'  \itemize{
 #'    \item \code{chi_age}: Single year age
 #'    \item \code{year}: Year
@@ -63,7 +63,7 @@
 #'
 #' @seealso
 #' \code{\link{chi_generate_instructions_pop}} which generates the instructions used as input
-#' to this function, \code{\link{chi_get_proper_pop}} the original implementation
+#' for this function
 #'
 #' @importFrom data.table alloc.col copy rbindlist set setkey uniqueN `:=`
 #' @importFrom qs qread qsave

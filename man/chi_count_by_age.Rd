@@ -7,42 +7,39 @@
 chi_count_by_age(ph.data = NULL, ph.instructions = NULL, source_date = NULL)
 }
 \arguments{
-\item{ph.data}{Input data frame or data table containing CHI data}
+\item{ph.data}{A data table containing line level data to be analyzed}
 
-\item{ph.instructions}{Data frame or data table containing calculation specifications with columns:
-\itemize{
-  \item indicator_key: Name of the health metric to calculate
-  \item tab: Visualization tab type (kingcounty, demgroups, crosstabs)
-  \item cat1_varname, cat2_varname: Variable names for stratification
-  \item cat1, cat2: Human-friendly labels for these variables
-  \item start, end: Year range for the calculation
-}}
+\item{ph.instructions}{A data table of calculation instructions created by
+\code{\link{chi_generate_tro_shell}}}
 
 \item{source_date}{Date of data source, added to output metadata}
 }
 \value{
-A data.table containing age-specific counts with standard CHI groupings:
+Returns a data.table containing age-specific counts with standard CHI groupings:
  \itemize{
-   \item indicator_key: Health metric identifier
-   \item year: Year range of data (e.g., "2019-2021" or single year)
-   \item tab: Visualization tab type
-   \item cat1, cat1_varname, cat1_group: Primary stratification variable details
-   \item cat2, cat2_varname, cat2_group: Secondary stratification variable details (if applicable)
-   \item chi_age: Age value (0-100)
-   \item count: Number of cases in that demographic-age group
-   \item source_date: Date of data source (if provided)
+   \item \code{indicator_key}: Health metric identifier
+   \item \code{year}: Year range of data (e.g., "2019-2021", "2023", etc.)
+   \item \code{tab}: Visualization tab type (e.g., "_kingcounty", "demgroups",
+   etc.)
+   \item \code{cat1}, \code{cat1_varname}, \code{cat1_group}: Primary
+   stratification variable details
+   \item \code{cat2}, \code{cat2_varname}, \code{cat2_group}: Secondary
+   stratification variable details (if applicable)
+   \item \code{chi_age}: Age value (0-100)
+   \item \code{count}: Number of cases or events in that demographic-age group
+   \item \code{source_date}: Date of data source (if provided)
  }
 }
 \description{
-Creates a detailed breakdown of counts by age for CHI data analysis. Primarily
+Creates a detailed breakdown of counts by age for CHI data analysis using
+instructions created by \code{\link{chi_generate_tro_shell}}. Primarily
 used for age standardization and rate calculations when combined with
 population estimates. Processes data according to provided instructions and
 handles demographic groupings with special treatment for race and ethnicity
 variables.
 }
 \seealso{
-\code{\link{chi_generate_tro_shell}} which creates ph.instructions used by
-\code{chi_count_by_age}
+\code{\link{chi_generate_tro_shell}} which creates ph.instructions
 
 \code{\link{chi_generate_instructions_pop}} which uses the output of the output
 of \code{chi_count_by_age}

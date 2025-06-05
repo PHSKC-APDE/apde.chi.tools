@@ -1,10 +1,9 @@
 #' Get CHI YAML configuration
 #'
-#' Returns the complete CHI YAML configuration as a list.
 #' This helper function provides access to the full YAML configuration
 #' which contains variable definitions and other CHI-related settings.
 #'
-#' @return A list containing the parsed YAML configuration
+#' @return Returns a list containing the parsed YAML configuration
 #' @importFrom yaml read_yaml
 #' @export
 #'

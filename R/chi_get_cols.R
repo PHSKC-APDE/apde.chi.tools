@@ -2,11 +2,12 @@
 #'
 #' @description
 #' Returns a character vector of column names defined in the CHI YAML reference file.
-#' This helper function provides easy access to the standardized CHI variable names.
+#' This helper function provides easy access to the standardized CHI Tableau
+#' Ready Output variable names.
 #'
 #' @param metadata returns metadata column names instead of primary data
 #'
-#' @return A character vector of column names for the chi data (Default) or metadata
+#' @return Returns a character vector of column names for the chi data (Default) or metadata
 #' @importFrom yaml read_yaml
 #' @export
 #'
