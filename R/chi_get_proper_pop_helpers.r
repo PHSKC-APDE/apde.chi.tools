@@ -3,6 +3,7 @@
 ######################################### ----
 # Input Validation: validate_inputs() ----
 #' Input Validation: validate_inputs() ----
+#' @keywords internal
 #' @noRd
   validate_inputs <- function(pop.template, pop.genders, pop.ages, is_chars) {
     # pop.template
@@ -66,6 +67,7 @@
 
 # Standardize Category Names: standardize_category_names() ----
 #' Standardize Category Names: standardize_category_names() ----
+#' @keywords internal
 #' @noRd
   standardize_category_names <- function(pop.template) {
     # Remove birthing person prefixes to standardize maternal data categories
@@ -79,6 +81,7 @@
 
 # Create Query Keys for Consolidation: create_query_keys() ----
 #' Create Query Keys for Consolidation: create_query_keys() ----
+#' @keywords internal
 #' @noRd
   create_query_keys <- function(pop.template) {
     # Create a key to identify unique population query patterns
@@ -97,6 +100,7 @@
 
 # Batch Similar Querys: batch_population_queries() ----
 #' Batch Similar Querys: batch_population_queries() ----
+#' @keywords internal
 #' @noRd
   batch_population_queries <- function(pop.template) {
     # For each unique query key, find the min start year and max stop year
@@ -124,6 +128,7 @@
 
 # Get Population Data for a batched Query: get_batched_population() ----
 #' Get Population Data for a batched Query: get_batched_population() ----
+#' @keywords internal
 #' @noRd
    get_batched_population <- function(query_id,
                                      pop.template,
@@ -201,6 +206,7 @@
 
 # Process Age Group Patterns: process_age_patterns() ----
 #' Process Age Group Patterns: process_age_patterns() ----
+#' @keywords internal
 #' @noRd
   process_age_patterns <- function(age_var) {
     # Check if this age variable exists in misc_chi_byvars
@@ -257,6 +263,7 @@
 
 # Assign Race/Ethnicity Categories: assign_race_ethnicity() ----
 #' Assign Race/Ethnicity Categories: assign_race_ethnicity() ----
+#' @keywords internal
 #' @noRd
   assign_race_ethnicity <- function(population_data, catnum, catvarname, catgroup, race_type) {
     # Standardize race_eth into race
@@ -310,6 +317,7 @@
 
 # Assign Age Groupings using misc_chi_byvars:assign_age_groupings() ----
 #' Assign Age Groupings using misc_chi_byvars:assign_age_groupings() ----
+#' @keywords internal
 #' @noRd
   assign_age_groupings <- function(population_data, catnum, catvarname, catgroup) {
     # Check if this is an age category
@@ -340,6 +348,7 @@
 
 # Assign Geographic Crosswalks: assign_geographic_crosswalks() ----
 #' Assign Geographic Crosswalks: assign_geographic_crosswalks() ----
+#' @keywords internal
 #' @noRd
   assign_geographic_crosswalks <- function(population_data, catnum, catgroup, catvarname, geo_type) {
     # Process HRAs
@@ -485,6 +494,7 @@
 
 # Create demographic shell for population analysis: create_demographic_shell() ----
 #' Create demographic shell for population analysis: create_demographic_shell() ----
+#' @keywords internal
 #' @noRd
   create_demographic_shell <- function(population_data, template_row, age_values = NULL) {
     # Use age_values if provided, otherwise default to 0:100
@@ -581,6 +591,7 @@
 
 # Process a single template row: process_template_row() ----
 #' Process a single template row: process_template_row() ----
+#' @keywords internal
 #' @noRd
   process_template_row <- function(row_index, population_data, pop.template, age_values = NULL) {
     # Basic subsetting tidying ----
