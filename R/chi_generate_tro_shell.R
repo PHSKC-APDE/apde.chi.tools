@@ -51,7 +51,7 @@
 #'
 #' \code{\link{chi_calc}}, \code{\link{chi_count_by_age}}, \code{\link{chi_chars_ccs}},
 #' and \code{\link{chi_chars_injury}} for performing
-#' calculations using the output of \code{chi_generate_analysis_set}
+#' calculations using the output of \code{chi_generate_tro_shell}
 #'
 #' @keywords CHI, Tableau, Production
 #'
