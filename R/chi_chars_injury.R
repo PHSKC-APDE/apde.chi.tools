@@ -11,7 +11,7 @@
 #' @param ph.indicator A character string of length 1. The indicator key to process,
 #' which must exist in the chars.defs data table.
 #' @param ph.data A data.table containing the CHARS data to be processed.
-#' @param myinstructions A data.table containing processing instructions for each indicator.
+#' @param ph.instructions A data.table containing processing instructions for each indicator.
 #'        Default is the output from \code{\link{chi_generate_tro_shell}}.
 #' @param chars.defs A data.table containing definitions for each indicator. It
 #' should have the following columns: \code{indicator_name}, \code{indicator_key}, \code{intent},
@@ -55,7 +55,7 @@
 #'   chi_chars_injury(
 #'     ph.indicator = indicator,
 #'     ph.data = chars,
-#'     myinstructions = myinstructions,
+#'     ph.instructions = ph.instructions,
 #'     chars.defs = chars.defs,
 #'     def = 'narrow')
 #' }, future.seed = TRUE))
@@ -70,7 +70,7 @@
 #' \code{\link[rads]{chars_injury_matrix_count}}, in the rads package, which is
 #' the engine used by this function
 #'
-#' \code{\link{chi_generate_tro_shell}}, which creates myinstructions
+#' \code{\link{chi_generate_tro_shell}}, which creates ph.instructions
 #'
 #' @import data.table
 #' @import rads
@@ -78,7 +78,7 @@
 #' @export
 chi_chars_injury <- function(ph.indicator = NA,
                              ph.data = NULL,
-                             myinstructions = NULL,
+                             ph.instructions = NULL,
                              chars.defs = NULL,
                              def = 'narrow') {
   # Input validation -----
@@ -86,7 +86,7 @@ chi_chars_injury <- function(ph.indicator = NA,
     stop("\n\U1F6D1 ph.indicator must be provided.")
   }
 
-  for (arg_name in c("ph.data", "myinstructions", "chars.defs")) {
+  for (arg_name in c("ph.data", "ph.instructions", "chars.defs")) {
     arg_value <- get(arg_name)
     if (is.null(arg_value)) {
       stop(paste0("\n\U1F6D1 ", arg_name, " must be specified."))
@@ -99,10 +99,10 @@ chi_chars_injury <- function(ph.indicator = NA,
   }
 
   # Ensure indicator exists
-  instructions <- myinstructions[indicator_key == ph.indicator]
+  instructions <- ph.instructions[indicator_key == ph.indicator]
 
   if (nrow(instructions) == 0) {
-    stop(paste0("\n\U1F6D1 ph.indicator '", ph.indicator, "' not found in myinstructions."))
+    stop(paste0("\n\U1F6D1 ph.indicator '", ph.indicator, "' not found in ph.instructions."))
   }
 
   if (!ph.indicator %in% chars.defs$indicator_key) {
@@ -149,6 +149,18 @@ chi_chars_injury <- function(ph.indicator = NA,
     stop("\n\U1F6D1 'def' must be either 'narrow' or 'broad'.")
   }
 
+  # Validate year range in ph.instructions ----
+    if (nrow(ph.instructions[end > max(ph.data[['chi_year']], na.rm = T), ]) > 0){
+      warning("\u26A0\ufe0f There are rows in ph.instructions where the end year is > the maximum chi_year in ph.data.\n",
+              "These rows have been dropped from your instructions.", immediate. = TRUE)
+      ph.instructions <- ph.instructions[!(end > max(ph.data[['chi_year']], na.rm = T)),]
+    }
+    if (nrow(ph.instructions[start < min(ph.data[['chi_year']], na.rm = T), ]) > 0){
+      warning("\u26A0\ufe0f There are rows in ph.instructions where the start year is < the minimum chi_year in ph.data.\n",
+              "These rows have been dropped from your instructions.", immediate. = TRUE)
+      ph.instructions <- ph.instructions[!(start < min(ph.data[['chi_year']], na.rm = T)),]
+    }
+
   # Process sequentially ----
   message('\U023F3 Processing calculations... this may take a while')
 
@@ -169,7 +181,7 @@ chi_chars_injury <- function(ph.indicator = NA,
         current_row$start,
         sep = "|"
       )
-      message(paste0("myinstructions row ", i, "/", nrow(instructions), ": \n  - ", row_info))
+      message(paste0("ph.instructions row ", i, "/", nrow(instructions), ": \n  - ", row_info))
 
       # Get current instruction parameters
       current_start <- as.integer(current_row$start)
@@ -311,7 +323,7 @@ chi_chars_injury <- function(ph.indicator = NA,
   setorder(result, tab, year, cat1, cat1_varname, cat1_group, cat2, cat2_varname, cat2_group, chi_age, hospitalizations)
 
   # Identify instructions that caused all data to be filtered out ----
-  # this helps diagnose data quality issues, either in myinstructions or in ph.data
+  # this helps diagnose data quality issues, either in ph.instructions or in ph.data
   if (nrow(result) > 0) {
     # Get combinations actually used in results
     result_combos <- unique(result[, list(indicator_key, tab, cat1, cat1_varname, cat2, cat2_varname,
