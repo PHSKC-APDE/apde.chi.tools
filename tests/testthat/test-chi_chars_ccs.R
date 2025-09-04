@@ -139,23 +139,23 @@ test_that("chi_chars_ccs validates inputs correctly", {
   # Test missing ph.indicator
   expect_error(chi_chars_ccs(ph.indicator = NA,
                              ph.data = mock_chars,
-                             myinstructions = mock_instructions,
+                             ph.instructions = mock_instructions,
                              chars.defs = mock_chars_def),
                "ph.indicator must be provided")
 
   # Test missing ph.data
   expect_error(chi_chars_ccs(ph.indicator = "hos1803000_v1",
                              ph.data = NULL,
-                             myinstructions = mock_instructions,
+                             ph.instructions = mock_instructions,
                              chars.defs = mock_chars_def),
                "ph.data must be specified")
 
   # Test indicator not found in instructions
   expect_error(chi_chars_ccs(ph.indicator = "not_an_indicator",
                              ph.data = mock_chars,
-                             myinstructions = mock_instructions,
+                             ph.instructions = mock_instructions,
                              chars.defs = mock_chars_def),
-               "not found in myinstructions")
+               "not found in ph.instructions")
 
   # Test invalid column in instructions
   bad_instructions <- copy(mock_instructions)
@@ -163,7 +163,7 @@ test_that("chi_chars_ccs validates inputs correctly", {
 
   expect_error(chi_chars_ccs(ph.indicator = "hos1803000_v1",
                              ph.data = mock_chars,
-                             myinstructions = bad_instructions,
+                             ph.instructions = bad_instructions,
                              chars.defs = mock_chars_def),
                "don't exist in ph.data")
 })
@@ -177,7 +177,7 @@ test_that("chi_chars_ccs processes ICD-9 data correctly", {
   result <- chi_chars_ccs(
     ph.indicator = "hos1803000_v1",
     ph.data = mock_chars,
-    myinstructions = icd9_instructions,
+    ph.instructions = icd9_instructions,
     chars.defs = mock_chars_def
   )
 
@@ -210,7 +210,7 @@ test_that("chi_chars_ccs processes ICD-10 data correctly", {
   result <- chi_chars_ccs(
     ph.indicator = "hos1803000_v2",
     ph.data = mock_chars,
-    myinstructions = icd10_instructions,
+    ph.instructions = icd10_instructions,
     chars.defs = mock_chars_def
   )
 
@@ -243,7 +243,7 @@ test_that("chi_chars_ccs processes mixed ICD-9/ICD-10 data correctly", {
   result <- chi_chars_ccs(
     ph.indicator = "hos1803000_v1",
     ph.data = mock_chars,
-    myinstructions = mixed_instructions,
+    ph.instructions = mixed_instructions,
     chars.defs = mock_chars_def
   )
 
@@ -278,7 +278,7 @@ test_that("chi_chars_ccs handles different indicator variables correctly", {
     chi_chars_ccs(
       ph.indicator = indicator,
       ph.data = mock_chars,
-      myinstructions = cat2_instructions,
+      ph.instructions = cat2_instructions,
       chars.defs = mock_chars_def)
   }), fill = TRUE)
 
@@ -314,7 +314,7 @@ test_that("chi_chars_ccs handles WA state filtering correctly", {
   result <- chi_chars_ccs(
     ph.indicator = "hos1803000_v1",
     ph.data = mock_chars,
-    myinstructions = wa_instructions,
+    ph.instructions = wa_instructions,
     chars.defs = mock_chars_def
   )
 
@@ -335,7 +335,7 @@ test_that("chi_chars_ccs handles age filtering correctly", {
   result <- chi_chars_ccs(
     ph.indicator = "hos1803000_v2",
     ph.data = mock_chars,
-    myinstructions = mock_instructions[indicator_key == "hos1803000_v2"],
+    ph.instructions = mock_instructions[indicator_key == "hos1803000_v2"],
     chars.defs = mock_chars_def
   )
 
@@ -357,7 +357,7 @@ test_that("When some instructions filter out all rows, expect it to work but ret
       chi_chars_ccs(
         ph.indicator = indicator,
         ph.data = copy(mock_chars)[, chi_geo_kc := 'KC'],
-        myinstructions = mock_instructions,
+        ph.instructions = mock_instructions,
         chars.defs = mock_chars_def)
     }), fill = TRUE)
   })

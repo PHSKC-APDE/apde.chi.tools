@@ -132,23 +132,23 @@ test_that("chi_chars_injury validates inputs correctly", {
   # Test missing ph.indicator
   expect_error(chi_chars_injury(ph.indicator = NA,
                                 ph.data = mock_chars,
-                                myinstructions = mock_instructions,
+                                ph.instructions = mock_instructions,
                                 chars.defs = mock_chars_def),
                "ph.indicator must be provided")
 
   # Test missing ph.data
   expect_error(chi_chars_injury(ph.indicator = "hos1901000_v1",
                                 ph.data = NULL,
-                                myinstructions = mock_instructions,
+                                ph.instructions = mock_instructions,
                                 chars.defs = mock_chars_def),
                "ph.data must be specified")
 
   # Test indicator not found in instructions
   expect_error(chi_chars_injury(ph.indicator = "not_an_indicator",
                                 ph.data = mock_chars,
-                                myinstructions = mock_instructions,
+                                ph.instructions = mock_instructions,
                                 chars.defs = mock_chars_def),
-               "not found in myinstructions")
+               "not found in ph.instructions")
 
   # Test invalid column in instructions
   bad_instructions <- copy(mock_instructions)
@@ -156,14 +156,14 @@ test_that("chi_chars_injury validates inputs correctly", {
 
   expect_error(chi_chars_injury(ph.indicator = "hos1901000_v1",
                                 ph.data = mock_chars,
-                                myinstructions = bad_instructions,
+                                ph.instructions = bad_instructions,
                                 chars.defs = mock_chars_def),
                "don't exist in ph.data")
 
   # Test invalid def parameter
   expect_error(chi_chars_injury(ph.indicator = "hos1901000_v1",
                                 ph.data = mock_chars,
-                                myinstructions = mock_instructions,
+                                ph.instructions = mock_instructions,
                                 chars.defs = mock_chars_def,
                                 def = "invalid_def"),
                "must be either 'narrow' or 'broad'")
@@ -175,7 +175,7 @@ test_that("chi_chars_injury processes fall injury data correctly", {
   result <- chi_chars_injury(
     ph.indicator = "hos1901000_v1",
     ph.data = mock_chars,
-    myinstructions = mock_instructions[indicator_key == "hos1901000_v1"],
+    ph.instructions = mock_instructions[indicator_key == "hos1901000_v1"],
     chars.defs = mock_chars_def
   )
 
@@ -199,7 +199,7 @@ test_that("chi_chars_injury handles age filtering correctly", {
   result <- chi_chars_injury(
     ph.indicator = "hos1901000_v2",
     ph.data = mock_chars,
-    myinstructions = mock_instructions[indicator_key == "hos1901000_v2"],
+    ph.instructions = mock_instructions[indicator_key == "hos1901000_v2"],
     chars.defs = mock_chars_def
   )
 
@@ -220,7 +220,7 @@ test_that("chi_chars_injury handles different injury types correctly", {
   result <- chi_chars_injury(
     ph.indicator = "hos1902000_v1",
     ph.data = mock_chars,
-    myinstructions = mock_instructions[indicator_key == "hos1902000_v1"],
+    ph.instructions = mock_instructions[indicator_key == "hos1902000_v1"],
     chars.defs = mock_chars_def
   )
 
@@ -241,7 +241,7 @@ test_that("chi_chars_injury handles 'def' parameter correctly", {
   narrow_result <- chi_chars_injury(
     ph.indicator = "hos1901000_v1",
     ph.data = mock_chars,
-    myinstructions = mock_instructions[indicator_key == "hos1901000_v1"][1],
+    ph.instructions = mock_instructions[indicator_key == "hos1901000_v1"][1],
     chars.defs = mock_chars_def,
     def = "narrow"
   )
@@ -250,7 +250,7 @@ test_that("chi_chars_injury handles 'def' parameter correctly", {
   broad_result <- chi_chars_injury(
     ph.indicator = "hos1901000_v1",
     ph.data = mock_chars,
-    myinstructions = mock_instructions[indicator_key == "hos1901000_v1"][1],
+    ph.instructions = mock_instructions[indicator_key == "hos1901000_v1"][1],
     chars.defs = mock_chars_def,
     def = "broad"
   )
@@ -272,7 +272,7 @@ test_that("chi_chars_injury handles WA state filtering correctly", {
   result <- chi_chars_injury(
     ph.indicator = "hos1901000_v1",
     ph.data = mock_chars,
-    myinstructions = wa_instructions,
+    ph.instructions = wa_instructions,
     chars.defs = mock_chars_def
   )
 
@@ -296,7 +296,7 @@ test_that("chi_chars_injury processes multiple instructions correctly", {
   result <- chi_chars_injury(
     ph.indicator = "hos1901000_v1",
     ph.data = mock_chars,
-    myinstructions = multiple_instructions,
+    ph.instructions = multiple_instructions,
     chars.defs = mock_chars_def
   )
 
@@ -320,7 +320,7 @@ test_that("When some instructions filter out all rows, expect it to work but ret
       chi_chars_injury(
         ph.indicator = indicator,
         ph.data = copy(mock_chars)[, chi_geo_kc := 'KC'], # Corrupt the data
-        myinstructions = mock_instructions[indicator_key %in% c("hos1901000_v1", "hos1901000_v2")],
+        ph.instructions = mock_instructions[indicator_key %in% c("hos1901000_v1", "hos1901000_v2")],
         chars.defs = mock_chars_def)
     }), fill = TRUE)
   })
@@ -350,7 +350,7 @@ test_that("chi_chars_injury correctly handles pre-2012 years", {
   result <- chi_chars_injury(
     ph.indicator = "hos1901000_v1",
     ph.data = mock_chars,
-    myinstructions = early_instructions,
+    ph.instructions = early_instructions,
     chars.defs = mock_chars_def
   )
 
@@ -386,7 +386,7 @@ test_that("chi_chars_injury correctly handles poisoning with ICD-10", {
   result <- chi_chars_injury(
     ph.indicator = "hos1902000_v1",
     ph.data = poisoning_test_chars,
-    myinstructions = mock_instructions[indicator_key == "hos1902000_v1"],
+    ph.instructions = mock_instructions[indicator_key == "hos1902000_v1"],
     chars.defs = mock_chars_def
   )
 
