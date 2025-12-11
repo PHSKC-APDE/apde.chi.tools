@@ -499,6 +499,14 @@ chi_qa_tro <- function(CHIestimates,
   # Get reference data
   ref_combos <- rads.data::misc_chi_byvars[, list(cat, varname, group)]
 
+  # Address race3/race4 insanity again
+  # The CHI viz needs / wants race3 & race4 cat values to be 'Race/ethnicity' but only on trends tab, otherwise it is 'Race'
+  # For simplicity, the CHI reference data for cat/varname/group expect them to be 'Race'. So, need to recode
+  CHIestimates[cat1 == 'Race/ethnicity' & (cat1_varname == 'race4' | (cat1_varname == 'race3' & cat1_group != 'Hispanic')) , cat1 := 'Race']
+  CHIestimates[cat1 == 'Race/ethnicity' & (cat1_varname == 'race4' | (cat1_varname == 'race3' & cat1_group == 'Hispanic')) , cat1 := 'Ethnicity']
+  CHIestimates[cat2 == 'Race/ethnicity' & (cat2_varname == 'race4' | (cat2_varname == 'race3' & cat2_group != 'Hispanic')) , cat2 := 'Race']
+  CHIestimates[cat2 == 'Race/ethnicity' & (cat2_varname == 'race4' | (cat2_varname == 'race3' & cat2_group == 'Hispanic')) , cat2 := 'Ethnicity']
+
   # For ACS data, we only check cat and group combinations
   if(acs) {
     # Check cat1 combinations
@@ -663,10 +671,10 @@ chi_qa_tro <- function(CHIestimates,
   ## Print success statement!!!!!!!! ####
   if(verbose) {
     if(status == 1){
-      message("Your data has passed all CHI Tableau Ready formatting, style, and logic checks.")
+      message("\u2B50\U2714 Your data has passed all CHI Tableau Ready formatting, style, and logic checks.")
 
     } else {
-      warning("At least one check has failed. Please review messages, make corrections, and rerun this check.")
+      warning("\u26A0\ufe0f At least one check has failed. Please review messages, make corrections, and rerun this check.")
     }
   }
 
