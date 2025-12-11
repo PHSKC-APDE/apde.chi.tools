@@ -146,25 +146,32 @@ chi_generate_analysis_set <- function(data_source = NULL,
     }
 
   # Recodes for race3 & race4 ----
+    # Remove `Birthing Person's` prefix
+      CHIestimates[cat1 == "Birthing person's ethnicity", cat1 := 'Ethnicity']
+      CHIestimates[, cat1 := gsub("Birthing person's race", 'Race', cat1)]
+      CHIestimates[cat2 == "Birthing person's ethnicity", cat2 := 'Ethnicity']
+      CHIestimates[, cat2 := gsub("Birthing person's race", 'Race', cat2)]
+
     # Necessary because they are wonky as heck due to how APDE decided to code/display them
-      race3_remix1 <- CHIestimates[(grepl('race/ethnicity$', cat1, ignore.case = T) & cat1_varname == 'race3')]
+      # Basically, need to split 'Race/ethnicity' for race 3 into separate rows for
+      # 'Race' & 'Ethnicity' into separate rows, because have separate variables:
+      # i.e., `race3` & `race3_hispanic`
+      race3_remix1 <- CHIestimates[cat1 == 'Race/ethnicity' & cat1_varname == 'race3']
       CHIestimates <- rbind(
         fsetdiff(CHIestimates, race3_remix1),
-        copy(race3_remix1)[, cat1 := gsub('race/ethnicity$', 'race', cat1)][, cat1 := gsub('Race/ethnicity$', 'Race', cat1)],
-        copy(race3_remix1)[, cat1 := gsub('race/ethnicity$', 'ethnicity', cat1)][, cat1 := gsub('Race/ethnicity$', 'Ethnicity', cat1)]
+        copy(race3_remix1)[cat1 == 'Race/ethnicity', cat1 := 'Race'],
+        copy(race3_remix1)[cat1 == 'Race/ethnicity', cat1 := 'Ethnicity']
       )
 
-      race3_remix2 <- CHIestimates[(grepl('race/ethnicity$', cat2, ignore.case = T) & cat2_varname == 'race3')]
+      race3_remix2 <- CHIestimates[cat2 == 'Race/ethnicity' & cat2_varname == 'race3']
       CHIestimates <- rbind(
         fsetdiff(CHIestimates, race3_remix2),
-        copy(race3_remix2)[, cat2 := gsub('race/ethnicity$', 'race', cat2)][, cat2 := gsub('Race/ethnicity$', 'Race', cat2)],
-        copy(race3_remix2)[, cat2 := gsub('race/ethnicity$', 'ethnicity', cat2)][, cat2 := gsub('Race/ethnicity$', 'Ethnicity', cat2)]
+        copy(race3_remix2)[cat2 == 'Race/ethnicity', cat2 := 'Race'],
+        copy(race3_remix2)[cat2 == 'Race/ethnicity', cat2 := 'Ethnicity']
       )
 
-      CHIestimates[cat1_varname == 'race4', cat1 := gsub('race$', 'race/ethnicity', cat1)]
       CHIestimates[cat1_varname == 'race4', cat1 := gsub('Race$', 'Race/ethnicity', cat1)]
 
-      CHIestimates[cat2_varname == 'race4', cat2 := gsub('race$', 'race/ethnicity', cat2)]
       CHIestimates[cat2_varname == 'race4', cat2 := gsub('Race$', 'Race/ethnicity', cat2)]
 
   # Table of categories and tabs per indicator ----

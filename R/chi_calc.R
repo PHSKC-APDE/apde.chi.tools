@@ -385,23 +385,13 @@ chi_calc <- function(ph.data = NULL,
     tempCHIest[cat1_varname == 'race3_hispanic', cat1_varname := 'race3']
     tempCHIest[cat2_varname == 'race3_hispanic', cat2_varname := 'race3']
 
-    if(any(grepl("Birthing per", unique(tempCHIest$cat1)))){
-      tempCHIest[cat1_varname %in% c("race3", "race4") & tab == 'trends', cat1 := "Birthing person's race/ethnicity"]
-      tempCHIest[cat2_varname %in% c("race3", "race4") & tab == 'trends', cat2 := "Birthing person's race/ethnicity"]
+    tempCHIest[cat1_varname %in% c("race3", "race4") & tab == 'trends', cat1 := "Race/ethnicity"]
+    tempCHIest[cat2_varname %in% c("race3", "race4") & tab == 'trends', cat2 := "Race/ethnicity"]
 
-      tempCHIest[cat1_varname %in% c('race3') & tab %in% c('crosstabs', 'demgroups') & cat1_group == 'Hispanic',
-                 cat1 := "Birthing person's ethnicity"]
-      tempCHIest[cat2_varname %in% c('race3') & tab %in% c('crosstabs', 'demgroups') & cat2_group == 'Hispanic',
-                 cat2 := "Birthing person's ethnicity"]
-    } else {
-      tempCHIest[cat1_varname %in% c("race3", "race4") & tab == 'trends', cat1 := "Race/ethnicity"]
-      tempCHIest[cat2_varname %in% c("race3", "race4") & tab == 'trends', cat2 := "Race/ethnicity"]
-
-      tempCHIest[cat1_varname %in% c('race3') & tab %in% c('crosstabs', 'demgroups') & cat1_group == 'Hispanic',
-                 cat1 := 'Ethnicity']
-      tempCHIest[cat2_varname %in% c('race3') & tab %in% c('crosstabs', 'demgroups') & cat2_group == 'Hispanic',
-                 cat2 := 'Ethnicity']
-    }
+    tempCHIest[cat1_varname %in% c('race3') & tab %in% c('crosstabs', 'demgroups') & cat1_group == 'Hispanic',
+               cat1 := 'Ethnicity']
+    tempCHIest[cat2_varname %in% c('race3') & tab %in% c('crosstabs', 'demgroups') & cat2_group == 'Hispanic',
+               cat2 := 'Ethnicity']
 
     # Create additional necessary CHI columns ----
     tempCHIest[, source_date := as.Date(source_date)]

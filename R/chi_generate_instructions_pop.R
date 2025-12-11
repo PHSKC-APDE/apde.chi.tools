@@ -72,13 +72,6 @@ chi_generate_instructions_pop <- function(mycount.data,
     # Default race type includes ethnicity (Hispanic as race)
     pop.template[, race_type := 'race_eth']
 
-  # Handle maternal data prefixes ----
-    # Remove "Birthing person's" prefix to standardize maternal data categories
-    pop.template[grepl("birthing person", cat1, ignore.case = TRUE),
-                 cat1 := tools::toTitleCase(gsub("Birthing person's ", "", cat1))]
-    pop.template[grepl("birthing person", cat2, ignore.case = TRUE),
-                 cat2 := tools::toTitleCase(gsub("Birthing person's ", "", cat2))]
-
   # Process geographic types and demographic groupings ----
     # Define OMB AIC (alone or in combination)
     omb_aic <- c("chi_race_aic_aian", "chi_race_aic_asian", "chi_race_aic_black",

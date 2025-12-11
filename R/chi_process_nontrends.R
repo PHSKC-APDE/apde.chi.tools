@@ -90,8 +90,8 @@ chi_process_nontrends <- function(ph.analysis_set = NULL,
   tempy <- rbind(tempy, sub_crosstabs)
 
   # tidy
-  tempy[cat1 %in% c('Ethnicity', "Birthing person's ethnicity") & cat1_varname == 'race3', cat1_varname := 'race3_hispanic']
-  tempy[cat2 %in% c('Ethnicity', "Birthing person's ethnicity") & cat2_varname == 'race3', cat2_varname := 'race3_hispanic']
+  tempy[cat1 %in% c('Ethnicity') & cat1_varname == 'race3', cat1_varname := 'race3_hispanic']
+  tempy[cat2 %in% c('Ethnicity') & cat2_varname == 'race3', cat2_varname := 'race3_hispanic']
   setcolorder(tempy, 'indicator_key')
   rads::string_clean(tempy)
   tempy <- tempy[!(tab == 'crosstabs' & cat1 == 'King County' & cat2 != 'King County')] # only legit xtab for KC is KC by itself

@@ -65,20 +65,6 @@
     ))
   }
 
-# Standardize Category Names: standardize_category_names() ----
-#' Standardize Category Names: standardize_category_names() ----
-#' @keywords internal
-#' @noRd
-  standardize_category_names <- function(pop.template) {
-    # Remove birthing person prefixes to standardize maternal data categories
-    pop.template[grepl("birthing person", cat1, ignore.case = TRUE),
-                 cat1 := tools::toTitleCase(gsub("Birthing person's ", "", cat1))]
-    pop.template[grepl("birthing person", cat2, ignore.case = TRUE),
-                 cat2 := tools::toTitleCase(gsub("Birthing person's ", "", cat2))]
-
-    return(pop.template)
-  }
-
 # Create Query Keys for Consolidation: create_query_keys() ----
 #' Create Query Keys for Consolidation: create_query_keys() ----
 #' @keywords internal

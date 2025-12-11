@@ -84,7 +84,6 @@ chi_get_proper_pop <- function(pop.template = NULL,
   age_values <- validated$age_values
 
   # STEP 2: Batch similar queries ----
-  pop.template <- standardize_category_names(pop.template)
   pop.template <- create_query_keys(pop.template)
   batched <- batch_population_queries(pop.template)
   pop.template <- batched$pop.template

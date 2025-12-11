@@ -545,12 +545,6 @@ chi_qa_tro <- function(CHIestimates,
       group = cat1_group
     )])
 
-    # wonky tweaks because of annoying structure for Birthing Person's race/ethnicity
-    chi_cat1_combos[cat %in% c("Birthing person's race/ethnicity", "Birthing person's race"), cat := "[Birthing person's] Race"]
-    chi_cat1_combos[cat == "Birthing person's ethnicity", cat := "[Birthing person's] Ethnicity"]
-    chi_cat1_combos[cat == "[Birthing person's] Race" & varname == 'race3' & group == 'Hispanic', cat := "[Birthing person's] Ethnicity"]
-    chi_cat1_combos[, cat := gsub("Birthing person's eth", "[Birthing person's] Eth", cat)]
-
     cat1_invalid <- chi_cat1_combos[!ref_combos, on = list(cat, varname, group)]
 
     if(nrow(cat1_invalid) > 0) {
@@ -570,12 +564,6 @@ chi_qa_tro <- function(CHIestimates,
       varname = cat2_varname,
       group = cat2_group
     )])
-
-    # wonky tweaks because of annoying structure for Birthing Person's race/ethnicity
-    chi_cat2_combos[cat %in% c("Birthing person's race/ethnicity", "Birthing person's race"), cat := "[Birthing person's] Race"]
-    chi_cat2_combos[cat == "Birthing person's ethnicity", cat := "[Birthing person's] Ethnicity"]
-    chi_cat2_combos[cat == "[Birthing person's] Race" & varname == 'race3' & group == 'Hispanic', cat := "[Birthing person's] Ethnicity"]
-    chi_cat2_combos[, cat := gsub("Birthing person's eth", "[Birthing person's] Eth", cat)]
 
     cat2_invalid <- chi_cat2_combos[!ref_combos, on = list(cat, varname, group)]
 
