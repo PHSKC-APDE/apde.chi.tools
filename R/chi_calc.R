@@ -420,6 +420,8 @@ chi_calc <- function(ph.data = NULL,
     tempCHIest <- tempCHIest[, cat1 := factor(cat1, levels = c("King County", sort(setdiff(unique(tempCHIest$cat1), "King County"))) )]
     tempCHIest <- tempCHIest[, tab := factor(tab, levels = c(c("_kingcounty","demgroups", "trends"),  sort(setdiff(unique(tempCHIest$tab), c("_kingcounty","demgroups", "trends")))) )]
     setorder(tempCHIest, indicator_key, tab, -year, cat1, cat1_group, cat2, cat2_group)
+    tempCHIest[, cat1 := as.character(cat1)]
+    tempCHIest[, tab := as.character(tab)]
     setcolorder(tempCHIest, c('data_source', 'indicator_key', 'level'))
 
   # return the CHI table ----
