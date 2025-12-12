@@ -129,7 +129,7 @@
     template_row <- pop.template[current_query$representative_row_index]
 
     # Show progress
-    message(paste0("Process ID ", Sys.getpid(), ": get_population call ",
+    message(paste0("Process ID ", Sys.getpid(), ": population() call ",
                query_id, " (covers ", sum(pop.template$batched_id == query_id),
                " original queries: ", current_query$query_key, ")"))
 
@@ -139,10 +139,10 @@
       setdiff(c(template_row$group_by1, template_row$group_by2), c(NA))
     ))
 
-    # Call get_population with the batched year range
+    # Call population() with the batched year range
     if (is_chars && template_row$geo_type == 'kc') {
       # For CHARS data, use ZIP aggregation method for King County
-      population_data <- rads::get_population(
+      population_data <- apde.data::population(
         kingco = FALSE, # intentionally FALSE to retrieve ALL ZIP codes, which we'll filter later
         group_by = grouping_vars,
         geo_type = 'zip', # note this is purposefully not 'kc'
@@ -164,7 +164,7 @@
       population_data[, geo_type := 'kc']
       population_data[, geo_id := 'King County']
     } else if (is.na(template_row$geo_type)) {
-      population_data <- rads::get_population(
+      population_data <- apde.data::population(
         group_by = grouping_vars,
         race_type = template_row$race_type,
         years = current_query$min_start:current_query$max_stop,
@@ -173,7 +173,7 @@
         round = FALSE
       )
     } else {
-      population_data <- rads::get_population(
+      population_data <- apde.data::population(
         group_by = grouping_vars,
         geo_type = template_row$geo_type,
         race_type = template_row$race_type,
