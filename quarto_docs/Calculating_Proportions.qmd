@@ -22,7 +22,6 @@ Finally, please remember that you can always get more information about a specif
 #| warning: false
 #| message: false
 
-library(glue)           # For creating dynamic strings
 library(future)         # For parallel processing
 library(Microsoft365R)  # For SharePoint connections
 library(DBI)            # For SQL Server connections
@@ -30,6 +29,7 @@ library(openxlsx)       # For Excel output
 library(rads)           # For APDE analyses
 library(data.table)     # For wicked fast data manipulation
 library(apde.chi.tools) # The package we're demonstrating
+library(apde.data)      # For importing analytic data
 ```
 
 ```{r pretty_kable}
@@ -60,12 +60,12 @@ sharepoint_output_dir <- paste0('JUNK_testing/', latest_year, '-update/')
 
 # Getting the Raw Data
 
-Next, let's retrieve the birth data we'll be analyzing. The `rads::get_data_birth()` function pulls data from SQL, filtered to our specifications.
+Next, let's retrieve the birth data we'll be analyzing. The `apde.data::birth()` function pulls data from SQL, filtered to our specifications.
 
 ::: callout-note
 ## What is`race3_hispanic` and why do I need it?
 
-Generally, CHI has two versions of composite race/ethnicity data. In `race4`, Hispanic is defined as a race and overwrites other OMB race categories. For example, if someone is Black and Hispanic, in `race4`, the person would be categorized as Hispanic. In contrast, `race3` defines Hispanic as an ethnicity. This means a person can be any OMB race (e.g., AIAN, Asian, Black, etc.) AND be of Hispanic ethnicity. A single analytic ready variable cannot contain both race and ethnicity data since it can only have one value. Therefore, every time you want to process `race3` estimates, you must download and use both `'race3'` and `'race3_hispanic'` columns from the analytic ready data that you get with the `rads::get_data_*()` functions. The `apde.chi.tools` functions will "know" how to appropriately use `race3` and `race3_hispanic`, but you must get both from the analytic ready data.
+Generally, CHI has two versions of composite race/ethnicity data. In `race4`, Hispanic is defined as a race and overwrites other OMB race categories. For example, if someone is Black and Hispanic, in `race4`, the person would be categorized as Hispanic. In contrast, `race3` defines Hispanic as an ethnicity. This means a person can be any OMB race (e.g., AIAN, Asian, Black, etc.) AND be of Hispanic ethnicity. A single analytic ready variable cannot contain both race and ethnicity data since it can only have one value. Therefore, every time you want to process `race3` estimates, you must download and use both `'race3'` and `'race3_hispanic'` columns from the analytic ready data that you get with the `apde.data` functions. The `apde.chi.tools` functions will "know" how to appropriately use `race3` and `race3_hispanic`, but you must get both from the analytic ready data.
 :::
 
 ```{r get-data}
@@ -73,7 +73,7 @@ Generally, CHI has two versions of composite race/ethnicity data. In `race4`, Hi
 #| message: false
 
 # Get birth data for the past 10 years
-birthsdt <- get_data_birth(
+birthsdt <- birth(
   cols = c("bigcities", "chi_geo_kc", "chi_geo_region", "chi_race_aic_asianother",
            "chi_race_aic_chinese", "chi_race_aic_filipino",
            "chi_race_aic_guam_or_chamorro", "chi_race_aic_hawaiian",
@@ -148,20 +148,19 @@ myinstructions <- myinstructions[indicator_key == 'bw_norm']
 
 # Tidying Instructions
 
-Now, let's clean up our instructions to prevent illogical cross-tabulations like Seattle HRAs in East King County. Note that this is one place where the analyst will need to think carefully and deeply about illogical cross-tabulations that should be removed. You should assume that this step will be specific to each analysis.
+Now, let's clean up our instructions to prevent illogical cross-tabulations like Seattle in East King County. Note that this is one place where the analyst will need to think carefully and deeply about illogical cross-tabulations that should be removed. You should assume that this step will be specific to each analysis.
 
 ```{r tidy-instructions}
 #| warning: false
 #| message: false
 
-# Remove crosstabs of big cities with HRAs or Regions
-myinstructions <- myinstructions[!(cat1_varname == 'bigcities' &
-                                     cat2_varname %in% c('hra20_name', 'chi_geo_region'))]
+# Remove crosstabs of big cities with HRAs or Regions, `%in% TRUE` allows rows where values are NA to be kept 
+myinstructions <- myinstructions[!(cat1_varname == 'bigcities' & 
+                        cat2_varname %in% c('hra20_name', 'chi_geo_region')) %in% TRUE] 
 
 # Remove crosstabs of HRAs or Regions with big cities
-myinstructions <- myinstructions[!(cat2_varname == 'bigcities' &
-                                     cat1_varname %in% c('hra20_name', 'chi_geo_region'))]
-
+myinstructions <- myinstructions[!(cat2_varname == 'bigcities' & 
+                                     cat1_varname %in% c('hra20_name', 'chi_geo_region')) %in% TRUE] 
 ```
 
 # Performing Calculations
@@ -247,38 +246,6 @@ In our current example, since `bw_norm` is not a categorical variable, the `leve
 myestimates[, level := NULL]
 ```
 
-## Race/Ethnicity
-
-Due to the way that APDE decided to display `race3` (Hispanic as ethnicity) and `race4` (Hispanic as race), the calculation and preparation of these variables can be complex. We need to manipulate the results to align them with CHI standards.
-
-```{r tidy-race}
-#| warning: false
-#| message: false
-
-# For race4 categories (both cat1 and cat2)
-myestimates[tab %in% c('demgroups', 'crosstabs') & cat1_varname == 'race4', 
-            cat1 := "Birthing person's race"]
-myestimates[tab %in% c('demgroups', 'crosstabs') & cat2_varname == 'race4', 
-            cat2 := "Birthing person's race"]
-
-# For race3 categories - default to race, override for Hispanic ethnicity
-myestimates[tab %in% c('demgroups', 'crosstabs') & cat1_varname == 'race3', 
-            cat1 := "Birthing person's race"]
-myestimates[tab %in% c('demgroups', 'crosstabs') & cat1_varname == 'race3' & cat1_group == 'Hispanic', 
-            cat1 := "Birthing person's ethnicity"]
-
-myestimates[tab %in% c('demgroups', 'crosstabs') & cat2_varname == 'race3', 
-            cat2 := "Birthing person's race"]
-myestimates[tab %in% c('demgroups', 'crosstabs') & cat2_varname == 'race3' & cat2_group == 'Hispanic', 
-            cat2 := "Birthing person's ethnicity"]
-
-# Update trend data labels (both race3 and race4 at once)
-myestimates[tab == 'trends' & cat1_varname %in% c('race3', 'race4'), 
-            cat1 := "Birthing person's race/ethnicity"]
-myestimates[tab == 'trends' & cat2_varname %in% c('race3', 'race4'), 
-            cat2 := "Birthing person's race/ethnicity"]
-```
-
 # Updating Metadata
 
 This step uses `chi_generate_metadata()` to combine existing metadata with our current estimates calculated above.
@@ -342,22 +309,47 @@ qa_result <- chi_qa_tro(CHIestimates = myestimates,
 print(qa_result)
 ```
 
+## Add `Birthing person's` prefix to birth race/ethnicity data
+
+Now that we passed the QA, we have to address a wonky tweak needed for the birth estimates. Since ***race/ethnicity data are that of the person giving birth and not the child***, we need to prefix the `cat#` values when `cat#_varname == race3` (Hispanic as ethnicity) `cat#_varname == race4` (Hispanic as race).
+
+```{r tidy-race}
+#| warning: false
+#| message: false
+myestimates[ ,
+  cat1 := fifelse(
+    cat1 %chin% c("Ethnicity", "Race", "Race/ethnicity", "Detailed race/ethnicity"),
+    paste0("Birthing person's ", sub("^([A-Za-z]+)", "\\L\\1", cat1, perl = TRUE)),
+    cat1
+    )
+]
+
+myestimates[ ,
+  cat2 := fifelse(
+    cat2 %chin% c("Ethnicity", "Race", "Race/ethnicity", "Detailed race/ethnicity"),
+    paste0("Birthing person's ", sub("^([A-Za-z]+)", "\\L\\1", cat2, perl = TRUE)),
+    cat2
+    )
+]
+```
+
 # Comparing with Previous Estimates
 
 An important validation step is comparing our new estimates with previous ones to identify 'notable differences'. The notable differences criteria were specified by Joie McCracken and are the same for each data source. They are used both for human QA and for sharing high-level summaries to accompany new releases of CHI estimates. If there is an issue, the table will have `notable == 1`, otherwise it will have `is.na(notable)`.
 
-```{r compare}
-#| warning: false 
-#| message: false
+Below is an example of how you would do this. Note that, in this case, the differences show are not real (they are synthetic) and are provied for purely illustrative purposes.
+
+```{r compare-just-code}
+#| eval: false 
 
 # Get previous _kingcounty and demgroups estimates from the database
-estimates_old <- setDT(DBI::dbGetQuery(
+estimates_old <- DBI::dbGetQuery(
   conn = db_chi_prod,
-  statement = glue::glue_sql("SELECT * FROM [PHExtractStore].[APDE].[birth_results]
+  statement = "SELECT * FROM [PHExtractStore].[APDE].[birth_results]
         WHERE tab IN ('_kingcounty', 'demgroups') AND chi = 1 AND
-        indicator_key IN ({unique(myestimates$indicator_key)*})", .con = db_chi_prod)))
+        indicator_key = 'bw_norm'")
 
-# Compare old and new estimates
+# Compare old 5-year estimates to new 5-year estimates
 mycomparison <- chi_compare_estimates(OLD = estimates_old,
                                       NEW = myestimates,
                                       OLD.year = paste0(latest_year-5, '-', latest_year-1),
@@ -365,7 +357,55 @@ mycomparison <- chi_compare_estimates(OLD = estimates_old,
                                       META = mymetadata)
 ```
 
-Let's examine three rows from `mycomparison`:
+```{r synthetic-old}
+#| message: false
+#| warning: false
+# Create a synthetic 'old' table to use with chi_compare_estimates
+set.seed(123)   # reproducible
+olddt <- copy(myestimates)
+
+# randomly choose rows to changed ----
+abs_rows <- sample(seq_len(nrow(olddt)), 5)
+rel_rows <- sample(setdiff(seq_len(nrow(olddt)), abs_rows), 5)
+
+# Helper to keep result within (0,1)
+cap01 <- function(x) pmin(pmax(x, 0.0001), 0.9999)
+
+## Absolute change rows: +/- 0.02–0.07
+olddt[abs_rows,
+      result := cap01(result + sample(c(-1,1), .N, TRUE) * runif(.N, 0.02, 0.07))]
+
+## Relative change rows: +/- 10–15%
+olddt[rel_rows,
+      result := cap01(result * (1 + sample(c(-1,1), .N, TRUE) * runif(.N, 0.10, 0.15)))]
+
+# Recalcualte numerator, se, CI, rse
+changed_rows <- c(abs_rows, rel_rows)
+
+olddt[changed_rows, numerator := round(result * denominator)]
+olddt[changed_rows, se := sqrt(result * (1 - result) / denominator)]
+olddt[changed_rows,
+      `:=`(lower_bound = cap01(result - 1.96 * se),
+           upper_bound = cap01(result + 1.96 * se),
+           rse         = se / pmax(result, 1e-8))]
+
+olddt[, year := paste0(latest_year-5, '-', latest_year-1)]
+
+estimates_old = copy(olddt)
+```
+
+```{r compare-for-real}
+#| include: false
+
+# Compare old 5-year estimates to synthetic 5-year estimates
+mycomparison <- chi_compare_estimates(OLD = estimates_old,
+                                      NEW = myestimates,
+                                      OLD.year = paste0(latest_year-5, '-', latest_year-1),
+                                      NEW.year = paste0(latest_year-4, '-', latest_year),
+                                      META = mymetadata)
+```
+
+Let's examine three rows from `mycomparison` where `notable == 1`, meaning there is a substantial difference:
 
 ```{r}
 #| echo: false
