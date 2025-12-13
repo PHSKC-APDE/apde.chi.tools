@@ -142,16 +142,42 @@
     # Call population() with the batched year range
     if (is_chars && template_row$geo_type == 'kc') {
       # For CHARS data, use ZIP aggregation method for King County
-      population_data <- apde.data::population(
-        kingco = FALSE, # intentionally FALSE to retrieve ALL ZIP codes, which we'll filter later
-        group_by = grouping_vars,
-        geo_type = 'zip', # note this is purposefully not 'kc'
-        race_type = template_row$race_type,
-        years = current_query$min_start:current_query$max_stop,
-        genders = gender_values,
-        ages = age_values,
-        round = FALSE
-      )
+      # When grouping by race with race_type='race', we need to make two calls:
+      # one for race categories and one specifically for Hispanic ethnicity
+      if('race' %in% grouping_vars & template_row$race_type == 'race'){
+        population_data <- rbind(
+          apde.data::population(
+            kingco = FALSE, # intentionally FALSE to retrieve ALL ZIP codes, which we'll filter later
+            group_by = grouping_vars,
+            geo_type = 'zip', # note this is purposefully not 'kc'
+            race_type = template_row$race_type,
+            years = current_query$min_start:current_query$max_stop,
+            genders = gender_values,
+            ages = age_values,
+            round = FALSE),
+          apde.data::population(
+            kingco = FALSE, # intentionally FALSE to retrieve ALL ZIP codes, which we'll filter later
+            group_by = grouping_vars,
+            geo_type = 'zip', # note this is purposefully not 'kc'
+            race_type = template_row$race_type,
+            years = current_query$min_start:current_query$max_stop,
+            genders = gender_values,
+            ages = age_values,
+            races = 'hispanic',
+            round = FALSE
+          )
+        )
+      } else {
+        population_data <- apde.data::population(
+          kingco = FALSE, # intentionally FALSE to retrieve ALL ZIP codes, which we'll filter later
+          group_by = grouping_vars,
+          geo_type = 'zip', # note this is purposefully not 'kc'
+          race_type = template_row$race_type,
+          years = current_query$min_start:current_query$max_stop,
+          genders = gender_values,
+          ages = age_values,
+          round = FALSE)
+      }
 
       # Filter to Define King County as ZIPs that begin with 980/981
       population_data <- population_data[grepl('^980|^981', geo_id)]
@@ -164,24 +190,70 @@
       population_data[, geo_type := 'kc']
       population_data[, geo_id := 'King County']
     } else if (is.na(template_row$geo_type)) {
-      population_data <- apde.data::population(
-        group_by = grouping_vars,
-        race_type = template_row$race_type,
-        years = current_query$min_start:current_query$max_stop,
-        genders = gender_values,
-        ages = age_values,
-        round = FALSE
-      )
+      # When grouping by race with race_type='race', we need to make two calls:
+      # one for race categories and one specifically for Hispanic ethnicity
+      if('race' %in% grouping_vars & template_row$race_type == 'race'){
+        population_data <- rbind(
+          apde.data::population(
+            group_by = grouping_vars,
+            race_type = template_row$race_type,
+            years = current_query$min_start:current_query$max_stop,
+            genders = gender_values,
+            ages = age_values,
+            round = FALSE),
+          apde.data::population(
+            group_by = grouping_vars,
+            race_type = template_row$race_type,
+            years = current_query$min_start:current_query$max_stop,
+            genders = gender_values,
+            ages = age_values,
+            races = 'hispanic',
+            round = FALSE)
+        )
+      } else {
+        population_data <- apde.data::population(
+          group_by = grouping_vars,
+          race_type = template_row$race_type,
+          years = current_query$min_start:current_query$max_stop,
+          genders = gender_values,
+          ages = age_values,
+          round = FALSE
+        )
+      }
     } else {
-      population_data <- apde.data::population(
-        group_by = grouping_vars,
-        geo_type = template_row$geo_type,
-        race_type = template_row$race_type,
-        years = current_query$min_start:current_query$max_stop,
-        genders = gender_values,
-        ages = age_values,
-        round = FALSE
-      )
+      # When grouping by race with race_type='race' (i.e., for race3), we need to make two calls:
+      # one for race categories and one specifically for Hispanic ethnicity
+      if('race' %in% grouping_vars & template_row$race_type == 'race'){
+        population_data <- rbind(
+          apde.data::population(
+            group_by = grouping_vars,
+            geo_type = template_row$geo_type,
+            race_type = template_row$race_type,
+            years = current_query$min_start:current_query$max_stop,
+            genders = gender_values,
+            ages = age_values,
+            round = FALSE),
+          apde.data::population(
+            group_by = grouping_vars,
+            geo_type = template_row$geo_type,
+            race_type = template_row$race_type,
+            years = current_query$min_start:current_query$max_stop,
+            genders = gender_values,
+            ages = age_values,
+            races = 'hispanic',
+            round = FALSE)
+        )
+      } else {
+        population_data <- apde.data::population(
+          group_by = grouping_vars,
+          geo_type = template_row$geo_type,
+          race_type = template_row$race_type,
+          years = current_query$min_start:current_query$max_stop,
+          genders = gender_values,
+          ages = age_values,
+          round = FALSE
+        )
+      }
     }
 
     # Add batched_id to population data for later processing
@@ -583,7 +655,7 @@
     # Basic subsetting tidying ----
       current_row <- pop.template[row_index, ]
 
-      # Set the correct year format
+      # Set the correct year format (will aggregate/sum for the binned years below)
       population_data[, year := current_row$year]
 
     # Process demographic categories ----
