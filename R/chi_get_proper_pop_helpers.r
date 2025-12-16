@@ -17,6 +17,11 @@
       pop.template <- data.table::setDT(data.table::copy(pop.template))
     }
 
+    # if cat1|cat2 == 'Ethnicity', eliminate those rows because getting race3 will already get Ethnicity
+    pop.template[cat1 == 'Ethnicity', `:=` (cat1 = 'Race', race_type = 'race', group_by1 = 'race')]
+    pop.template[cat2 == 'Ethnicity', `:=` (cat2 = 'Race', race_type = 'race', group_by2 = 'race')]
+    pop.template <- unique(pop.template)
+
     # Check for required columns
     required_columns <- c("year", "cat1", "cat1_varname", "cat2", "cat2_varname",
                           "start", "stop", "race_type", "geo_type", "tab")
@@ -343,11 +348,6 @@
 
     # Process specific race/ethnicity groups
     population_data[get(catvarname) %in% c('race4', 'race3'), (catgroup) := race]
-
-    # Filter out Ethnicity unless the group == 'Hispanic'
-    population_data <- population_data[get(catnum) != "Ethnicity" |
-                                         (get(catnum) == "Ethnicity" &
-                                            get(catgroup) == 'Hispanic'), ]
 
     # Standardize "Multiple" label
     population_data[get(catgroup) == "Multiple race", (catgroup) := "Multiple"]
@@ -744,17 +744,20 @@
       # Generate complete demographic combinations
       complete_demographics <- create_demographic_shell(population_data, current_row, age_values)
 
-
       # Merge population data with complete demographics grid
       population_data <- suppressWarnings(merge(population_data,
                                                 complete_demographics,
                                                 all = TRUE))
 
-      # Fill missing population values with zero
-      population_data[is.na(pop), pop := 0]
-
       # Add tab column
       population_data[, tab := current_row$tab]
+
+      # Automatically made Hispanic with race3, so now mark the cat# as Ethnicity
+      population_data[cat1_varname == 'race3' & cat1_group == 'Hispanic' & tab != 'trends', cat1 := 'Ethnicity']
+      population_data[cat2_varname == 'race3' & cat2_group == 'Hispanic' & tab != 'trends', cat2 := 'Ethnicity']
+
+      # Fill missing population values with zero
+      population_data[is.na(pop), pop := 0]
 
       # Convert placeholder "NA" strings back to true NA values
       population_data[cat2 == "NA", c("cat2", "cat2_varname", "cat2_group") := NA]
