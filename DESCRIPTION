@@ -38,6 +38,7 @@ Remotes:
     github::PHSKC-APDE/dtsurvey, 
     github::PHSKC-APDE/apde.data
 Suggests: 
+    apde.data, 
     devtools, 
     httr,
     keyring,
