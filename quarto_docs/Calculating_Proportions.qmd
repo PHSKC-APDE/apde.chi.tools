@@ -63,7 +63,7 @@ sharepoint_output_dir <- paste0('JUNK_testing/', latest_year, '-update/')
 Next, let's retrieve the birth data we'll be analyzing. The `apde.data::birth()` function pulls data from SQL, filtered to our specifications.
 
 ::: callout-note
-## What is`race3_hispanic` and why do I need it?
+## What is `race3_hispanic` and why do I need it?
 
 Generally, CHI has two versions of composite race/ethnicity data. In `race4`, Hispanic is defined as a race and overwrites other OMB race categories. For example, if someone is Black and Hispanic, in `race4`, the person would be categorized as Hispanic. In contrast, `race3` defines Hispanic as an ethnicity. This means a person can be any OMB race (e.g., AIAN, Asian, Black, etc.) AND be of Hispanic ethnicity. A single analytic ready variable cannot contain both race and ethnicity data since it can only have one value. Therefore, every time you want to process `race3` estimates, you must download and use both `'race3'` and `'race3_hispanic'` columns from the analytic ready data that you get with the `apde.data` functions. The `apde.chi.tools` functions will "know" how to appropriately use `race3` and `race3_hispanic`, but you must get both from the analytic ready data.
 :::
@@ -122,7 +122,7 @@ We use `chi_generate_tro_shell()` to create a standardized set of calculation in
 #| message: false
 
 myinstructions <- chi_generate_tro_shell(
-  ph.analysis_set = analysis_sets,  # from by chi_generate_analysis_set 
+  ph.analysis_set = analysis_sets,  # from chi_generate_analysis_set 
   end.year = latest_year,           # latest year used in analyses
   year.span = 5,                    # number of years in a single analysis period
   trend.span = 3,                   # number of years in a single trend period
@@ -137,7 +137,7 @@ Let's examine the top six rows of our instructions:
 pretty_kable(head(myinstructions))
 ```
 
-For this vignettes, we'll subset our instructions to a single indicator. Specifically, we'll chose `bw_norm` - the proportion of births with a birth weight between 2,500 and 3,999 grams.
+For this vignette, we'll subset our instructions to a single indicator. Specifically, we'll choose `bw_norm` - the proportion of births with a birth weight between 2,500 and 3,999 grams.
 
 ```{r filter-instructions}
 #| warning: false
@@ -154,13 +154,16 @@ Now, let's clean up our instructions to prevent illogical cross-tabulations like
 #| warning: false
 #| message: false
 
-# Remove crosstabs of big cities with HRAs or Regions, `%in% TRUE` allows rows where values are NA to be kept 
-myinstructions <- myinstructions[!(cat1_varname == 'bigcities' & 
-                        cat2_varname %in% c('hra20_name', 'chi_geo_region')) %in% TRUE] 
-
-# Remove crosstabs of HRAs or Regions with big cities
-myinstructions <- myinstructions[!(cat2_varname == 'bigcities' & 
-                                     cat1_varname %in% c('hra20_name', 'chi_geo_region')) %in% TRUE] 
+# Remove crosstabs of big cities with HRAs or Regions
+myinstructions <- myinstructions[
+  is.na(cat2_varname) |
+  !(
+    (cat1_varname == "bigcities" &
+     cat2_varname %in% c("hra20_name", "chi_geo_region")) |
+    (cat2_varname == "bigcities" &
+     cat1_varname %in% c("hra20_name", "chi_geo_region"))
+  )
+]
 ```
 
 # Performing Calculations
@@ -298,14 +301,18 @@ It performs numerous checks including proper rounding based on result type, abse
 :::
 
 ```{r qa}
-#| message: true
-#| output: true
+#| output: false
 
 # Perform QA checks
 qa_result <- chi_qa_tro(CHIestimates = myestimates,
                         CHImetadata = mymetadata,
                         acs = F,
                         verbose = F)
+print(qa_result)
+```
+
+```{r qa-print}
+#| echo: false
 print(qa_result)
 ```
 
@@ -316,20 +323,18 @@ Now that we passed the QA, we have to address a wonky tweak needed for the birth
 ```{r tidy-race}
 #| warning: false
 #| message: false
-myestimates[ ,
-  cat1 := fifelse(
-    cat1 %chin% c("Ethnicity", "Race", "Race/ethnicity", "Detailed race/ethnicity"),
-    paste0("Birthing person's ", sub("^([A-Za-z]+)", "\\L\\1", cat1, perl = TRUE)),
-    cat1
-    )
+myestimates[ , cat1 := fifelse(
+  cat1 %chin% c("Ethnicity", "Race", "Race/ethnicity", "Detailed race/ethnicity"),
+  paste0("Birthing person's ", tolower(cat1)),
+  cat1
+  )
 ]
 
-myestimates[ ,
-  cat2 := fifelse(
-    cat2 %chin% c("Ethnicity", "Race", "Race/ethnicity", "Detailed race/ethnicity"),
-    paste0("Birthing person's ", sub("^([A-Za-z]+)", "\\L\\1", cat2, perl = TRUE)),
-    cat2
-    )
+myestimates[ ,cat2 := fifelse(
+  cat2 %chin% c("Ethnicity", "Race", "Race/ethnicity", "Detailed race/ethnicity"),
+  paste0("Birthing person's ", tolower(cat2)),
+  cat2
+  )
 ]
 ```
 
@@ -337,7 +342,7 @@ myestimates[ ,
 
 An important validation step is comparing our new estimates with previous ones to identify 'notable differences'. The notable differences criteria were specified by Joie McCracken and are the same for each data source. They are used both for human QA and for sharing high-level summaries to accompany new releases of CHI estimates. If there is an issue, the table will have `notable == 1`, otherwise it will have `is.na(notable)`.
 
-Below is an example of how you would do this. Note that, in this case, the differences show are not real (they are synthetic) and are provied for purely illustrative purposes.
+Below is an example of how you would do this. Note that, in this case, the differences show are not real (they are synthetic) and are provided for purely illustrative purposes.
 
 ```{r compare-just-code}
 #| eval: false 
@@ -358,10 +363,10 @@ mycomparison <- chi_compare_estimates(OLD = estimates_old,
 ```
 
 ```{r synthetic-old}
-#| message: false
-#| warning: false
+#| include: false
+
 # Create a synthetic 'old' table to use with chi_compare_estimates
-set.seed(123)   # reproducible
+set.seed(98104) 
 olddt <- copy(myestimates)
 
 # randomly choose rows to changed ----
@@ -377,17 +382,17 @@ olddt[abs_rows,
 
 ## Relative change rows: +/- 10–15%
 olddt[rel_rows,
-      result := cap01(result * (1 + sample(c(-1,1), .N, TRUE) * runif(.N, 0.10, 0.15)))]
+      result := round(cap01(result * (1 + sample(c(-1,1), .N, TRUE) * runif(.N, 0.10, 0.15))), 3)]
 
 # Recalcualte numerator, se, CI, rse
 changed_rows <- c(abs_rows, rel_rows)
 
 olddt[changed_rows, numerator := round(result * denominator)]
-olddt[changed_rows, se := sqrt(result * (1 - result) / denominator)]
+olddt[changed_rows, se := round(sqrt(result * (1 - result) / denominator), 4)]
 olddt[changed_rows,
-      `:=`(lower_bound = cap01(result - 1.96 * se),
-           upper_bound = cap01(result + 1.96 * se),
-           rse         = se / pmax(result, 1e-8))]
+      `:=`(lower_bound = round(cap01(result - 1.96 * se), 3),
+           upper_bound = round(cap01(result + 1.96 * se), 3),
+           rse         = round(se / pmax(result, 1e-8), 3))]
 
 olddt[, year := paste0(latest_year-5, '-', latest_year-1)]
 
@@ -407,9 +412,9 @@ mycomparison <- chi_compare_estimates(OLD = estimates_old,
 
 Let's examine three rows from `mycomparison` where `notable == 1`, meaning there is a substantial difference:
 
-```{r}
+```{r compare-view}
 #| echo: false
-pretty_kable(mycomparison[1:3])
+pretty_kable(mycomparison[notable == 1][1:3])
 ```
 
 # Export Analyses to SharePoint
@@ -419,12 +424,7 @@ Now that we've finished our analyses, let's save our results to SharePoint.
 ## Exporting Estimates & Metadata
 
 ```{r save-excel}
-#| eval: true
-#| echo: true
-#| message: false
-#| warning: false
-#| output: false
-#| results: "hide"
+#| eval: false 
 
 # Connect to SharePoint
 team <- get_team("Community Health Indicators")
@@ -439,7 +439,7 @@ openxlsx::writeDataTable(wb, "Estimates",
                          x = myestimates,
                          tableStyle = "TableStyleMedium9")
 
-# Add mettadata worksheet and write data
+# Add metadata worksheet and write data
 openxlsx::addWorksheet(wb, "Metadata")
 openxlsx::writeDataTable(wb, "Metadata",
                          x = mymetadata,
@@ -462,12 +462,7 @@ rm(tempy)
 ## Exporting `mycomparison`
 
 ```{r save-mycomparison}
-#| eval: true
-#| echo: true
-#| message: false
-#| warning: false
-#| output: false
-#| results: "hide"
+#| eval: false 
 
 # Connect to SharePoint
 team <- get_team("Community Health Indicators")
@@ -497,7 +492,7 @@ rm(tempy)
 Finally, we need to save our results and metadata to the development SQL Server using `chi_update_sql()`. Later, once it passes human QA, it will be transferred to the production SQL Server.
 
 ```{r save-sql}
-#| warning: false
+#| eval: false 
 
 chi_update_sql(CHIestimates = myestimates,
                CHImetadata = mymetadata,
@@ -511,12 +506,7 @@ chi_update_sql(CHIestimates = myestimates,
 In the process of creating this vignette, we created some temporary tables on SharePoint and SQL Server. Let's delete these tables to keep our servers clean. Obviously, in your real analyses, you'd skip this step.
 
 ```{r clean-up-temp-SQL}
-#| eval: true
-#| echo: true
-#| message: false
-#| warning: false
-#| output: false
-#| results: "hide"
+#| eval: false 
 
 # Drop SharePoint directory
 SharePoint_Parent <- strsplit(sharepoint_output_dir, "/")[[1]][1]
@@ -550,6 +540,6 @@ New functions you used:
 
 If you encounter issues or believe you've found a bug, please submit a GitHub issue at [Issues · PHSKC-APDE/apde.chi.tools](https://github.com/PHSKC-APDE/apde.chi.tools/issues).
 
-Remember that this workflow is specifically for calculations of proportion and means. For rate calculations that use population denominators, please refer to the dedicated [dedicated rate calculation vignette](https://github.com/PHSKC-APDE/apde.chi.tools/wiki/Calculating_Rates).
+Remember that this workflow is specifically for calculations of proportion and means. For rate calculations that use population denominators, please refer to the [dedicated rate calculation vignette](https://github.com/PHSKC-APDE/apde.chi.tools/wiki/Calculating_Rates).
 
 -- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (apde.chi.tools v', packageVersion('apde.chi.tools'), ')')`*
