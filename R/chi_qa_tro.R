@@ -185,16 +185,23 @@ chi_qa_tro <- function(CHIestimates,
       }
     }
 
-  for(mycol in c("result", "lower_bound", "upper_bound", "se", "chi", "source_date", "run_date")){
+  # Check most columns for missingness
+  for(mycol in c("result", "lower_bound", "upper_bound", "chi", "source_date", "run_date")){
     if(nrow(CHIestimates[is.na(get(mycol)) & is.na(suppression)]) > 0){
       status <- 0
       warning(paste0("\U00026A0 Warning: '", mycol, "' is missing in at least one row of the CHI data."))
     }
   }
 
+  # Check se separately - allow NA when both numerator and denominator are 0 (undefined/no population stratum)
+  if(nrow(CHIestimates[is.na(se) & is.na(suppression) & !(numerator == 0 & denominator == 0)]) > 0){
+    status <- 0
+    warning("\U00026A0 Warning: 'se' is missing in at least one row of the CHI data where the estimate is defined.")
+  }
+
   if(nrow(CHIestimates[is.na(rse) & is.na(suppression) & numerator != 0]) > 0){
     status <- 0
-    warning("\U00026A0 Warning: 'rse' is missing in at least one row of the CHI data where numerator is not 0.")
+    warning("\U00026A0 Warning: 'rse' is missing in at least one row of the CHI data where the estimate is defined.")
   }
 
   for(mycol in names(unlist(chi_get_yaml()$metadata))){
