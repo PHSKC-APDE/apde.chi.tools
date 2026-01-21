@@ -17,6 +17,11 @@
       pop.template <- data.table::setDT(data.table::copy(pop.template))
     }
 
+    # convert race3_hispanic to race3 (race3_hispanic should not exist, but just in case!)
+    pop.template[cat1_varname == 'race3_hispanic', cat1_varname := 'race3']
+    pop.template[cat2_varname == 'race3_hispanic', cat2_varname := 'race3']
+    pop.template <- unique(pop.template)
+
     # if cat1|cat2 == 'Ethnicity', eliminate those rows because getting race3 will already get Ethnicity
     pop.template[cat1 == 'Ethnicity', `:=` (cat1 = 'Race', race_type = 'race', group_by1 = 'race')]
     pop.template[cat2 == 'Ethnicity', `:=` (cat2 = 'Race', race_type = 'race', group_by2 = 'race')]
