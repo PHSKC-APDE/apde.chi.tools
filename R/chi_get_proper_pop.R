@@ -165,6 +165,8 @@ chi_get_proper_pop <- function(pop.template = NULL,
                 year <= current_row$stop
             ]
 
+            filtered_population[, grep('year', names(filtered_population), value = T) := NULL]
+
             # Process without temp files
             process_template_row(row_index, filtered_population, pop.template, age_values)
           }
