@@ -28,7 +28,7 @@ Imports:
     odbc (>= 1.2.2),
     progressr,
     qs,
-    rads (>= 1.3.4), 
+    rads (>= 1.5.3), 
     rads.data,
     stats,
     tidyr,
