@@ -1,84 +1,25 @@
 # Create mock_chars data for injury ----
-set.seed(98104)
+  mock_chars <- rads.data::synthetic_chars
+  mock_chars[, `:=` (
+    chi_year = sample(2012:2022, nrow(mock_chars), replace = TRUE),
+    chi_age = sample(0:99, nrow(mock_chars), replace = TRUE),
+    wastate = "Washington State",
+    race3_hispanic = sample(c("Hispanic", "Non-Hispanic"), nrow(mock_chars), replace = TRUE),
+    chi_geo_region = sample(c("Seattle", "South", "East", "North"), nrow(mock_chars), replace = TRUE),
+    chi_sex = sample(c("Female", "Male"), nrow(mock_chars), replace = TRUE)
+  )]
 
-# Create 1000 sample CHARS records
-n_samples <- 1000
+  # force exactly 100 unintentional falls
+  mock_chars[injury_mechanism == 'fall', injury_mechanism := 'unspecified']
+  idx <- sample(mock_chars[injury_mechanism == "unspecified" & injury_intent == "unintentional", which = TRUE], 100)
+  mock_chars[idx, injury_mechanism := "fall"]
+  mock_chars[injury_mechanism == 'fall', .N, .(injury_intent, injury_mechanism)]
 
-# Define all injury mechanisms and intents as needed by chars_injury_matrix_count
-mechanisms <- c("any", "bites_stings", "cut_pierce", "drowning", "fall", "fire",
-                "fire_burn", "firearm", "machinery", "motor_vehicle_nontraffic",
-                "mvt_motorcyclist", "mvt_occupant", "mvt_other", "mvt_pedal_cyclist",
-                "mvt_pedestrian", "mvt_traffic", "mvt_unspecified", "natural",
-                "natural_environmental", "other", "other_land_transport", "other_spec",
-                "other_specified", "other_transport", "overexertion", "pedal_cyclist",
-                "pedestrian", "poisoning", "poisoning_drug", "poisoning_nondrug", "struck",
-                "struck_by_against", "suffocation", "transport_other", "unspecified")
-
-intents <- c("any", "unintentional", "intentional", "assault", "legal", "undetermined")
-
-# Initialize the data.table with demographic columns
-mock_chars <- data.table(
-  seq_no = 1:n_samples,  # Unique identifier
-  injury_nature_narrow = sample(c(TRUE, FALSE), n_samples, replace = TRUE, prob = c(0.8, 0.2)),
-  injury_nature_broad = NA,
-  chi_year = sample(2012:2022, n_samples, replace = TRUE),
-  chi_age = sample(0:99, n_samples, replace = TRUE),
-  chi_geo_kc = rep("King County", n_samples),
-  wastate = rep("Washington State", n_samples),
-  race3_hispanic = sample(c("Hispanic", "Non-Hispanic"), n_samples, replace = TRUE),
-  chi_geo_region = sample(c("Seattle", "South", "East", "North"), n_samples, replace = TRUE),
-  chi_sex = sample(c("Female", "Male"), n_samples, replace = TRUE)
-)
-mock_chars[, injury_nature_broad := !injury_nature_narrow]  # Define broad based on narrow
-
-
-# Add mechanism columns (all 0 initially)
-for (mech in mechanisms) {
-  mock_chars[, paste0("mechanism_", mech) := 0]
-}
-
-# Add intent columns (all 0 initially)
-for (int in intents) {
-  mock_chars[, paste0("intent_", int) := 0]
-}
-
-# First, set our fixed test cases
-# Set exactly 100 fall injuries with unintentional intent (rows 1-100)
-mock_chars[1:100, `:=`(
-  mechanism_fall = 1,
-  intent_unintentional = 1,
-  injury_intent = "unintentional"
-)]
-
-# Set exactly 50 poisoning self-harm cases (rows 101-150)
-mock_chars[101:150, `:=`(
-  mechanism_poisoning = 1,
-  intent_intentional = 1,
-  injury_intent = "intentional"
-)]
-
-# Now randomly assign mechanism and intent to the remaining records (151-1000)
-remaining_rows <- 151:n_samples
-for (i in remaining_rows) {
-  # Select random mechanism and intent
-  mech <- sample(mechanisms, 1)
-  int <- sample(intents, 1)
-
-  # Set the selected mechanism and intent to 1
-  mock_chars[i, paste0("mechanism_", mech) := 1]
-  mock_chars[i, paste0("intent_", int) := 1]
-
-  # Set the injury_intent string value based on which intent_* column is 1
-  # Skip "any" since it's not a real intent category for injury_intent
-  if (int != "any") {
-    mock_chars[i, injury_intent := int]
-  } else {
-    # If "any" was selected, choose one of the real intents
-    real_int <- sample(setdiff(intents, "any"), 1)
-    mock_chars[i, injury_intent := real_int]
-    mock_chars[i, paste0("intent_", real_int) := 1]
-  }
-}
+  # force exactly 50 intentional poisoning
+  mock_chars[injury_mechanism == 'poisoning', injury_mechanism := 'unspecified']
+  idx <- sample(mock_chars[injury_mechanism == "unspecified" & injury_intent == "intentional", which = TRUE], 100)
+  mock_chars[idx, injury_mechanism := "poisoning"]
+  mock_chars[injury_mechanism == 'poisoning', .N, .(injury_intent, injury_mechanism)]
 
 # Create mock_instructions ----
 mock_instructions <- data.table(
@@ -97,7 +38,7 @@ mock_chars_def <- data.table(
   indicator_name = c("Fall injuries (all ages)", "Fall injuries (children)"),
   indicator_key = c("hos1901000_v1", "hos1901000_v2"),
   intent = c("unintentional", "unintentional"),
-  mechanism = c("fall", "fall"),
+  mechanism = c("fall", "motor_vehicle_traffic"),
   age_start = c(0, 0),
   age_end = c(120, 17)
 )
@@ -193,7 +134,7 @@ test_that("chi_chars_injury processes fall injury data correctly", {
   expect_equal(uniqueN(result[, .N, chi_age]$N), 1)
 })
 
-# Test function handles age filtering correctly ----
+# xxxTest function handles age filtering correctly ----
 test_that("chi_chars_injury handles age filtering correctly", {
   # Test children-only indicator (hos1901000_v2 has age_end = 17)
   result <- chi_chars_injury(
@@ -319,7 +260,7 @@ test_that("When some instructions filter out all rows, expect it to work but ret
     result <- rbindlist(lapply(c("hos1901000_v1", "hos1901000_v2"), function(indicator) {
       chi_chars_injury(
         ph.indicator = indicator,
-        ph.data = copy(mock_chars)[, chi_geo_kc := 'KC'], # Corrupt the data
+        ph.data = copy(mock_chars)[, chi_geo_kc := NA], # Corrupt the data
         ph.instructions = mock_instructions[indicator_key %in% c("hos1901000_v1", "hos1901000_v2")],
         chars.defs = mock_chars_def)
     }), fill = TRUE)
@@ -340,7 +281,7 @@ test_that("When some instructions filter out all rows, expect it to work but ret
   expect_gt(nrow(result), 0)
 })
 
-# *Test year restriction for injury data (only 2012+) ----
+# Test year restriction for injury data (only 2012+) ----
 test_that("chi_chars_injury correctly handles pre-2012 years", {
   # Create instructions with pre-2012 years
   early_instructions <- copy(mock_instructions[1])
