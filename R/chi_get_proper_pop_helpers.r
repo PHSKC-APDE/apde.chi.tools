@@ -671,9 +671,9 @@
         temp.groupby <- paste0("group_by", gsub('cat', '', catnum))
 
         # Set basic category info from template
-        population_data[, (catnum) := current_row[[catnum]]]
-        population_data[, (catvarname) := current_row[[catvarname]]]
-        population_data[, (catgroup) := current_row[[temp.groupby]]]
+        population_data[, (catnum) := as.character(current_row[[catnum]])]
+        population_data[, (catvarname) := as.character(current_row[[catvarname]])]
+        population_data[, (catgroup) := as.character(current_row[[temp.groupby]])]
 
         # Process standard geographic categories
         # King County
