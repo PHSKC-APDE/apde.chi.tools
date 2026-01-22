@@ -3,7 +3,6 @@ title: "Generating CHI Rate Estimates"
 format: gfm
 prefer-html: false
 self-contained: true
-editor: visual
 ---
 
 # Introduction
@@ -12,7 +11,7 @@ The `apde.chi.tools` package provides tools for a standardized workflow for prep
 
 For the sake of simplicity, we'll walk through the analysis pipeline for calculating the adolescent birth rate as an example. However, estimation of CHARS and death rates follows the same basic process, albeit with some additional complexity that can be observed in the most recent code in the [CHI repository](https://github.com/PHSKC-APDE/chi). To view a complete list of documented functions available from the `apde.chi.tools` package, enter `help(package = 'apde.chi.tools')` at the R prompt.
 
-The CHI standards are documented in [SharePoint \> Community Health Indicators \> CHI-Vizes](https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/Forms/AllItems.aspx) \> CHI-Standards-TableauReady Output.xlsx. We'll follow those standards throughout our analysis.
+The CHI standards are documented in [SharePoint \> Community Health Indicators](https://kc1.sharepoint.com/teams/DPH-CHI/)  \> CHI-Vizes \> CHI-Standards-TableauReady Output.xlsx. We'll follow those standards throughout our analysis.
 
 Finally, please remember that you can always get more information about a specific function by accessing its help file, e.g., `?chi_count_by_age`, `?chi_generate_tro_shell`, etc.
 
@@ -61,12 +60,12 @@ sharepoint_output_dir <- paste0('JUNK_testing/', latest_year, '-update/')
 
 # Getting the Raw Data
 
-Next, let's retrieve the birth data we'll be analyzing. The `rads::get_data_birth()` function pulls data from SQL, filtered to our specifications.
+Next, let's retrieve the birth data we'll be analyzing. The `apde.data::birth()` function pulls data from SQL, filtered to our specifications.
 
 ::: callout-note
 ## What is `race3_hispanic` and why do I need it?
 
-Generally, CHI has two versions of composite race/ethnicity data. In `race4`, Hispanic is defined as a race and overwrites other OMB race categories. For example, if someone is Black and Hispanic, in `race4`, the person would be categorized as Hispanic. In contrast, `race3` defines Hispanic as an ethnicity. This means a person can be any OMB race (e.g., AIAN, Asian, Black, etc.) AND be of Hispanic ethnicity. A single analytic ready variable cannot contain both race and ethnicity data since it can only have one value. Therefore, every time you want to process `race3` estimates, you must download and use both `'race3'` and `'race3_hispanic'` columns from the analytic ready data that you get with the `rads::get_data_*()` functions. The `apde.chi.tools` functions will "know" how to appropriately use `race3` and `race3_hispanic`, but you must get both from the analytic ready data.
+Generally, CHI has two versions of composite race/ethnicity data. In `race4`, Hispanic is defined as a race and overwrites other OMB race categories. For example, if someone is Black and Hispanic, in `race4`, the person would be categorized as Hispanic. In contrast, `race3` defines Hispanic as an ethnicity. This means a person can be any OMB race (e.g., AIAN, Asian, Black, etc.) AND be of Hispanic ethnicity. A single analytic ready variable cannot contain both race and ethnicity data since it can only have one value. Therefore, every time you want to process `race3` estimates, you must download and use both `'race3'` and `'race3_hispanic'` columns from the analytic ready data that you get with the `apde.data` package. The `apde.chi.tools` functions will "know" how to appropriately use `race3` and `race3_hispanic`, but you must get both from the analytic ready data.
 :::
 
 ```{r get-data}
@@ -74,7 +73,7 @@ Generally, CHI has two versions of composite race/ethnicity data. In `race4`, Hi
 #| message: false
 
 # Get birth data for the past 10 years
-birthsdt <- get_data_birth(
+birthsdt <- apde.data::birth(
   cols = c("bigcities", "chi_geo_kc", "chi_geo_region", "chi_race_aic_asianother",
            "chi_race_aic_chinese", "chi_race_aic_filipino",
            "chi_race_aic_guam_or_chamorro", "chi_race_aic_hawaiian",
@@ -204,7 +203,6 @@ As its name implies, `chi_count_by_age()` creates a detailed breakdown of counts
 
 The `chi_count_by_age()`function shares many validation steps with`chi_calc()`, including checking inputs against`rads.data::misc_chi_byvars` to ensure they follow CHI encoding standards. After validation, the function uses `rads::calc()` to generate counts by single-year age values (default = 0-100). Like `chi_calc()`, `chi_count_by_age()` applies special handling for race and ethnicity variables, particularly the relationship between race3 and race3_hispanic, to ensure consistent representation in output data. A key feature of `chi_count_by_age()` is its handling of missing combinations. When no data exists for a specific demographic-age group combination (e.g., a particular racial group at age 97), the function creates a complete reference table using Cartesian products to ensure all possible combinations are represented with counts of zero rather than being omitted entirely. This comprehensive approach enables proper age standardization in downstream analyses.
 
-The demographic grouping standards in `rads.data::misc_chi_byvars` can be traced back to [SharePoint \> Community Health Indicators \> CHI-Vizes](https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/Forms/AllItems.aspx) \> CHI-Standards-TableauReady Output.xlsx. However, directly referencing a SharePoint file from within an R package creates a fragile dependency on external, user-specific infrastructure that can break portability, reproducibility, and automation.
 :::
 
 ```{r calculate}

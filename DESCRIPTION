@@ -19,6 +19,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports:
+    apde.data,
     data.table (>= 1.14.2),
     DBI (>= 1.1.0),
     dtsurvey (>= 0.0.2.0),
@@ -34,11 +35,10 @@ Imports:
     tidyr,
     yaml (>= 2.2.1)
 Remotes:
+    github::PHSKC-APDE/apde.data,
     github::PHSKC-APDE/rads, 
-    github::PHSKC-APDE/dtsurvey, 
-    github::PHSKC-APDE/apde.data
+    github::PHSKC-APDE/dtsurvey 
 Suggests: 
-    apde.data, 
     devtools, 
     httr,
     keyring,

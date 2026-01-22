@@ -135,6 +135,6 @@ chi_generate_instructions_pop <- function(mycount.data,
     pop.template[is.na(geo_type), geo_type := 'kc']
 
   # Return final results ----
-    # Remove duplicate rows to minimize calls to population() for efficiency
+    # Remove duplicate rows to minimize calls to apde.data::population() for efficiency
     return(unique(pop.template))
 }

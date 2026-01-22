@@ -83,7 +83,7 @@ plan(sequential)
 
 }
 \seealso{
-\code{\link[rads]{get_data_chars}}, which provides creates ph.data
+\code{\link[apde.data]{chars}}, which provides creates ph.data
 
 \code{\link[rads]{chars_injury_matrix_count}}, in the rads package, which is
 the engine used by this function

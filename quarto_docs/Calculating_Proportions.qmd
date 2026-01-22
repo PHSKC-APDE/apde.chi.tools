@@ -3,7 +3,6 @@ title: "Generating CHI Estimates of Proportions and Means"
 format: gfm
 prefer-html: false
 self-contained: true
-editor: visual
 ---
 
 # Introduction
@@ -65,7 +64,7 @@ Next, let's retrieve the birth data we'll be analyzing. The `apde.data::birth()`
 ::: callout-note
 ## What is `race3_hispanic` and why do I need it?
 
-Generally, CHI has two versions of composite race/ethnicity data. In `race4`, Hispanic is defined as a race and overwrites other OMB race categories. For example, if someone is Black and Hispanic, in `race4`, the person would be categorized as Hispanic. In contrast, `race3` defines Hispanic as an ethnicity. This means a person can be any OMB race (e.g., AIAN, Asian, Black, etc.) AND be of Hispanic ethnicity. A single analytic ready variable cannot contain both race and ethnicity data since it can only have one value. Therefore, every time you want to process `race3` estimates, you must download and use both `'race3'` and `'race3_hispanic'` columns from the analytic ready data that you get with the `apde.data` functions. The `apde.chi.tools` functions will "know" how to appropriately use `race3` and `race3_hispanic`, but you must get both from the analytic ready data.
+Generally, CHI has two versions of composite race/ethnicity data. In `race4`, Hispanic is defined as a race and overwrites other OMB race categories. For example, if someone is Black and Hispanic, in `race4`, the person would be categorized as Hispanic. In contrast, `race3` defines Hispanic as an ethnicity. This means a person can be any OMB race (e.g., AIAN, Asian, Black, etc.) AND be of Hispanic ethnicity. A single analytic ready variable cannot contain both race and ethnicity data since it can only have one value. Therefore, every time you want to process `race3` estimates, you must download and use both `'race3'` and `'race3_hispanic'` columns from the analytic ready data that you get with the `apde.data` package The `apde.chi.tools` functions will "know" how to appropriately use `race3` and `race3_hispanic`, but you must get both from the analytic ready data.
 :::
 
 ```{r get-data}
@@ -73,7 +72,7 @@ Generally, CHI has two versions of composite race/ethnicity data. In `race4`, Hi
 #| message: false
 
 # Get birth data for the past 10 years
-birthsdt <- birth(
+birthsdt <- apde.data::birth(
   cols = c("bigcities", "chi_geo_kc", "chi_geo_region", "chi_race_aic_asianother",
            "chi_race_aic_chinese", "chi_race_aic_filipino",
            "chi_race_aic_guam_or_chamorro", "chi_race_aic_hawaiian",
@@ -199,7 +198,8 @@ Now we're ready to perform our calculations using `chi_calc()`. `chi_calc()` use
 
 The `chi_calc()` function relies on several custom data sources and functions for validation and data processing. Key among these is `rads.data::misc_chi_byvars`, which serves as the reference standard for validating CHI variable encodings in your `ph.data`. After input validation, `rads::calc()` generates statistical estimates for each set of instructions. The estimates are then passed to `apde.chi.tools::chi_suppress_results()` to handle primary and secondary suppression of small numbers. The function also references a standard set of column names provided by `chi_get_cols()`, which itself references [chi_qa.yaml](https://github.com/PHSKC-APDE/apde.chi.tools/blob/main/inst/ref/chi_qa.yaml).
 
-Fundamentally, all of the standards can be traced back to [SharePoint \> Community Health Indicators \> CHI-Vizes](https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/Forms/AllItems.aspx) \> CHI-Standards-TableauReady Output.xlsx. However, directly referencing a SharePoint file from within an R package creates a fragile dependency on external, user-specific infrastructure that can break portability, reproducibility, and automation.
+Fundamentally, all of the standards can be traced back to [SharePoint \> Community Health Indicators](https://kc1.sharepoint.com/teams/DPH-CHI/)  \> CHI-Vizes \> CHI-Standards-TableauReady Output.xlsx. However, directly referencing a SharePoint file from within an R package creates a fragile dependency on external, user-specific infrastructure that can break portability, reproducibility, and automation.
+
 :::
 
 ```{r calculate}

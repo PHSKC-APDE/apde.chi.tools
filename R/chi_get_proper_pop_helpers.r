@@ -139,7 +139,7 @@
     template_row <- pop.template[current_query$representative_row_index]
 
     # Show progress
-    message(paste0("Process ID ", Sys.getpid(), ": population() call ",
+    message(paste0("Process ID ", Sys.getpid(), ": apde.data::population() call ",
                query_id, " (covers ", sum(pop.template$batched_id == query_id),
                " original queries: ", current_query$query_key, ")"))
 
@@ -149,7 +149,7 @@
       setdiff(c(template_row$group_by1, template_row$group_by2), c(NA))
     ))
 
-    # Call population() with the batched year range
+    # Call apde.data::population() with the batched year range
     if (is_chars && template_row$geo_type == 'kc') {
       # For CHARS data, use ZIP aggregation method for King County
       # When grouping by race with race_type='race', we need to make two calls:
