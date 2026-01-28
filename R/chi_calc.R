@@ -234,55 +234,42 @@ chi_calc <- function(ph.data = NULL,
           temptab <- current_row$tab
 
           # use calc()----
-          if(rate == FALSE){ # standard proportion analysis
-            if(temptab == '_wastate'){
+            if (temptab == '_wastate') {
               data_4_calc <- ph.data[chi_year >= tempstart & chi_year <= tempend]
-              if (was_imputationList) {data_4_calc <- apde.data::make_brfss_imputations(data_4_calc)}
-              tempest <- rads::calc(ph.data = data_4_calc,
-                              what = current_row$indicator_key,
-                              by = tempbv,
-                              ci = ci,
-                              metrics = c('mean', 'numerator', 'denominator', 'rse'))
             } else {
               data_4_calc <- ph.data[chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County']
-              if (was_imputationList) {data_4_calc <- apde.data::make_brfss_imputations(data_4_calc)}
-              tempest <- rads::calc(ph.data = data_4_calc,
-                              what = current_row$indicator_key,
-                              by = tempbv,
-                              ci = ci,
-                              metrics = c('mean', 'numerator', 'denominator', 'rse'))
             }
-          }
-          if(rate == TRUE){
-            if(temptab == '_wastate'){
-              data_4_calc <- ph.data[chi_year >= tempstart & chi_year <= tempend]
-              if (was_imputationList) {data_4_calc <- apde.data::make_brfss_imputations(data_4_calc)}
-              tempest <- rads::calc(ph.data = data_4_calc,
-                              what = current_row$indicator_key,
-                              by = tempbv,
-                              ci = ci,
-                              metrics = c('rate', 'numerator', 'denominator', 'rse'),
-                              per = rate_per)
-            } else {
-              data_4_calc <- ph.data[chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County']
-              if (was_imputationList) {data_4_calc <- apde.data::make_brfss_imputations(data_4_calc)}
-              tempest <- rads::calc(ph.data = data_4_calc,
-                              what = current_row$indicator_key,
-                              by = tempbv,
-                              ci = ci,
-                              metrics = c('rate', 'numerator', 'denominator', 'rse'),
-                              per = rate_per)
+
+            if (was_imputationList) {data_4_calc <- apde.data::make_brfss_imputations(data_4_calc)}
+
+            if (rate) {
+              tempest <- rads::calc(
+                ph.data = data_4_calc,
+                what = current_row$indicator_key,
+                by = tempbv,
+                ci = ci,
+                metrics = c('rate', 'numerator', 'denominator', 'rse'),
+                per = rate_per,
+                time_var = 'chi_year',
+                fancy_time = TRUE
+              )
+              data.table::setnames(tempest, gsub("^rate", "mean", names(tempest)))
+            } else { # for standard proportion analysis
+              tempest <- rads::calc(
+                ph.data = data_4_calc,
+                what = current_row$indicator_key,
+                by = tempbv,
+                ci = ci,
+                metrics = c('mean', 'numerator', 'denominator', 'rse'),
+                time_var = 'chi_year',
+                fancy_time = TRUE
+              )
             }
-            data.table::setnames(tempest, gsub("^rate", "mean", names(tempest)))
-          }
 
           # add on CHI standard columns that are from ph.instructions (in order of standard results output)----
           tempest[, indicator_key := current_row$indicator_key]
           tempest[, tab := current_row$tab]
-          tempest[current_row$end != current_row$start,
-                  year := paste0(current_row$start, "-", current_row$end)]
-          tempest[current_row$end == current_row$start,
-                  year := current_row$end]
+          setnames(tempest, 'chi_year', 'year')
           tempest[, cat1 := current_row$cat1]
           data.table::setnames(tempest, current_row$cat1_varname, 'cat1_group')
           tempest[, cat1_varname := current_row$cat1_varname]
