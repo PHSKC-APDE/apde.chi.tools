@@ -19,7 +19,13 @@ chi_calc(
 )
 }
 \arguments{
-\item{ph.data}{data.frame or data.table. Input data containing analytic read data.}
+\item{ph.data}{data.frame, data.table, dtsurvey, or imputationList.
+  Input data containing analytic-ready data.
+
+  If \code{ph.data} is provided as an \code{imputationList}, it is assumed to
+  be BRFSS data. The imputation list is internally converted to a
+  \code{data.table} for validation and preprocessing, and converted back to
+  an imputation list immediately before calls to \code{rads::calc()}.}
 
 \item{ph.instructions}{data.frame or data.table. Calculation instructions for processing.}
 
@@ -42,7 +48,7 @@ chi_calc(
 \item{non_chi_byvars}{character vector. Variable names to exclude from CHI byvar encoding validation. Default: \code{NULL}.}
 }
 \value{
-Returns a data.table containing CHI estimates
+Returns a data.table containing CHI estimates, regardless of input type
 }
 \description{
 Generates CHI estimates from input data according to provided instructions.

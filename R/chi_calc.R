@@ -4,7 +4,13 @@
 #' Generates CHI estimates from input data according to provided instructions.
 #' Handles both proportions and means, with options for suppression of small numbers.
 #'
-#' @param ph.data data.frame or data.table. Input data containing analytic read data.
+#' @param ph.data data.frame, data.table, dtsurvey, or imputationList.
+#'   Input data containing analytic-ready data.
+#'
+#'   If \code{ph.data} is provided as an \code{imputationList}, it is assumed to
+#'   be BRFSS data. The imputation list is internally converted to a
+#'   \code{data.table} for validation and preprocessing, and converted back to
+#'   an imputation list immediately before calls to \code{rads::calc()}.
 #' @param ph.instructions data.frame or data.table. Calculation instructions for processing.
 #' @param ci numeric. Confidence level between 0 and 1. Default: \code{0.90}.
 #' @param rate logical. If TRUE calculates rates, if FALSE calculates proportions. Default: \code{FALSE}.
@@ -55,7 +61,7 @@
 #'   \item{\code{run_date}} date of this analysis
 #' }
 #'
-#' @return Returns a data.table containing CHI estimates
+#' @return Returns a data.table containing CHI estimates, regardless of input type
 #'
 #' @seealso
 #' \code{\link{chi_generate_tro_shell}} for creating calculation instructions
@@ -85,7 +91,9 @@ chi_calc <- function(ph.data = NULL,
                      non_chi_byvars = NULL){
   # Input validation ----
     if (is.null(ph.data)) stop("\n\U1F6D1 ph.data must be provided")
-    if (!is.data.frame(ph.data)) stop("\n\U1F6D1 ph.data must be a data.frame or data.table")
+    was_imputationList <- inherits(ph.data, "imputationList")
+    if (was_imputationList) {ph.data <- apde.data::make_brfss_table(ph.data)}
+    if (!is.data.frame(ph.data)) stop("\n\U1F6D1 ph.data must be a data.frame, data.table, or imputationList")
     if (nrow(ph.data) == 0) stop("\n\U1F6D1 ph.data is empty")
     if (!is.data.table(ph.data)) setDT(ph.data)
 
@@ -226,47 +234,42 @@ chi_calc <- function(ph.data = NULL,
           temptab <- current_row$tab
 
           # use calc()----
-          if(rate == FALSE){ # standard proportion analysis
-            if(temptab == '_wastate'){
-              tempest <- rads::calc(ph.data = ph.data[chi_year >= tempstart & chi_year <= tempend],
-                              what = current_row$indicator_key,
-                              by = tempbv,
-                              ci = ci,
-                              metrics = c('mean', 'numerator', 'denominator', 'rse'))
+            if (temptab == '_wastate') {
+              data_4_calc <- ph.data[chi_year >= tempstart & chi_year <= tempend]
             } else {
-              tempest <- rads::calc(ph.data = ph.data[chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County'],
-                              what = current_row$indicator_key,
-                              by = tempbv,
-                              ci = ci,
-                              metrics = c('mean', 'numerator', 'denominator', 'rse'))
+              data_4_calc <- ph.data[chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County']
             }
-          }
-          if(rate == TRUE){
-            if(temptab == '_wastate'){
-              tempest <- rads::calc(ph.data = ph.data[chi_year >= tempstart & chi_year <= tempend],
-                              what = current_row$indicator_key,
-                              by = tempbv,
-                              ci = ci,
-                              metrics = c('rate', 'numerator', 'denominator', 'rse'),
-                              per = rate_per)
-            } else {
-              tempest <- rads::calc(ph.data = ph.data[chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County'],
-                              what = current_row$indicator_key,
-                              by = tempbv,
-                              ci = ci,
-                              metrics = c('rate', 'numerator', 'denominator', 'rse'),
-                              per = rate_per)
+
+            if (was_imputationList) {data_4_calc <- apde.data::make_brfss_imputations(data_4_calc)}
+
+            if (rate) {
+              tempest <- rads::calc(
+                ph.data = data_4_calc,
+                what = current_row$indicator_key,
+                by = tempbv,
+                ci = ci,
+                metrics = c('rate', 'numerator', 'denominator', 'rse'),
+                per = rate_per,
+                time_var = 'chi_year',
+                fancy_time = TRUE
+              )
+              data.table::setnames(tempest, gsub("^rate", "mean", names(tempest)))
+            } else { # for standard proportion analysis
+              tempest <- rads::calc(
+                ph.data = data_4_calc,
+                what = current_row$indicator_key,
+                by = tempbv,
+                ci = ci,
+                metrics = c('mean', 'numerator', 'denominator', 'rse'),
+                time_var = 'chi_year',
+                fancy_time = TRUE
+              )
             }
-            data.table::setnames(tempest, gsub("^rate", "mean", names(tempest)))
-          }
 
           # add on CHI standard columns that are from ph.instructions (in order of standard results output)----
           tempest[, indicator_key := current_row$indicator_key]
           tempest[, tab := current_row$tab]
-          tempest[current_row$end != current_row$start,
-                  year := paste0(current_row$start, "-", current_row$end)]
-          tempest[current_row$end == current_row$start,
-                  year := current_row$end]
+          setnames(tempest, 'chi_year', 'year')
           tempest[, cat1 := current_row$cat1]
           data.table::setnames(tempest, current_row$cat1_varname, 'cat1_group')
           tempest[, cat1_varname := current_row$cat1_varname]
