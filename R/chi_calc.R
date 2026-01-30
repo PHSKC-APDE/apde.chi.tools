@@ -233,36 +233,55 @@ chi_calc <- function(ph.data = NULL,
           temptab <- current_row$tab
 
           # use calc()----
-            if (temptab == '_wastate') {
-              data_4_calc <- ph.data[chi_year >= tempstart & chi_year <= tempend]
-            } else {
-              data_4_calc <- ph.data[chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County']
+            data_4_calc <- ph.data
+            data_4_calc[, `:=`(tempstart = tempstart, tempend = tempend)] # add these cols so can subset with where statement
+            if (was_imputationList) {
+              data_4_calc <- apde.data::make_brfss_imputations(data_4_calc)
             }
 
-            if (was_imputationList) {data_4_calc <- apde.data::make_brfss_imputations(data_4_calc)}
-
             if (rate) {
-              tempest <- rads::calc(
-                ph.data = data_4_calc,
-                what = current_row$indicator_key,
-                by = tempbv,
-                ci = ci,
-                metrics = c('rate', 'numerator', 'denominator', 'rse'),
-                per = rate_per,
-                time_var = 'chi_year',
-                fancy_time = TRUE
-              )
+              if (temptab == '_wastate') {
+                tempest <- rads::calc(ph.data = data_4_calc,
+                                      what = current_row$indicator_key,
+                                      where = chi_year >= tempstart & chi_year <= tempend,
+                                      by = tempbv,
+                                      ci = ci,
+                                      metrics = c('rate', 'numerator', 'denominator', 'rse'),
+                                      per = rate_per,
+                                      time_var = 'chi_year',
+                                      fancy_time = TRUE)
+              } else {
+                tempest <- rads::calc(ph.data = data_4_calc,
+                                      what = current_row$indicator_key,
+                                      where = chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County',
+                                      by = tempbv,
+                                      ci = ci,
+                                      metrics = c('rate', 'numerator', 'denominator', 'rse'),
+                                      per = rate_per,
+                                      time_var = 'chi_year',
+                                      fancy_time = TRUE)
+                }
               data.table::setnames(tempest, gsub("^rate", "mean", names(tempest)))
             } else { # for standard proportion analysis
-              tempest <- rads::calc(
-                ph.data = data_4_calc,
-                what = current_row$indicator_key,
-                by = tempbv,
-                ci = ci,
-                metrics = c('mean', 'numerator', 'denominator', 'rse'),
-                time_var = 'chi_year',
-                fancy_time = TRUE
-              )
+              if (temptab == '_wastate') {
+                tempest <- rads::calc(ph.data = data_4_calc,
+                                      what = current_row$indicator_key,
+                                      where = chi_year >= tempstart & chi_year <= tempend,
+                                      by = tempbv,
+                                      ci = ci,
+                                      metrics = c('mean', 'numerator', 'denominator', 'rse'),
+                                      time_var = 'chi_year',
+                                      fancy_time = TRUE)
+              } else {
+                tempest <- rads::calc(ph.data = data_4_calc,
+                                      what = current_row$indicator_key,
+                                      where = chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County',
+                                      by = tempbv,
+                                      ci = ci,
+                                      metrics = c('mean', 'numerator', 'denominator', 'rse'),
+                                      time_var = 'chi_year',
+                                      fancy_time = TRUE)
+              }
             }
 
           # add on CHI standard columns that are from ph.instructions (in order of standard results output)----
