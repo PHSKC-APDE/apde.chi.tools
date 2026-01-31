@@ -108,6 +108,7 @@ utils::globalVariables(c(
   "trends.y",
   "upper_bound",
   "valid_years",
+  "valid_year",
   "varname",
   "vebrose",
   "wastate",

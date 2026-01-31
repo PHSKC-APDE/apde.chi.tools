@@ -231,10 +231,14 @@ chi_calc <- function(ph.data = NULL,
           tempend <- current_row$end
           tempstart <- current_row$start
           temptab <- current_row$tab
+          temp_indicator_key <- current_row$indicator_key
 
           # use calc()----
             data_4_calc <- ph.data
-            data_4_calc[, `:=`(tempstart = tempstart, tempend = tempend)] # add these cols so can subset with where statement
+            valid_years <- data_4_calc[!is.na(get(temp_indicator_key)), unique(chi_year)] # necessary because some surveys (like BRFSS) skip years
+            valid_years <- valid_years[valid_years >= tempstart & valid_years <= tempend]
+            data_4_calc[, valid_year := chi_year %in% valid_years] # identify rows to filter in WHERE statement to properly account for survey design
+
             if (was_imputationList) {
               data_4_calc <- apde.data::make_brfss_imputations(data_4_calc)
             }
@@ -242,8 +246,8 @@ chi_calc <- function(ph.data = NULL,
             if (rate) {
               if (temptab == '_wastate') {
                 tempest <- rads::calc(ph.data = data_4_calc,
-                                      what = current_row$indicator_key,
-                                      where = chi_year >= tempstart & chi_year <= tempend,
+                                      what = temp_indicator_key,
+                                      where = valid_year,
                                       by = tempbv,
                                       ci = ci,
                                       metrics = c('rate', 'numerator', 'denominator', 'rse'),
@@ -252,8 +256,8 @@ chi_calc <- function(ph.data = NULL,
                                       fancy_time = TRUE)
               } else {
                 tempest <- rads::calc(ph.data = data_4_calc,
-                                      what = current_row$indicator_key,
-                                      where = chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County',
+                                      what = temp_indicator_key,
+                                      where = valid_year & chi_geo_kc == 'King County',
                                       by = tempbv,
                                       ci = ci,
                                       metrics = c('rate', 'numerator', 'denominator', 'rse'),
@@ -265,8 +269,8 @@ chi_calc <- function(ph.data = NULL,
             } else { # for standard proportion analysis
               if (temptab == '_wastate') {
                 tempest <- rads::calc(ph.data = data_4_calc,
-                                      what = current_row$indicator_key,
-                                      where = chi_year >= tempstart & chi_year <= tempend,
+                                      what = temp_indicator_key,
+                                      where = valid_year,
                                       by = tempbv,
                                       ci = ci,
                                       metrics = c('mean', 'numerator', 'denominator', 'rse'),
@@ -274,8 +278,8 @@ chi_calc <- function(ph.data = NULL,
                                       fancy_time = TRUE)
               } else {
                 tempest <- rads::calc(ph.data = data_4_calc,
-                                      what = current_row$indicator_key,
-                                      where = chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County',
+                                      what = temp_indicator_key,
+                                      where = valid_year & chi_geo_kc == 'King County',
                                       by = tempbv,
                                       ci = ci,
                                       metrics = c('mean', 'numerator', 'denominator', 'rse'),
