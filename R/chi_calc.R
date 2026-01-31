@@ -374,7 +374,7 @@ chi_calc <- function(ph.data = NULL,
       }
 
     # drop if cat1_group | cat2_group had `keepme == "No"` in the reference table ----
-      dropme <- unique(stdbyvars[keepme == 'No', .(varname, group)])
+      dropme <- unique(stdbyvars[keepme == 'No', list(varname, group)])
 
       # Anti-join for cat1
       tempCHIest <- tempCHIest[!dropme, on = list(cat1_varname = varname, cat1_group = group)]
