@@ -357,17 +357,21 @@ chi_calc <- function(ph.data = NULL,
       # bounds that don't exceed the logical limits while maintaining the specified confidence level
 
       # Calculate z-value based on the provided confidence interval
-      z_value <- qnorm(1-0.5*(1-ci))
+      z_value <- qnorm(1-0.5*(1-ci)) # compute once and use below
+      z_squared <- z_value^2 # computer once and use below
+      idx <- tempCHIest$result %in% c(0, 1) & tempCHIest$denominator > 10 # again, computer once and use below
 
-      # Lower bound using Wilson Score method
-      tempCHIest[result %in% c(0, 1) & denominator > 10,
-                 lower_bound := (2 * numerator + z_value^2 - z_value * sqrt(z_value^2 + 4 * numerator * (1 - numerator/denominator))) /
-                   (2 * (denominator + z_value^2))]
-
-      # Upper bound using Wilson Score method
-      tempCHIest[result %in% c(0, 1) & denominator > 10,
-                 upper_bound := (2 * numerator + z_value^2 + z_value * sqrt(z_value^2 + 4 * numerator * (1 - numerator/denominator))) /
-                   (2 * (denominator + z_value^2))]
+      if(any(idx)) {
+        tempCHIest[idx, c("lower_bound", "upper_bound") := {
+          adjusted_n <- denominator + z_squared
+          wilson_center <- 2 * numerator + z_squared
+          margin_of_error <- z_value * sqrt(z_squared + 4 * numerator * (1 - numerator / denominator))
+          list(
+            (wilson_center - margin_of_error) / (2 * adjusted_n),
+            (wilson_center + margin_of_error) / (2 * adjusted_n)
+          )
+        }]
+      }
 
     # drop if cat1_group | cat2_group had `keepme == "No"` in the reference table ----
     dropme <- unique(stdbyvars[keepme == 'No'][, reference := NULL])
