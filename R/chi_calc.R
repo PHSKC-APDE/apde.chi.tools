@@ -374,22 +374,13 @@ chi_calc <- function(ph.data = NULL,
       }
 
     # drop if cat1_group | cat2_group had `keepme == "No"` in the reference table ----
-    dropme <- unique(stdbyvars[keepme == 'No'][, reference := NULL])
-    tempCHIest <- merge(tempCHIest,
-                        dropme,
-                        by.x = c('cat1_varname', 'cat1_group'),
-                        by.y = c('varname', 'group'),
-                        all.x = T,
-                        all.y = F)
-    tempCHIest <- tempCHIest[is.na(keepme)][, keepme := NULL]
+      dropme <- unique(stdbyvars[keepme == 'No', .(varname, group)])
 
-    tempCHIest <- merge(tempCHIest,
-                        dropme,
-                        by.x = c('cat2_varname', 'cat2_group'),
-                        by.y = c('varname', 'group'),
-                        all.x = T,
-                        all.y = F)
-    tempCHIest <- tempCHIest[is.na(keepme)][, keepme := NULL]
+      # Anti-join for cat1
+      tempCHIest <- tempCHIest[!dropme, on = list(cat1_varname = varname, cat1_group = group)]
+
+      # Anti-join for cat2
+      tempCHIest <- tempCHIest[!dropme, on = list(cat2_varname = varname, cat2_group = group)]
 
     # change all NaN to a normal NA or SQL will vomit ----
     for(col in names(tempCHIest)) set(tempCHIest, i=which(is.nan(tempCHIest[[col]])), j=col, value=NA)
