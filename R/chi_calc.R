@@ -234,7 +234,12 @@ chi_calc <- function(ph.data = NULL,
           temp_indicator_key <- current_row$indicator_key
 
           # use calc()----
-            data_4_calc <- ph.data
+            # Keep only necessary columns for speed / efficiency
+              needed_cols <- unique(na.omit(c(temp_indicator_key, tempbv, "chi_year", "chi_geo_kc")))
+              if(inherits(ph.data, 'dtsurvey')){needed_cols <- c(needed_cols, "_id")}
+              if (was_imputationList) {needed_cols <- c(needed_cols, paste0("hra20_id_", 1:10))}
+              data_4_calc <- ph.data[, .SD, .SDcols = intersect(names(ph.data), needed_cols)]
+
             # Create a logical index as a filter for the WHERE parameter in calc
               valid_years <- data_4_calc[!is.na(get(temp_indicator_key)), unique(chi_year)] # necessary because some surveys (like BRFSS) skip years
               valid_years <- valid_years[valid_years >= tempstart & valid_years <= tempend]
