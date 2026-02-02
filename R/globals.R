@@ -118,6 +118,7 @@ utils::globalVariables(c(
   "_kingcounty.x",
   "_kingcounty.y",
   "_wastate.x",
+  "where_idx",
   "_wastate.y",
   ".I"
 ))
