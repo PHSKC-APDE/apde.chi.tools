@@ -91,7 +91,7 @@ chi_calc <- function(ph.data = NULL,
   # Input validation ----
     if (is.null(ph.data)) stop("\n\U1F6D1 ph.data must be provided")
     was_imputationList <- inherits(ph.data, "imputationList")
-    if (was_imputationList) {ph.data <- apde.data::make_brfss_table(ph.data)}
+    if (was_imputationList) {ph.data <- suppressMessages(apde.data::make_brfss_table(ph.data))}
     if (!is.data.frame(ph.data)) stop("\n\U1F6D1 ph.data must be a data.frame, data.table, or imputationList")
     if (nrow(ph.data) == 0) stop("\n\U1F6D1 ph.data is empty")
     if (!is.data.table(ph.data)) setDT(ph.data)
@@ -250,7 +250,7 @@ chi_calc <- function(ph.data = NULL,
               }
 
             if (was_imputationList) {
-              data_4_calc <- apde.data::make_brfss_imputations(data_4_calc)
+              data_4_calc <- suppressMessages(apde.data::make_brfss_imputations(data_4_calc))
             }
 
             if (rate) {
