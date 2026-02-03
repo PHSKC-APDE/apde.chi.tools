@@ -20,12 +20,12 @@ chi_calc(
 }
 \arguments{
 \item{ph.data}{data.frame, data.table, dtsurvey, or imputationList.
-  Input data containing analytic-ready data.
+Input data containing analytic-ready data.
 
-  If \code{ph.data} is provided as an \code{imputationList}, it is assumed to
-  be BRFSS data. The imputation list is internally converted to a
-  \code{data.table} for validation and preprocessing, and converted back to
-  an imputation list immediately before calls to \code{rads::calc()}.}
+If \code{ph.data} is provided as an \code{imputationList}, it is assumed to
+be BRFSS data. The imputation list is internally converted to a
+\code{data.table} for validation and preprocessing, and converted back to
+an imputation list immediately before calls to \code{rads::calc()}.}
 
 \item{ph.instructions}{data.frame or data.table. Calculation instructions for processing.}
 
@@ -56,8 +56,7 @@ Handles both proportions and means, with options for suppression of small number
 }
 \details{
 Uses \code{ph.instructions} created by \code{\link{chi_generate_tro_shell}} to
-generate standard CHI output following \href{https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady\%20Output.xlsx}{
-SharePoint > Community Health Indicators > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}.
+generate standard CHI output following \href{https://kc1.sharepoint.com/teams/DPH-CHI/CHIVizes/CHI-Standards-TableauReady Output.xlsx}{SharePoint > DPH-CHI > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}.
 The exception is the inclusion of the column \code{'level'}, which contains
 the specific factor level for categorical variables. For example, if
 \code{indicator_key == 'fetal_pres'}, the function would return separate rows
@@ -68,29 +67,29 @@ interest.
 
 For convenience, details of the returned column are presented here:
 \itemize{
-  \item{\code{data_source}} Data source (e.g., acs, brfss, etc.)
-  \item{\code{indicator_key}} Unique indicator key
-  \item{\code{level}} factor level of the indicator_key (e.g., Breech vs Cephalic vs other for fetal_pres in birth data)
-  \item{\code{tab}} Type of analysis (e.g., demgroups, _kingcounty, etc.)
-  \item{\code{year}} Year(s) of data
-  \item{\code{cat1}} Describes data field (e.g., Gender, Ethnicity, etc.)
-  \item{\code{cat1_group}} Demographics variables for cat1 (e.g., Female, Hispanic, etc.)
-  \item{\code{cat1_varname}} cat1 variable name in the analytic data sets
-  \item{\code{cat2}} Describes data field (e.g., Gender, Ethnicity, etc.)
-  \item{\code{cat2_group}} Demographics variables for cat2 (e.g., Female, Hispanic, etc.)
-  \item{\code{cat2_varname}} cat2 variable name in the analytic data sets
-  \item{\code{result}} Calculated proportion/percent or rate
-  \item{\code{lower_bound}} Lower bound of confidence interval
-  \item{\code{upper_bound}} Upper bound of confidence interval
-  \item{\code{se}} Standard error
-  \item{\code{rse}} Relative standard error
-  \item{\code{caution}} '!' when RSE>=30% | N == 0
-  \item{\code{suppression}} '^' when suppressed
-  \item{\code{numerator}} For line-level data, count of events; for surveys, people who responded yes or no for binary variable
-  \item{\code{denominator}} For line-level data, population; for surveys, sample size
-  \item{\code{chi}} '1' indicates that rows is used for CHI
-  \item{\code{source_date}} date analytic ready data was created
-  \item{\code{run_date}} date of this analysis
+\item{\code{data_source}} Data source (e.g., acs, brfss, etc.)
+\item{\code{indicator_key}} Unique indicator key
+\item{\code{level}} factor level of the indicator_key (e.g., Breech vs Cephalic vs other for fetal_pres in birth data)
+\item{\code{tab}} Type of analysis (e.g., demgroups, _kingcounty, etc.)
+\item{\code{year}} Year(s) of data
+\item{\code{cat1}} Describes data field (e.g., Gender, Ethnicity, etc.)
+\item{\code{cat1_group}} Demographics variables for cat1 (e.g., Female, Hispanic, etc.)
+\item{\code{cat1_varname}} cat1 variable name in the analytic data sets
+\item{\code{cat2}} Describes data field (e.g., Gender, Ethnicity, etc.)
+\item{\code{cat2_group}} Demographics variables for cat2 (e.g., Female, Hispanic, etc.)
+\item{\code{cat2_varname}} cat2 variable name in the analytic data sets
+\item{\code{result}} Calculated proportion/percent or rate
+\item{\code{lower_bound}} Lower bound of confidence interval
+\item{\code{upper_bound}} Upper bound of confidence interval
+\item{\code{se}} Standard error
+\item{\code{rse}} Relative standard error
+\item{\code{caution}} '!' when RSE>=30\% | N == 0
+\item{\code{suppression}} '^' when suppressed
+\item{\code{numerator}} For line-level data, count of events; for surveys, people who responded yes or no for binary variable
+\item{\code{denominator}} For line-level data, population; for surveys, sample size
+\item{\code{chi}} '1' indicates that rows is used for CHI
+\item{\code{source_date}} date analytic ready data was created
+\item{\code{run_date}} date of this analysis
 }
 }
 \seealso{

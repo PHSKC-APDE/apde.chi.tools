@@ -7,13 +7,13 @@
 #' unreliable data are noted by \code{caution = '!'}.
 #'
 #' @details
-#' Data source specific suppression ranges can be found in
-#' \href{https://kc1.sharepoint.com/teams/DPH-APDEData/Shared\%20Documents/General/data_presentation_algorithm/APDE_SmallNumberUpdate.xlsx}{APDE_SmallNumberUpdate.xlsx}
+#' Data source specific suppression ranges can be found
+#' [here](https://kc1.sharepoint.com/teams/DPH-APDEData/Shared%20Documents/General/data_presentation_algorithm/APDE_SmallNumberUpdate.xlsx)
 #'
 #'
 #' Please review the
-#' \href{https://kc1.sharepoint.com/teams/DPH-APDEData/Shared\%20Documents/General/data_presentation_algorithm/APDEDataPresentationAlgorithm_2020_Approved.pptx}{APDE}
-#' and \href{https://www.doh.wa.gov/Portals/1/Documents/1500/SmallNumbers.pdf}{DOH}
+#' [APDE](https://kc1.sharepoint.com/teams/DPH-APDEData/Shared%20Documents/General/data_presentation_algorithm/APDEDataPresentationAlgorithm_2020_Approved.pptx)
+#' and [DOH](https://www.doh.wa.gov/Portals/1/Documents/1500/SmallNumbers.pdf)
 #' suppression guidelines for details on the logic used in this function.
 #'
 #' This function expects data that has already been formatted for CHI. However,

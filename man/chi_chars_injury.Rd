@@ -32,19 +32,19 @@ Default is \code{def = 'narrow'}.}
 Returns a data.table containing the summarized CHARS injury hospitalization
 data for the specified indicator_key, stratified by the requested demographic
 variables:
- \itemize{
-   \item \code{indicator_key}: Injury type identifier
-   \item \code{year}: Year range of data (e.g., "2019-2021", "2023", etc.)
-   \item \code{chi_age}: Age value (0-100)
-   \item \code{hospitalizations}: Number of injury hospitalizations for that
-   indicator_key x demographic x age group
-   \item \code{tab}: Visualization tab type (e.g., "_kingcounty", "demgroups",
-   etc.)
-   \item \code{cat1}, \code{cat1_varname}, \code{cat1_group}: Primary
-   stratification variable details
-   \item \code{cat2}, \code{cat2_varname}, \code{cat2_group}: Secondary
-   stratification variable details (if applicable)
- }
+\itemize{
+\item \code{indicator_key}: Injury type identifier
+\item \code{year}: Year range of data (e.g., "2019-2021", "2023", etc.)
+\item \code{chi_age}: Age value (0-100)
+\item \code{hospitalizations}: Number of injury hospitalizations for that
+indicator_key x demographic x age group
+\item \code{tab}: Visualization tab type (e.g., "_kingcounty", "demgroups",
+etc.)
+\item \code{cat1}, \code{cat1_varname}, \code{cat1_group}: Primary
+stratification variable details
+\item \code{cat2}, \code{cat2_varname}, \code{cat2_group}: Secondary
+stratification variable details (if applicable)
+}
 }
 \description{
 Generate hospitalization age-specific counts from Comprehensive Hospital

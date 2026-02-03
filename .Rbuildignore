@@ -3,3 +3,4 @@
 ^ronNotes\.qmd$
 ^LICENSE\.md$
 ^quarto_docs$
+^data-raw$

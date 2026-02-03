@@ -11,8 +11,7 @@
 #' (for progress and successful checks).
 #'
 #' The CHI Tableau Ready Output (TRO) standards can be reviewed here:
-#' \href{https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady\%20Output.xlsx}{
-#' SharePoint > Community Health Indicators > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}
+#' [SharePoint > DPH-CHI > CHI_vizes > CHI-Standards-TableauReady Output.xlsx](<https://kc1.sharepoint.com/teams/DPH-CHI/CHIVizes/CHI-Standards-TableauReady Output.xlsx>).
 #'
 #' @param CHIestimates Name of a data.table or data.frame containing the prepared data to be pushed to SQL
 #' @param CHImetadata Name of a data.table or data.frame containing the metadata to be pushed to SQL

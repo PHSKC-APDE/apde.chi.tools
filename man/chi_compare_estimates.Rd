@@ -28,10 +28,10 @@ result_type columns for classifying comparison results}
 Returns a data.table ordered by absolute differences, containing:
 
 \itemize{
-  \item Difference metrics (absolute_diff, relative_diff)
-  \item All matching identifiers and categories
-  \item Original values and metadata from both datasets
-  \item Diagnostic information (bounds, numerators, denominators, standard errors)
+\item Difference metrics (absolute_diff, relative_diff)
+\item All matching identifiers and categories
+\item Original values and metadata from both datasets
+\item Diagnostic information (bounds, numerators, denominators, standard errors)
 }
 }
 \description{
@@ -42,10 +42,10 @@ integration for result type classification.
 \details{
 The function performs the following operations:
 \enumerate{
-  \item Merges datasets using CHI-specific identifiers (indicator_key, tab, cat1, cat2, etc.)
-  \item Calculates absolute differences (percentage points for non-rates, raw for rates)
-  \item Calculates relative differences as percentages
-  \item Identifies notable differences needing further exploration using standard CHI criteria
+\item Merges datasets using CHI-specific identifiers (indicator_key, tab, cat1, cat2, etc.)
+\item Calculates absolute differences (percentage points for non-rates, raw for rates)
+\item Calculates relative differences as percentages
+\item Identifies notable differences needing further exploration using standard CHI criteria
 }
 }
 \examples{
