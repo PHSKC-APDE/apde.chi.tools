@@ -31,8 +31,7 @@ diagnostic information through warnings (for deviations from standards) and mess
 (for progress and successful checks).
 
 The CHI Tableau Ready Output (TRO) standards can be reviewed here:
-\href{https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady\%20Output.xlsx}{
-SharePoint > Community Health Indicators > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}
+\href{https://kc1.sharepoint.com/teams/DPH-CHI/CHIVizes/CHI-Standards-TableauReady Output.xlsx}{SharePoint > DPH-CHI > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}.
 }
 \examples{
 \dontrun{

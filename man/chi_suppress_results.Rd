@@ -43,7 +43,7 @@ have \code{secondary_ids = c('hra20_name', 'cat1_varname')} rather than
 indicating which rows to include in secondary suppression analysis. Use this parameter
 to exclude categories that are not mutually exclusive (e.g., overlapping demographic
 groups). The expression should use column names from the dataset and evaluate to TRUE
-for rows to include. For example: `secondary_exclude = cat1_varname != "race3"` would
+for rows to include. For example: \code{secondary_exclude = cat1_varname != "race3"} would
 exclude all rows where cat1_varname equals "race3" from secondary suppression.}
 
 \item{flag_only}{Logical (\code{T}, \code{TRUE}, \code{F}, or \code{FALSE})
@@ -69,9 +69,8 @@ low reliability. Suppressed data are noted by \code{suppression = '^'} and
 unreliable data are noted by \code{caution = '!'}.
 }
 \details{
-Data source specific suppression ranges can be found in
-\href{https://kc1.sharepoint.com/teams/DPH-APDEData/Shared\%20Documents/General/data_presentation_algorithm/APDE_SmallNumberUpdate.xlsx}{APDE_SmallNumberUpdate.xlsx}
-
+Data source specific suppression ranges can be found
+\href{https://kc1.sharepoint.com/teams/DPH-APDEData/Shared\%20Documents/General/data_presentation_algorithm/APDE_SmallNumberUpdate.xlsx}{here}
 
 Please review the
 \href{https://kc1.sharepoint.com/teams/DPH-APDEData/Shared\%20Documents/General/data_presentation_algorithm/APDEDataPresentationAlgorithm_2020_Approved.pptx}{APDE}

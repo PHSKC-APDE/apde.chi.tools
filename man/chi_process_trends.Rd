@@ -23,14 +23,14 @@ chi_process_trends(
 \value{
 Returns a data table of trend calculation instructions with columns:
 \itemize{
-  \item \code{indicator_key} Unique identifier for each indicator
-  \item \code{tab} Always \code{'trends'}
-  \item \code{cat1} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
-  \item \code{cat1_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
-  \item \code{cat2} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
-  \item \code{cat2_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
-  \item \code{start} Starting year of the time period to be analyzed
-  \item \code{end} Ending year of the time period to be analyzed
+\item \code{indicator_key} Unique identifier for each indicator
+\item \code{tab} Always \code{'trends'}
+\item \code{cat1} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
+\item \code{cat1_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
+\item \code{cat2} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
+\item \code{cat2_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
+\item \code{start} Starting year of the time period to be analyzed
+\item \code{end} Ending year of the time period to be analyzed
 }
 }
 \description{

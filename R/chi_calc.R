@@ -24,8 +24,7 @@
 #'
 #' @details
 #' Uses \code{ph.instructions} created by \code{\link{chi_generate_tro_shell}} to
-#' generate standard CHI output following \href{https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady\%20Output.xlsx}{
-#' SharePoint > Community Health Indicators > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}.
+#' generate standard CHI output following [SharePoint > DPH-CHI > CHI_vizes > CHI-Standards-TableauReady Output.xlsx](<https://kc1.sharepoint.com/teams/DPH-CHI/CHIVizes/CHI-Standards-TableauReady Output.xlsx>).
 #' The exception is the inclusion of the column \code{'level'}, which contains
 #' the specific factor level for categorical variables. For example, if
 #' \code{indicator_key == 'fetal_pres'}, the function would return separate rows
