@@ -206,8 +206,7 @@ chi_get_proper_pop <- function(pop.template = NULL,
         # Extract and save just the data needed for this template row
 
         qs2::qs_save(population_subsets[row_index == i], # faster alternative to saveRDS
-                  file = file.path(temp_dir, paste0("row_", i, ".qs2")),
-                  preset = "fast")
+                  file = file.path(temp_dir, paste0("row_", i, ".qs2")))
 
         if(i %% 5 == 0) {message('Saved ', i, ' of ', max(pop.template$row_index), ' population tables')}
       }
