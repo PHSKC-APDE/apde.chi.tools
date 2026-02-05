@@ -88,6 +88,12 @@ chi_calc <- function(ph.data = NULL,
                      source_name = NULL,
                      source_date = NULL,
                      non_chi_byvars = NULL){
+  old_opts <- options(
+    datatable.verbose = FALSE,
+    datatable.print.verbose = FALSE,
+    datatable.showProgress = FALSE )
+  on.exit(options(old_opts), add = TRUE)
+
   # Input validation ----
     if (is.null(ph.data)) stop("\n\U1F6D1 ph.data must be provided")
     was_imputationList <- inherits(ph.data, "imputationList")
@@ -216,6 +222,7 @@ chi_calc <- function(ph.data = NULL,
       tempCHIest <- rbindlist(future_lapply(
         X = as.list(seq(1, nrow(ph.instructions), 1)),
         FUN = function(X){
+          tryCatch({
           p(sprintf("Processing row %d of %d", X, nrow(ph.instructions)))
 
           # get the current row
@@ -300,10 +307,14 @@ chi_calc <- function(ph.data = NULL,
           tempest[, numerator := as.numeric(numerator)]
 
           return(tempest)
+
+          }, error = function(e) {
+            message("\U0001F622\U0001f47f\U0001F92C\U2620\ufe0f  Error while running ph.instructions row ", X, ": ", conditionMessage(e))
+            return(NULL)  # or return a placeholder
+          })
         }
       ), use.names = TRUE)
   })
-
 
   # Tidy results ----
     # When we have no events, but a valid denominator ----
