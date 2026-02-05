@@ -28,7 +28,7 @@ Imports:
     glue (>= 1.6.1),
     odbc (>= 1.2.2),
     progressr,
-    qs,
+    qs2,
     rads (>= 1.5.3), 
     rads.data,
     stats,

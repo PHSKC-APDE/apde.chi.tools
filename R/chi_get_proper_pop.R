@@ -66,7 +66,7 @@
 #' for this function
 #'
 #' @importFrom data.table alloc.col copy rbindlist set setkey uniqueN `:=`
-#' @importFrom qs qread qsave
+#' @importFrom qs2 qs_read qs_save
 #' @importFrom future plan
 #' @importFrom future.apply future_lapply
 #' @importFrom tools toTitleCase
@@ -205,8 +205,8 @@ chi_get_proper_pop <- function(pop.template = NULL,
       for(i in unique(pop.template$row_index)) {
         # Extract and save just the data needed for this template row
 
-        qs::qsave(population_subsets[row_index == i], # faster alternative to saveRDS
-                  file = file.path(temp_dir, paste0("row_", i, ".qs")),
+        qs2::qs_save(population_subsets[row_index == i], # faster alternative to saveRDS
+                  file = file.path(temp_dir, paste0("row_", i, ".qs2")),
                   preset = "fast")
 
         if(i %% 5 == 0) {message('Saved ', i, ' of ', max(pop.template$row_index), ' population tables')}
@@ -230,7 +230,7 @@ chi_get_proper_pop <- function(pop.template = NULL,
               p(paste0("Post-processing row ", row_index, " of ", nrow(pop.template)))
 
               # Load only the data needed for this specific row (faster than readRDS)
-              filtered_population <- qs::qread(file.path(temp_dir, paste0("row_", row_index, ".qs")))
+              filtered_population <- qs2::qs_read(file.path(temp_dir, paste0("row_", row_index, ".qs2")))
 
               # Process the data using the template row
               result <- process_template_row(
