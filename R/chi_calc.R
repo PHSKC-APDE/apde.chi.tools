@@ -91,7 +91,7 @@ chi_calc <- function(ph.data = NULL,
   old_opts <- options(
     datatable.verbose = FALSE,
     datatable.print.verbose = FALSE,
-    datatable.showProgress = FALSE )
+    datatable.showProgress = FALSE)
   on.exit(options(old_opts), add = TRUE)
 
   # Input validation ----
@@ -222,6 +222,10 @@ chi_calc <- function(ph.data = NULL,
       tempCHIest <- rbindlist(future_lapply(
         X = as.list(seq(1, nrow(ph.instructions), 1)),
         FUN = function(X){
+          # set option for lonely PSU
+          old_opts <- options(survey.lonely.psu="adjust")
+          on.exit(options(old_opts), add = TRUE)
+
           tryCatch({
           p(sprintf("Processing row %d of %d", X, nrow(ph.instructions)))
 
@@ -241,14 +245,16 @@ chi_calc <- function(ph.data = NULL,
           temp_indicator_key <- current_row$indicator_key
 
           # use calc()----
-            # Keep only necessary columns for speed / efficiency
-              needed_cols <- unique(na.omit(c(temp_indicator_key, tempbv, "chi_year", "chi_geo_kc")))
-              if(inherits(ph.data, 'dtsurvey')){needed_cols <- c(needed_cols, "_id")}
-              if (was_imputationList) {needed_cols <- c(needed_cols, paste0("hra20_id_", 1:10))}
-              data_4_calc <- ph.data[, .SD, .SDcols = intersect(names(ph.data), needed_cols)]
+            data_4_calc <- ph.data
+
+            # Keep only necessary columns for speed / efficiency (only for non-survey data)
+              if(!inherits(ph.data, 'dtsurvey') && !inherits(ph.data, 'imputationList')) {
+                needed_cols <- unique(na.omit(c(temp_indicator_key, tempbv, "chi_year", "chi_geo_kc", "wastate")))
+                data_4_calc <- ph.data[, .SD, .SDcols = intersect(names(ph.data), needed_cols)]
+              }
 
             # Create a logical index as a filter for the WHERE parameter in calc
-              valid_years <- data_4_calc[!is.na(get(temp_indicator_key)), unique(chi_year)] # necessary because some surveys (like BRFSS) skip years
+              valid_years <- data_4_calc[!is.na(get(temp_indicator_key)), unique(chi_year)] # b/c some surveys skip years
               valid_years <- valid_years[valid_years >= tempstart & valid_years <= tempend]
               if (temptab == '_wastate') {
                 data_4_calc[, where_idx := chi_year %in% valid_years]
