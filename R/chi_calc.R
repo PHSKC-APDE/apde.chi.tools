@@ -315,7 +315,8 @@ chi_calc <- function(ph.data = NULL,
           return(tempest)
 
           }, error = function(e) {
-            message("\U0001F622\U0001f47f\U0001F92C\U2620\ufe0f  Error while running ph.instructions row ", X, ": ", conditionMessage(e))
+            message("\U0001F622\U0001f47f\U0001F92C\U2620\ufe0f",
+                    "Error while running ph.instructions row ", X, ": ", conditionMessage(e))
             return(NULL)  # or return a placeholder
           })
         }
