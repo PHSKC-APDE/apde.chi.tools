@@ -214,23 +214,18 @@ chi_calc <- function(ph.data = NULL,
       }
 
   # Use rads::calc to generate estimates for each row of ph.instructions ----
-  message("\U023F3 Be patient! The function is generating estimates for each row of ph.instructions.")
+    # Define the function to use rads::calc() within future_lapply ----
+      process_instruction_row <- function(X) {
+        # set option for lonely PSU
+        old_opts <- options(survey.lonely.psu="adjust")
+        on.exit(options(old_opts), add = TRUE)
 
-  progressr::handlers(handler_progress())
-  with_progress({
-    p <- progressor(nrow(ph.instructions))
-      tempCHIest <- rbindlist(future_lapply(
-        X = as.list(seq(1, nrow(ph.instructions), 1)),
-        FUN = function(X){
-          # set option for lonely PSU
-          old_opts <- options(survey.lonely.psu="adjust")
-          on.exit(options(old_opts), add = TRUE)
-
-          tryCatch({
+        tryCatch({
           p(sprintf("Processing row %d of %d", X, nrow(ph.instructions)))
 
           # get the current row
           current_row <- ph.instructions[X, ]
+          current_row_text <- paste(unlist(current_row, use.names = FALSE), collapse = "|")
 
           # create constants for calc()----
           tempbv1 <- setdiff(current_row$cat1_varname, c())
@@ -245,48 +240,48 @@ chi_calc <- function(ph.data = NULL,
           temp_indicator_key <- current_row$indicator_key
 
           # use calc()----
-            data_4_calc <- ph.data
+          data_4_calc <- ph.data
 
-            # Keep only necessary columns for speed / efficiency (only for non-survey data)
-              if(!inherits(ph.data, 'dtsurvey') && !inherits(ph.data, 'imputationList')) {
-                needed_cols <- unique(na.omit(c(temp_indicator_key, tempbv, "chi_year", "chi_geo_kc", "wastate")))
-                data_4_calc <- ph.data[, .SD, .SDcols = intersect(names(ph.data), needed_cols)]
-              }
+          # Keep only necessary columns for speed / efficiency (only for non-survey data)
+          if(!inherits(ph.data, 'dtsurvey') && !inherits(ph.data, 'imputationList')) {
+            needed_cols <- unique(na.omit(c(temp_indicator_key, tempbv, "chi_year", "chi_geo_kc", "wastate")))
+            data_4_calc <- ph.data[, .SD, .SDcols = intersect(names(ph.data), needed_cols)]
+          }
 
-            # Create a logical index as a filter for the WHERE parameter in calc
-              valid_years <- data_4_calc[!is.na(get(temp_indicator_key)), unique(chi_year)] # b/c some surveys skip years
-              valid_years <- valid_years[valid_years >= tempstart & valid_years <= tempend]
-              if (temptab == '_wastate') {
-                data_4_calc[, where_idx := chi_year %in% valid_years]
-              } else {
-                data_4_calc[, where_idx := chi_year %in% valid_years & chi_geo_kc == 'King County']
-              }
+          # Create a logical index as a filter for the WHERE parameter in calc
+          valid_years <- data_4_calc[!is.na(get(temp_indicator_key)), unique(chi_year)] # b/c some surveys skip years
+          valid_years <- valid_years[valid_years >= tempstart & valid_years <= tempend]
+          if (temptab == '_wastate') {
+            data_4_calc[, where_idx := chi_year %in% valid_years]
+          } else {
+            data_4_calc[, where_idx := chi_year %in% valid_years & chi_geo_kc == 'King County']
+          }
 
-            if (was_imputationList) {
-              data_4_calc <- suppressMessages(apde.data::make_brfss_imputations(data_4_calc))
-            }
+          if (was_imputationList) {
+            data_4_calc <- suppressMessages(apde.data::make_brfss_imputations(data_4_calc))
+          }
 
-            if (rate) {
-                tempest <- rads::calc(ph.data = data_4_calc,
-                                      what = temp_indicator_key,
-                                      where = where_idx & 1==1,
-                                      by = tempbv,
-                                      ci = ci,
-                                      metrics = c('rate', 'numerator', 'denominator', 'rse'),
-                                      per = rate_per,
-                                      time_var = 'chi_year',
-                                      fancy_time = TRUE)
-              data.table::setnames(tempest, gsub("^rate", "mean", names(tempest)))
-            } else { # for standard proportion analysis
-                tempest <- rads::calc(ph.data = data_4_calc,
-                                      what = temp_indicator_key,
-                                      where = where_idx & 1==1,
-                                      by = tempbv,
-                                      ci = ci,
-                                      metrics = c('mean', 'numerator', 'denominator', 'rse'),
-                                      time_var = 'chi_year',
-                                      fancy_time = TRUE)
-            }
+          if (rate) {
+            tempest <- rads::calc(ph.data = data_4_calc,
+                                  what = temp_indicator_key,
+                                  where = where_idx & 1==1,
+                                  by = tempbv,
+                                  ci = ci,
+                                  metrics = c('rate', 'numerator', 'denominator', 'rse'),
+                                  per = rate_per,
+                                  time_var = 'chi_year',
+                                  fancy_time = TRUE)
+            data.table::setnames(tempest, gsub("^rate", "mean", names(tempest)))
+          } else { # for standard proportion analysis
+            tempest <- rads::calc(ph.data = data_4_calc,
+                                  what = temp_indicator_key,
+                                  where = where_idx & 1==1,
+                                  by = tempbv,
+                                  ci = ci,
+                                  metrics = c('mean', 'numerator', 'denominator', 'rse'),
+                                  time_var = 'chi_year',
+                                  fancy_time = TRUE)
+          }
 
           # add on CHI standard columns that are from ph.instructions (in order of standard results output)----
           tempest[, indicator_key := current_row$indicator_key]
@@ -301,8 +296,8 @@ chi_calc <- function(ph.data = NULL,
               tempest[, cat2_group := NA] }
           tempest[, cat2_varname := current_row$cat2_varname]
           data.table::setnames(tempest,
-                   c("mean", "mean_lower", "mean_upper", "mean_se"),
-                   c("result", "lower_bound", "upper_bound", "se"))
+                               c("mean", "mean_lower", "mean_upper", "mean_se"),
+                               c("result", "lower_bound", "upper_bound", "se"))
 
           if(!"level" %in% names(tempest)) {
             tempest[, level := NA_character_]
@@ -314,14 +309,28 @@ chi_calc <- function(ph.data = NULL,
 
           return(tempest)
 
-          }, error = function(e) {
-            message("\U0001F622\U0001f47f\U0001F92C\U2620\ufe0f",
-                    "Error while running ph.instructions row ", X, ": ", conditionMessage(e))
-            return(NULL)  # or return a placeholder
-          })
-        }
-      ), use.names = TRUE)
-  })
+        }, error = function(e) {
+          message("\U0001F622\U0001f47f\U0001F92C\U2620\ufe0f ",
+                  "Error processing ph.instructions[", X, ", ]: ",
+                  current_row_text, ":\n", conditionMessage(e))
+          return(NULL)  # or return a placeholder
+        })
+      }
+
+    # Batch process with future_lapply ----
+      message("\U023F3 Be patient! The function is generating estimates for each row of ph.instructions.")
+      progressr::handlers(handler_progress())
+      with_progress({
+        p <- progressor(nrow(ph.instructions))
+
+        tempCHIest <- rbindlist(
+          future_lapply(
+            X = seq_len(nrow(ph.instructions)),
+            FUN = process_instruction_row
+          ),
+          use.names = TRUE
+        )
+      })
 
   # Tidy results ----
     # When we have no events, but a valid denominator ----
