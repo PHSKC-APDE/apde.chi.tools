@@ -435,7 +435,7 @@ chi_calc <- function(ph.data = NULL,
     tempCHIest[, data_source := source_name]
 
     if(small_num_suppress == TRUE){
-      tempCHIest <- apde.chi.tools::chi_suppress_results(ph.data = tempCHIest,
+      tempCHIest <- chi_suppress_results(ph.data = tempCHIest,
                                                          suppress_range = c(suppress_low, suppress_high),
                                                          secondary = T,
                                                          secondary_exclude = cat1_varname != 'race3')
