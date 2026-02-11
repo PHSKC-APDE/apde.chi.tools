@@ -503,7 +503,7 @@ chi_qa_tro <- function(CHIestimates,
   }
 
   # Get reference data
-  ref_combos <- rads.data::misc_chi_byvars[, list(cat, varname, group)]
+  ref_combos <- chi_standard_varnames[, list(cat, varname, group)]
 
   # Address race3/race4 insanity again
   # The CHI viz needs / wants race3 & race4 cat values to be 'Race/ethnicity' but only on trends tab, otherwise it is 'Race'
@@ -529,7 +529,7 @@ chi_qa_tro <- function(CHIestimates,
         warning("\U00026A0 \U0001F4E3 WARNING: Found non-standard cat1 combinations:\n",
                 paste0(" - cat1='", cat1_invalid$cat, "', cat1_group='",
                        cat1_invalid$group, "'", collapse = "\n"),
-                "\nThese combinations are not found in rads.data::misc_chi_byvars reference table.")
+                "\nThese combinations are not found in chi_standard_varnames reference table.")
       }
     }
 
@@ -547,7 +547,7 @@ chi_qa_tro <- function(CHIestimates,
         warning("\U00026A0 \U0001F4E3 WARNING: Found non-standard cat2 combinations:\n",
                 paste0(" - cat2='", cat2_invalid$cat, "', cat2_group='",
                        cat2_invalid$group, "'", collapse = "\n"),
-                "\nThese combinations are not found in rads.data::misc_chi_byvars reference table.")
+                "\nThese combinations are not found in chi_standard_varnames reference table.")
       }
     }
   } else {
@@ -568,7 +568,7 @@ chi_qa_tro <- function(CHIestimates,
                 paste0(" - cat1='", cat1_invalid$cat, "', cat1_varname='",
                        cat1_invalid$varname, "', cat1_group='", cat1_invalid$group, "'",
                        collapse = "\n"),
-                "\nThese combinations are not found in rads.data::misc_chi_byvars reference table.")
+                "\nThese combinations are not found in chi_standard_varnames reference table.")
       }
     }
 
@@ -588,7 +588,7 @@ chi_qa_tro <- function(CHIestimates,
                 paste0(" - cat2='", cat2_invalid$cat, "', cat2_varname='",
                        cat2_invalid$varname, "', cat2_group='", cat2_invalid$group, "'",
                        collapse = "\n"),
-                "\nThese combinations are not found in rads.data::misc_chi_byvars reference table.")
+                "\nThese combinations are not found in chi_standard_varnames reference table.")
       }
     }
   }

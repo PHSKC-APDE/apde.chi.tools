@@ -196,7 +196,7 @@ Now we're ready to perform our calculations using `chi_calc()`. `chi_calc()` use
 ::: callout-note
 ## What's going on under the hood?
 
-The `chi_calc()` function relies on several custom data sources and functions for validation and data processing. Key among these is `rads.data::misc_chi_byvars`, which serves as the reference standard for validating CHI variable encodings in your `ph.data`. After input validation, `rads::calc()` generates statistical estimates for each set of instructions. The estimates are then passed to `apde.chi.tools::chi_suppress_results()` to handle primary and secondary suppression of small numbers. The function also references a standard set of column names provided by `chi_get_cols()`, which itself references [chi_qa.yaml](https://github.com/PHSKC-APDE/apde.chi.tools/blob/main/inst/ref/chi_qa.yaml).
+The `chi_calc()` function relies on several custom data sources and functions for validation and data processing. Key among these is `apde.chi.tools::chi_standard_varnames`, which serves as the reference standard for validating CHI variable encodings in your `ph.data`. After input validation, `rads::calc()` generates statistical estimates for each set of instructions. The estimates are then passed to `apde.chi.tools::chi_suppress_results()` to handle primary and secondary suppression of small numbers. The function also references a standard set of column names provided by `chi_get_cols()`, which itself references [chi_qa.yaml](https://github.com/PHSKC-APDE/apde.chi.tools/blob/main/inst/ref/chi_qa.yaml).
 
 Fundamentally, all of the standards can be traced back to [SharePoint \> Community Health Indicators](https://kc1.sharepoint.com/teams/DPH-CHI/)  \> CHI-Vizes \> CHI-Standards-TableauReady Output.xlsx. However, directly referencing a SharePoint file from within an R package creates a fragile dependency on external, user-specific infrastructure that can break portability, reproducibility, and automation.
 
@@ -294,7 +294,7 @@ After calculation, we need to perform quality assurance checks to ensure our est
 
 -   Internal YAML configurations accessed via `chi_get_yaml()`
 -   Standard column names from `chi_get_cols()`
--   Category validation using `rads.data::misc_chi_byvars`
+-   Category validation using `apde.chi.tools::chi_standard_varnames`
 -   Field type / data class validation using `rads::tsql_validate_field_types()`
 
 It performs numerous checks including proper rounding based on result type, absence of missing critical data, and data integrity rules such as ensuring confidence intervals are properly bounded (lower_bound ≤ result ≤ upper_bound) and that proportions fall within \[0,1\].
