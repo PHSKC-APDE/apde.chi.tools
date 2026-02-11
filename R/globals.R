@@ -17,6 +17,7 @@ utils::globalVariables(c(
   "chi",
   "chi_age",
   "chi_geo_kc",
+  "chi_standard_varnames",
   "chi_year",
   "combo_idx",
   "comparison_with_kc_sig",

@@ -192,7 +192,9 @@ chi_calc <- function(ph.data = NULL,
       }
 
     # Only validate CHI variables
-      stdbyvars <- rads.data::misc_chi_byvars[varname %in% unique(na.omit(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)))]
+      unique_byvars <- unique(na.omit(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)))
+      unique_byvars <- gsub('race3_hispanic', 'race3', unique_byvars) # needed because of of annoyance of race3 defined by two distinct variables
+      stdbyvars <- chi_standard_varnames[varname %in% unique_byvars]
       stdbyvars <- stdbyvars[!varname %in% non_chi_byvars][, list(varname, group, keepme, reference = 1)]
       stdbyvars[group %in% c("Hispanic", 'Non-Hispanic') & varname == 'race3', varname := 'race3_hispanic'] # necessary because race3 & Hispanic must be two distinct variables in raw data
 
@@ -311,7 +313,7 @@ chi_calc <- function(ph.data = NULL,
 
         }, error = function(e) {
           message("\U0001F622\U0001f47f\U0001F92C\U2620\ufe0f ",
-                  "Error processing ph.instructions[", X, ", ]: ",
+                  "Error running ph.instructions[", X, ", ]: ",
                   current_row_text, ":\n", conditionMessage(e))
           return(NULL)  # or return a placeholder
         })
