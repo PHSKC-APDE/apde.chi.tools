@@ -180,7 +180,7 @@ chi_suppress_results  <- function(ph.data = NULL,
     myfilter <- eval(expr = e, envir = ph.data, enclos = parent.frame()) # evaluate
     stopifnot('`where` does not resolve to a logical' = is.logical(myfilter))
     if(nrow(ph.data[myfilter,]) < 1){
-      stop(paste0("\n\U1F6D1 Your 'secondary_exclude' argument filters out all rows of data. Please revise and submit again"))
+      warning("\u26A0\ufe0f `secondary_exclude` filtered out all rows. Secondary suppression will not be applied.")
     }
   }
 

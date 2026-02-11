@@ -201,7 +201,7 @@ As its name implies, `chi_count_by_age()` creates a detailed breakdown of counts
 ::: callout-note
 ## What's going on under the hood?
 
-The `chi_count_by_age()`function shares many validation steps with`chi_calc()`, including checking inputs against`rads.data::misc_chi_byvars` to ensure they follow CHI encoding standards. After validation, the function uses `rads::calc()` to generate counts by single-year age values (default = 0-100). Like `chi_calc()`, `chi_count_by_age()` applies special handling for race and ethnicity variables, particularly the relationship between race3 and race3_hispanic, to ensure consistent representation in output data. A key feature of `chi_count_by_age()` is its handling of missing combinations. When no data exists for a specific demographic-age group combination (e.g., a particular racial group at age 97), the function creates a complete reference table using Cartesian products to ensure all possible combinations are represented with counts of zero rather than being omitted entirely. This comprehensive approach enables proper age standardization in downstream analyses.
+The `chi_count_by_age()`function shares many validation steps with`chi_calc()`, including checking inputs against`apde.chi.tools::chi_standard_varnames` to ensure they follow CHI encoding standards. After validation, the function uses `rads::calc()` to generate counts by single-year age values (default = 0-100). Like `chi_calc()`, `chi_count_by_age()` applies special handling for race and ethnicity variables, particularly the relationship between race3 and race3_hispanic, to ensure consistent representation in output data. A key feature of `chi_count_by_age()` is its handling of missing combinations. When no data exists for a specific demographic-age group combination (e.g., a particular racial group at age 97), the function creates a complete reference table using Cartesian products to ensure all possible combinations are represented with counts of zero rather than being omitted entirely. This comprehensive approach enables proper age standardization in downstream analyses.
 
 :::
 
@@ -435,7 +435,7 @@ After calculation, we need to perform quality assurance checks to ensure our est
 
 -   Internal YAML configurations accessed via `chi_get_yaml()`
 -   Standard column names from `chi_get_cols()`
--   Category validation using `rads.data::misc_chi_byvars`
+-   Category validation using `apde.chi.tools::chi_standard_varnames`
 -   Field type / data class validation using `rads::tsql_validate_field_types()`
 
 It performs numerous checks including proper rounding based on result type, absence of missing critical data, and data integrity rules such as ensuring confidence intervals are properly bounded (lower_bound ≤ result ≤ upper_bound) and that proportions fall within \[0,1\].

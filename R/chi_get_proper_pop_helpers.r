@@ -278,10 +278,10 @@
 #' @noRd
   process_age_patterns <- function(age_var) {
     # Check if this age variable exists in misc_chi_byvars
-    chi_age_groups <- rads.data::misc_chi_byvars[cat == "Age" & varname == age_var]
+    chi_age_groups <- chi_standard_varnames[cat == "Age" & varname == age_var]
 
     if (nrow(chi_age_groups) == 0) {
-      stop(paste0("\n\U1F6D1 Age variable ", age_var, " not found in rads.data::misc_chi_byvars[cat == \"Age\"]"))
+      stop(paste0("\n\U1F6D1 Age variable ", age_var, " not found in chi_standard_varnames[cat == \"Age\"]"))
     }
 
     # Create a result table with age ranges
@@ -322,7 +322,7 @@
       else {
         stop(paste0("\n\U1F6D1 Age group ", g, " in age_var = ", age_var,
                     " does not follow the expected pattern (<#, #-#, or #+) and cannot be used",
-                    "\n Valid options are found in rads.data::misc_chi_byvars[cat == \"Age\"]"))
+                    "\n Valid options are found in chi_standard_varnames[cat == \"Age\"]"))
       }
     }
 

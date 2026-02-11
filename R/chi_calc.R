@@ -88,10 +88,16 @@ chi_calc <- function(ph.data = NULL,
                      source_name = NULL,
                      source_date = NULL,
                      non_chi_byvars = NULL){
+  old_opts <- options(
+    datatable.verbose = FALSE,
+    datatable.print.verbose = FALSE,
+    datatable.showProgress = FALSE)
+  on.exit(options(old_opts), add = TRUE)
+
   # Input validation ----
     if (is.null(ph.data)) stop("\n\U1F6D1 ph.data must be provided")
     was_imputationList <- inherits(ph.data, "imputationList")
-    if (was_imputationList) {ph.data <- apde.data::make_brfss_table(ph.data)}
+    if (was_imputationList) {ph.data <- suppressMessages(apde.data::make_brfss_table(ph.data))}
     if (!is.data.frame(ph.data)) stop("\n\U1F6D1 ph.data must be a data.frame, data.table, or imputationList")
     if (nrow(ph.data) == 0) stop("\n\U1F6D1 ph.data is empty")
     if (!is.data.table(ph.data)) setDT(ph.data)
@@ -186,7 +192,9 @@ chi_calc <- function(ph.data = NULL,
       }
 
     # Only validate CHI variables
-      stdbyvars <- rads.data::misc_chi_byvars[varname %in% unique(na.omit(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)))]
+      unique_byvars <- unique(na.omit(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)))
+      unique_byvars <- gsub('race3_hispanic', 'race3', unique_byvars) # needed because of of annoyance of race3 defined by two distinct variables
+      stdbyvars <- chi_standard_varnames[varname %in% unique_byvars]
       stdbyvars <- stdbyvars[!varname %in% non_chi_byvars][, list(varname, group, keepme, reference = 1)]
       stdbyvars[group %in% c("Hispanic", 'Non-Hispanic') & varname == 'race3', varname := 'race3_hispanic'] # necessary because race3 & Hispanic must be two distinct variables in raw data
 
@@ -208,18 +216,18 @@ chi_calc <- function(ph.data = NULL,
       }
 
   # Use rads::calc to generate estimates for each row of ph.instructions ----
-  message("\U023F3 Be patient! The function is generating estimates for each row of ph.instructions.")
+    # Define the function to use rads::calc() within future_lapply ----
+      process_instruction_row <- function(X) {
+        # set option for lonely PSU
+        old_opts <- options(survey.lonely.psu="adjust")
+        on.exit(options(old_opts), add = TRUE)
 
-  progressr::handlers(handler_progress())
-  with_progress({
-    p <- progressor(nrow(ph.instructions))
-      tempCHIest <- rbindlist(future_lapply(
-        X = as.list(seq(1, nrow(ph.instructions), 1)),
-        FUN = function(X){
+        tryCatch({
           p(sprintf("Processing row %d of %d", X, nrow(ph.instructions)))
 
           # get the current row
           current_row <- ph.instructions[X, ]
+          current_row_text <- paste(unlist(current_row, use.names = FALSE), collapse = "|")
 
           # create constants for calc()----
           tempbv1 <- setdiff(current_row$cat1_varname, c())
@@ -231,39 +239,51 @@ chi_calc <- function(ph.data = NULL,
           tempend <- current_row$end
           tempstart <- current_row$start
           temptab <- current_row$tab
+          temp_indicator_key <- current_row$indicator_key
 
           # use calc()----
-            if (temptab == '_wastate') {
-              data_4_calc <- ph.data[chi_year >= tempstart & chi_year <= tempend]
-            } else {
-              data_4_calc <- ph.data[chi_year >= tempstart & chi_year <= tempend & chi_geo_kc == 'King County']
-            }
+          data_4_calc <- ph.data
 
-            if (was_imputationList) {data_4_calc <- apde.data::make_brfss_imputations(data_4_calc)}
+          # Keep only necessary columns for speed / efficiency (only for non-survey data)
+          if(!inherits(ph.data, 'dtsurvey') && !inherits(ph.data, 'imputationList')) {
+            needed_cols <- unique(na.omit(c(temp_indicator_key, tempbv, "chi_year", "chi_geo_kc", "wastate")))
+            data_4_calc <- ph.data[, .SD, .SDcols = intersect(names(ph.data), needed_cols)]
+          }
 
-            if (rate) {
-              tempest <- rads::calc(
-                ph.data = data_4_calc,
-                what = current_row$indicator_key,
-                by = tempbv,
-                ci = ci,
-                metrics = c('rate', 'numerator', 'denominator', 'rse'),
-                per = rate_per,
-                time_var = 'chi_year',
-                fancy_time = TRUE
-              )
-              data.table::setnames(tempest, gsub("^rate", "mean", names(tempest)))
-            } else { # for standard proportion analysis
-              tempest <- rads::calc(
-                ph.data = data_4_calc,
-                what = current_row$indicator_key,
-                by = tempbv,
-                ci = ci,
-                metrics = c('mean', 'numerator', 'denominator', 'rse'),
-                time_var = 'chi_year',
-                fancy_time = TRUE
-              )
-            }
+          # Create a logical index as a filter for the WHERE parameter in calc
+          valid_years <- data_4_calc[!is.na(get(temp_indicator_key)), unique(chi_year)] # b/c some surveys skip years
+          valid_years <- valid_years[valid_years >= tempstart & valid_years <= tempend]
+          if (temptab == '_wastate') {
+            data_4_calc[, where_idx := chi_year %in% valid_years]
+          } else {
+            data_4_calc[, where_idx := chi_year %in% valid_years & chi_geo_kc == 'King County']
+          }
+
+          if (was_imputationList) {
+            data_4_calc <- suppressMessages(apde.data::make_brfss_imputations(data_4_calc))
+          }
+
+          if (rate) {
+            tempest <- rads::calc(ph.data = data_4_calc,
+                                  what = temp_indicator_key,
+                                  where = where_idx & 1==1,
+                                  by = tempbv,
+                                  ci = ci,
+                                  metrics = c('rate', 'numerator', 'denominator', 'rse'),
+                                  per = rate_per,
+                                  time_var = 'chi_year',
+                                  fancy_time = TRUE)
+            data.table::setnames(tempest, gsub("^rate", "mean", names(tempest)))
+          } else { # for standard proportion analysis
+            tempest <- rads::calc(ph.data = data_4_calc,
+                                  what = temp_indicator_key,
+                                  where = where_idx & 1==1,
+                                  by = tempbv,
+                                  ci = ci,
+                                  metrics = c('mean', 'numerator', 'denominator', 'rse'),
+                                  time_var = 'chi_year',
+                                  fancy_time = TRUE)
+          }
 
           # add on CHI standard columns that are from ph.instructions (in order of standard results output)----
           tempest[, indicator_key := current_row$indicator_key]
@@ -278,8 +298,8 @@ chi_calc <- function(ph.data = NULL,
               tempest[, cat2_group := NA] }
           tempest[, cat2_varname := current_row$cat2_varname]
           data.table::setnames(tempest,
-                   c("mean", "mean_lower", "mean_upper", "mean_se"),
-                   c("result", "lower_bound", "upper_bound", "se"))
+                               c("mean", "mean_lower", "mean_upper", "mean_se"),
+                               c("result", "lower_bound", "upper_bound", "se"))
 
           if(!"level" %in% names(tempest)) {
             tempest[, level := NA_character_]
@@ -290,10 +310,29 @@ chi_calc <- function(ph.data = NULL,
           tempest[, numerator := as.numeric(numerator)]
 
           return(tempest)
-        }
-      ), use.names = TRUE)
-  })
 
+        }, error = function(e) {
+          message("\U0001F622\U0001f47f\U0001F92C\U2620\ufe0f ",
+                  "Error running ph.instructions[", X, ", ]: ",
+                  current_row_text, ":\n", conditionMessage(e))
+          return(NULL)  # or return a placeholder
+        })
+      }
+
+    # Batch process with future_lapply ----
+      message("\U023F3 Be patient! The function is generating estimates for each row of ph.instructions.")
+      progressr::handlers(handler_progress())
+      with_progress({
+        p <- progressor(nrow(ph.instructions))
+
+        tempCHIest <- rbindlist(
+          future_lapply(
+            X = seq_len(nrow(ph.instructions)),
+            FUN = process_instruction_row
+          ),
+          use.names = TRUE
+        )
+      })
 
   # Tidy results ----
     # When we have no events, but a valid denominator ----
@@ -334,35 +373,30 @@ chi_calc <- function(ph.data = NULL,
       # bounds that don't exceed the logical limits while maintaining the specified confidence level
 
       # Calculate z-value based on the provided confidence interval
-      z_value <- qnorm(1-0.5*(1-ci))
+      z_value <- qnorm(1-0.5*(1-ci)) # compute once and use below
+      z_squared <- z_value^2 # computer once and use below
+      idx <- tempCHIest$result %in% c(0, 1) & tempCHIest$denominator > 10 # again, computer once and use below
 
-      # Lower bound using Wilson Score method
-      tempCHIest[result %in% c(0, 1) & denominator > 10,
-                 lower_bound := (2 * numerator + z_value^2 - z_value * sqrt(z_value^2 + 4 * numerator * (1 - numerator/denominator))) /
-                   (2 * (denominator + z_value^2))]
-
-      # Upper bound using Wilson Score method
-      tempCHIest[result %in% c(0, 1) & denominator > 10,
-                 upper_bound := (2 * numerator + z_value^2 + z_value * sqrt(z_value^2 + 4 * numerator * (1 - numerator/denominator))) /
-                   (2 * (denominator + z_value^2))]
+      if(any(idx)) {
+        tempCHIest[idx, c("lower_bound", "upper_bound") := {
+          adjusted_n <- denominator + z_squared
+          wilson_center <- 2 * numerator + z_squared
+          margin_of_error <- z_value * sqrt(z_squared + 4 * numerator * (1 - numerator / denominator))
+          list(
+            (wilson_center - margin_of_error) / (2 * adjusted_n),
+            (wilson_center + margin_of_error) / (2 * adjusted_n)
+          )
+        }]
+      }
 
     # drop if cat1_group | cat2_group had `keepme == "No"` in the reference table ----
-    dropme <- unique(stdbyvars[keepme == 'No'][, reference := NULL])
-    tempCHIest <- merge(tempCHIest,
-                        dropme,
-                        by.x = c('cat1_varname', 'cat1_group'),
-                        by.y = c('varname', 'group'),
-                        all.x = T,
-                        all.y = F)
-    tempCHIest <- tempCHIest[is.na(keepme)][, keepme := NULL]
+      dropme <- unique(stdbyvars[keepme == 'No', list(varname, group)])
 
-    tempCHIest <- merge(tempCHIest,
-                        dropme,
-                        by.x = c('cat2_varname', 'cat2_group'),
-                        by.y = c('varname', 'group'),
-                        all.x = T,
-                        all.y = F)
-    tempCHIest <- tempCHIest[is.na(keepme)][, keepme := NULL]
+      # Anti-join for cat1
+      tempCHIest <- tempCHIest[!dropme, on = list(cat1_varname = varname, cat1_group = group)]
+
+      # Anti-join for cat2
+      tempCHIest <- tempCHIest[!dropme, on = list(cat2_varname = varname, cat2_group = group)]
 
     # change all NaN to a normal NA or SQL will vomit ----
     for(col in names(tempCHIest)) set(tempCHIest, i=which(is.nan(tempCHIest[[col]])), j=col, value=NA)
@@ -403,7 +437,7 @@ chi_calc <- function(ph.data = NULL,
     tempCHIest[, data_source := source_name]
 
     if(small_num_suppress == TRUE){
-      tempCHIest <- apde.chi.tools::chi_suppress_results(ph.data = tempCHIest,
+      tempCHIest <- chi_suppress_results(ph.data = tempCHIest,
                                                          suppress_range = c(suppress_low, suppress_high),
                                                          secondary = T,
                                                          secondary_exclude = cat1_varname != 'race3')
