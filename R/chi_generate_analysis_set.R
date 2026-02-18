@@ -146,12 +146,6 @@ chi_generate_analysis_set <- function(data_source = NULL,
     }
 
   # Recodes for race3 & race4 ----
-    # Remove `Birthing Person's` prefix & set first character to uppercase
-      CHIestimates[grepl("race|ethnicity", cat1, ignore.case = TRUE),
-                   cat1 := sub("^Birthing person's (.)", "\\U\\1", cat1, perl = TRUE)]
-      CHIestimates[grepl("race|ethnicity", cat2, ignore.case = TRUE),
-                   cat2 := sub("^Birthing person's (.)", "\\U\\1", cat2, perl = TRUE)]
-
     # Necessary because they are wonky as heck due to how APDE decided to code/display them
       # Basically, need to split 'Race/ethnicity' for race 3 into separate rows for
       # 'Race' & 'Ethnicity' into separate rows, because have separate variables:
