@@ -342,7 +342,7 @@ myestimates[ ,cat2 := fifelse(
 
 An important validation step is comparing our new estimates with previous ones to identify 'notable differences'. The notable differences criteria were specified by Joie McCracken and are the same for each data source. They are used both for human QA and for sharing high-level summaries to accompany new releases of CHI estimates. If there is an issue, the table will have `notable == 1`, otherwise it will have `is.na(notable)`.
 
-Below is an example of how you would do this. Note that, in this case, the differences show are not real (they are synthetic) and are provided for purely illustrative purposes.
+Below is an example of how you would do this. Note that, in this case, the differences shown are not real (they are synthetic) and are provided for purely illustrative purposes.
 
 ```{r compare-just-code}
 #| eval: false 
