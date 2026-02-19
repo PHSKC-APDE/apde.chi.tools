@@ -17,6 +17,7 @@ utils::globalVariables(c(
   "chi",
   "chi_age",
   "chi_geo_kc",
+  "chi_standard_varnames",
   "chi_year",
   "combo_idx",
   "comparison_with_kc_sig",
@@ -108,6 +109,7 @@ utils::globalVariables(c(
   "trends.y",
   "upper_bound",
   "valid_years",
+  "valid_year",
   "varname",
   "vebrose",
   "wastate",
@@ -117,6 +119,7 @@ utils::globalVariables(c(
   "_kingcounty.x",
   "_kingcounty.y",
   "_wastate.x",
+  "where_idx",
   "_wastate.y",
   ".I"
 ))

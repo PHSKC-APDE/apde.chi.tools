@@ -249,7 +249,8 @@ setup_test_data <- function() {
             indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations, replace = T)),
             indicator2 = as.factor(sample(c(1,2,3,4, NA), observations, replace = T)),
             indicator3 = as.factor(sample(c("<20","21-40","41-60","61<"),  observations, replace = T)),
-            chi_year = year)
+            chi_year = year,
+            wastate = 'Washington State')
           if(exists("returnDT")) {
             returnDT <- rbind(returnDT, DTIteration)
           } else {
@@ -381,15 +382,15 @@ setup_test_data <- function() {
 
     test_analysis_set_twosets <- data.table(
       #this should work with the generic data set
-      cat1 = rep(c('Regions', 'Gender', 'Race/ethnicity'),2),
-      cat1_varname = rep(c('chi_geo_region', 'chi_sex', 'race4'),2),
-      `_kingcounty` = c('x'),
-      `_wastate` = NA_character_,
-      demgroups = c(rep(NA_character_,3),rep("x", 3)),
-      crosstabs = c(rep(NA_character_,3),rep("x", 3)),
-      trends = c(rep(NA_character_,3),rep("x", 3)),
-      set = c(rep(1,3), rep(2,3)),
-      set_indicator_keys = c(rep(c('indicator1, indicator2'),3), rep("indicator3",3))
+      cat1 = c(rep(c('Regions', 'Gender', 'Race/ethnicity'),2), 'Washington State'),
+      cat1_varname = c(rep(c('chi_geo_region', 'chi_sex', 'race4'),2), 'wastate'),
+      `_kingcounty` = c(rep('x', 6), NA_character_),
+      `_wastate` = c(rep(NA_character_, 6), 'x'),
+      demgroups = c(rep(NA_character_,3),rep("x", 3), NA_character_),
+      crosstabs = c(rep(NA_character_,3),rep("x", 3), NA_character_),
+      trends = c(rep(NA_character_,3),rep("x", 3), NA_character_),
+      set = c(rep(1,3), rep(2,3), 2),
+      set_indicator_keys = c(rep(c('indicator1, indicator2'),3), rep("indicator3",4))
     )
 
     # create twoset analysis set

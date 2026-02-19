@@ -11,8 +11,7 @@
 #' (for progress and successful checks).
 #'
 #' The CHI Tableau Ready Output (TRO) standards can be reviewed here:
-#' \href{https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady\%20Output.xlsx}{
-#' SharePoint > Community Health Indicators > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}
+#' [SharePoint > DPH-CHI > CHI_vizes > CHI-Standards-TableauReady Output.xlsx](<https://kc1.sharepoint.com/teams/DPH-CHI/CHIVizes/CHI-Standards-TableauReady Output.xlsx>).
 #'
 #' @param CHIestimates Name of a data.table or data.frame containing the prepared data to be pushed to SQL
 #' @param CHImetadata Name of a data.table or data.frame containing the metadata to be pushed to SQL
@@ -185,16 +184,23 @@ chi_qa_tro <- function(CHIestimates,
       }
     }
 
-  for(mycol in c("result", "lower_bound", "upper_bound", "se", "chi", "source_date", "run_date")){
+  # Check most columns for missingness
+  for(mycol in c("result", "lower_bound", "upper_bound", "chi", "source_date", "run_date")){
     if(nrow(CHIestimates[is.na(get(mycol)) & is.na(suppression)]) > 0){
       status <- 0
       warning(paste0("\U00026A0 Warning: '", mycol, "' is missing in at least one row of the CHI data."))
     }
   }
 
+  # Check se separately - allow NA when both numerator and denominator are 0 (undefined/no population stratum)
+  if(nrow(CHIestimates[is.na(se) & is.na(suppression) & !(numerator == 0 & denominator == 0)]) > 0){
+    status <- 0
+    warning("\U00026A0 Warning: 'se' is missing in at least one row of the CHI data where the estimate is defined.")
+  }
+
   if(nrow(CHIestimates[is.na(rse) & is.na(suppression) & numerator != 0]) > 0){
     status <- 0
-    warning("\U00026A0 Warning: 'rse' is missing in at least one row of the CHI data where numerator is not 0.")
+    warning("\U00026A0 Warning: 'rse' is missing in at least one row of the CHI data where the estimate is defined.")
   }
 
   for(mycol in names(unlist(chi_get_yaml()$metadata))){
@@ -497,7 +503,15 @@ chi_qa_tro <- function(CHIestimates,
   }
 
   # Get reference data
-  ref_combos <- rads.data::misc_chi_byvars[, list(cat, varname, group)]
+  ref_combos <- chi_standard_varnames[, list(cat, varname, group)]
+
+  # Address race3/race4 insanity again
+  # The CHI viz needs / wants race3 & race4 cat values to be 'Race/ethnicity' but only on trends tab, otherwise it is 'Race'
+  # For simplicity, the CHI reference data for cat/varname/group expect them to be 'Race'. So, need to recode
+  CHIestimates[cat1 == 'Race/ethnicity' & (cat1_varname == 'race4' | (cat1_varname == 'race3' & cat1_group != 'Hispanic')) , cat1 := 'Race']
+  CHIestimates[cat1 == 'Race/ethnicity' & (cat1_varname == 'race4' | (cat1_varname == 'race3' & cat1_group == 'Hispanic')) , cat1 := 'Ethnicity']
+  CHIestimates[cat2 == 'Race/ethnicity' & (cat2_varname == 'race4' | (cat2_varname == 'race3' & cat2_group != 'Hispanic')) , cat2 := 'Race']
+  CHIestimates[cat2 == 'Race/ethnicity' & (cat2_varname == 'race4' | (cat2_varname == 'race3' & cat2_group == 'Hispanic')) , cat2 := 'Ethnicity']
 
   # For ACS data, we only check cat and group combinations
   if(acs) {
@@ -515,7 +529,7 @@ chi_qa_tro <- function(CHIestimates,
         warning("\U00026A0 \U0001F4E3 WARNING: Found non-standard cat1 combinations:\n",
                 paste0(" - cat1='", cat1_invalid$cat, "', cat1_group='",
                        cat1_invalid$group, "'", collapse = "\n"),
-                "\nThese combinations are not found in rads.data::misc_chi_byvars reference table.")
+                "\nThese combinations are not found in chi_standard_varnames reference table.")
       }
     }
 
@@ -533,7 +547,7 @@ chi_qa_tro <- function(CHIestimates,
         warning("\U00026A0 \U0001F4E3 WARNING: Found non-standard cat2 combinations:\n",
                 paste0(" - cat2='", cat2_invalid$cat, "', cat2_group='",
                        cat2_invalid$group, "'", collapse = "\n"),
-                "\nThese combinations are not found in rads.data::misc_chi_byvars reference table.")
+                "\nThese combinations are not found in chi_standard_varnames reference table.")
       }
     }
   } else {
@@ -545,12 +559,6 @@ chi_qa_tro <- function(CHIestimates,
       group = cat1_group
     )])
 
-    # wonky tweaks because of annoying structure for Birthing Person's race/ethnicity
-    chi_cat1_combos[cat %in% c("Birthing person's race/ethnicity", "Birthing person's race"), cat := "[Birthing person's] Race"]
-    chi_cat1_combos[cat == "Birthing person's ethnicity", cat := "[Birthing person's] Ethnicity"]
-    chi_cat1_combos[cat == "[Birthing person's] Race" & varname == 'race3' & group == 'Hispanic', cat := "[Birthing person's] Ethnicity"]
-    chi_cat1_combos[, cat := gsub("Birthing person's eth", "[Birthing person's] Eth", cat)]
-
     cat1_invalid <- chi_cat1_combos[!ref_combos, on = list(cat, varname, group)]
 
     if(nrow(cat1_invalid) > 0) {
@@ -560,7 +568,7 @@ chi_qa_tro <- function(CHIestimates,
                 paste0(" - cat1='", cat1_invalid$cat, "', cat1_varname='",
                        cat1_invalid$varname, "', cat1_group='", cat1_invalid$group, "'",
                        collapse = "\n"),
-                "\nThese combinations are not found in rads.data::misc_chi_byvars reference table.")
+                "\nThese combinations are not found in chi_standard_varnames reference table.")
       }
     }
 
@@ -571,12 +579,6 @@ chi_qa_tro <- function(CHIestimates,
       group = cat2_group
     )])
 
-    # wonky tweaks because of annoying structure for Birthing Person's race/ethnicity
-    chi_cat2_combos[cat %in% c("Birthing person's race/ethnicity", "Birthing person's race"), cat := "[Birthing person's] Race"]
-    chi_cat2_combos[cat == "Birthing person's ethnicity", cat := "[Birthing person's] Ethnicity"]
-    chi_cat2_combos[cat == "[Birthing person's] Race" & varname == 'race3' & group == 'Hispanic', cat := "[Birthing person's] Ethnicity"]
-    chi_cat2_combos[, cat := gsub("Birthing person's eth", "[Birthing person's] Eth", cat)]
-
     cat2_invalid <- chi_cat2_combos[!ref_combos, on = list(cat, varname, group)]
 
     if(nrow(cat2_invalid) > 0) {
@@ -586,7 +588,7 @@ chi_qa_tro <- function(CHIestimates,
                 paste0(" - cat2='", cat2_invalid$cat, "', cat2_varname='",
                        cat2_invalid$varname, "', cat2_group='", cat2_invalid$group, "'",
                        collapse = "\n"),
-                "\nThese combinations are not found in rads.data::misc_chi_byvars reference table.")
+                "\nThese combinations are not found in chi_standard_varnames reference table.")
       }
     }
   }
@@ -675,10 +677,10 @@ chi_qa_tro <- function(CHIestimates,
   ## Print success statement!!!!!!!! ####
   if(verbose) {
     if(status == 1){
-      message("Your data has passed all CHI Tableau Ready formatting, style, and logic checks.")
+      message("\u2B50\U2714 Your data has passed all CHI Tableau Ready formatting, style, and logic checks.")
 
     } else {
-      warning("At least one check has failed. Please review messages, make corrections, and rerun this check.")
+      warning("\u26A0\ufe0f At least one check has failed. Please review messages, make corrections, and rerun this check.")
     }
   }
 

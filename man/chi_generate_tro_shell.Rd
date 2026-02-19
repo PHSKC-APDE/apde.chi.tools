@@ -32,14 +32,14 @@ then trends would be calculated for c('2023-2022', '2022-2021', '2021-2020',
 \value{
 Returns a data table of calculation instructions with columns:
 \itemize{
-  \item \code{indicator_key} Unique identifier for each indicator
-  \item \code{tab} Analysis type (_kingcounty, demgroups, trends, etc.)
-  \item \code{cat1} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
-  \item \code{cat1_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
-  \item \code{cat2} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
-  \item \code{cat2_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
-  \item \code{start} Starting year of the time period to be analyzed
-  \item \code{end} Ending year of the time period to be analyzed
+\item \code{indicator_key} Unique identifier for each indicator
+\item \code{tab} Analysis type (_kingcounty, demgroups, trends, etc.)
+\item \code{cat1} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
+\item \code{cat1_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
+\item \code{cat2} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
+\item \code{cat2_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
+\item \code{start} Starting year of the time period to be analyzed
+\item \code{end} Ending year of the time period to be analyzed
 }
 }
 \description{
@@ -50,26 +50,26 @@ instructions which can be used by \code{\link{chi_calc}}, \code{\link{chi_count_
 }
 \details{
 The expected format of \code{ph.analysis_set} is:
-  \itemize{
-    \item \code{cat1}: character. A standard value from the \code{'cat'} column
-    of \code{\link[rads.data]{misc_chi_byvars}}, e.g. \code{'Gender'}
-    \item \code{cat1_varname}: character. A standard value from the \code{'varname'}
-    column of \code{\link[rads.data]{misc_chi_byvars}}, e.g., \code{'chi_sex'}
-    \item \code{_kingcounty}: character \code{'x'}. Is the analysis for King County as a whole?
-    \item \code{_wastate}: character \code{'x'}. Is the analysis is for WA state as a whole?
-    \item \code{demgroups}: character \code{'x'}. Is the analysis for demgroups?
-    \item \code{crosstabs}: character \code{'x'}. Is the analysis for crosstabs?
-    \item \code{trends}: character \code{'x'}, Is the the analysis for trends?
-    \item \code{set}: Integer identifying groups of indicators with identical analysis patterns
-    \item \code{set_indicator_keys}: Comma-separated list of indicator keys sharing the pattern
-  }
+\itemize{
+\item \code{cat1}: character. A standard value from the \code{'cat'} column
+of \code{\link[rads.data]{misc_chi_byvars}}, e.g. \code{'Gender'}
+\item \code{cat1_varname}: character. A standard value from the \code{'varname'}
+column of \code{\link[rads.data]{misc_chi_byvars}}, e.g., \code{'chi_sex'}
+\item \code{_kingcounty}: character \code{'x'}. Is the analysis for King County as a whole?
+\item \code{_wastate}: character \code{'x'}. Is the analysis is for WA state as a whole?
+\item \code{demgroups}: character \code{'x'}. Is the analysis for demgroups?
+\item \code{crosstabs}: character \code{'x'}. Is the analysis for crosstabs?
+\item \code{trends}: character \code{'x'}, Is the the analysis for trends?
+\item \code{set}: Integer identifying groups of indicators with identical analysis patterns
+\item \code{set_indicator_keys}: Comma-separated list of indicator keys sharing the pattern
+}
 }
 \seealso{
 \code{\link{chi_generate_analysis_set}} for creating analysis sets
 
 \code{\link{chi_calc}}, \code{\link{chi_count_by_age}}, \code{\link{chi_chars_ccs}},
 and \code{\link{chi_chars_injury}} for performing
-calculations using the output of \code{chi_generate_analysis_set}
+calculations using the output of \code{chi_generate_tro_shell}
 }
 \keyword{CHI,}
 \keyword{Production}
