@@ -90,8 +90,12 @@ chi_process_nontrends <- function(ph.analysis_set = NULL,
   tempy <- rbind(tempy, sub_crosstabs)
 
   # tidy
-  tempy[cat1 %in% c('Ethnicity', "Birthing person's ethnicity") & cat1_varname == 'race3', cat1_varname := 'race3_hispanic']
-  tempy[cat2 %in% c('Ethnicity', "Birthing person's ethnicity") & cat2_varname == 'race3', cat2_varname := 'race3_hispanic']
+  tempy[cat1 %in% c('Ethnicity') & cat1_varname == 'race3', cat1_varname := 'race3_hispanic']
+  tempy[cat2 %in% c('Ethnicity') & cat2_varname == 'race3', cat2_varname := 'race3_hispanic']
+  tempy[cat1_varname %in% c('race3', 'race4') & tab != 'trends', cat1 := 'Race'] # 'Race/ethnicity' is only for trends
+  tempy[cat2_varname %in% c('race3', 'race4') & tab != 'trends', cat2 := 'Race'] # 'Race/ethnicity' is only for trends
+  tempy[cat1_varname %in% c('race3', 'race4', 'race3_hispanic') & tab == 'trends', cat1 := 'Race/ethnicity'] # 'Race/ethnicity' is only for trends
+  tempy[cat2_varname %in% c('race3', 'race4', 'race3_hispanic') & tab == 'trends', cat2 := 'Race/ethnicity'] # 'Race/ethnicity' is only for trends
   setcolorder(tempy, 'indicator_key')
   rads::string_clean(tempy)
   tempy <- tempy[!(tab == 'crosstabs' & cat1 == 'King County' & cat2 != 'King County')] # only legit xtab for KC is KC by itself

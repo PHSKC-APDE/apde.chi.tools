@@ -25,8 +25,8 @@ age values. It compares the single year age value (specified by \code{agevar})
 against age ranges defined in \code{cat1_group} and \code{cat2_group} columns,
 keeping only those rows where:
 \itemize{
-  \item The categorical variable is not age-related, OR
-  \item The age value falls within the range specified by the corresponding age group
+\item The categorical variable is not age-related, OR
+\item The age value falls within the range specified by the corresponding age group
 }
 
 Age groups are expected to be in formats like "10-17", "<5", or "45+", which
@@ -36,11 +36,11 @@ nor \code{cat2} contains age categories, the function returns the data unchanged
 \details{
 The function interprets special formats in age group strings:
 \itemize{
-  \item "0" is treated as age "0-0" (age zero)
-  \item "<1" is treated as age "0-0" (age zero)
-  \item "<N" is converted to "0-(N-1)" (ages 0 through N-1)
-  \item "N+" is converted to "N-120" (ages N through 120)
-  \item "N-M" ranges are used as-is (ages N through M)
+\item "0" is treated as age "0-0" (age zero)
+\item "<1" is treated as age "0-0" (age zero)
+\item "<N" is converted to "0-(N-1)" (ages 0 through N-1)
+\item "N+" is converted to "N-120" (ages N through 120)
+\item "N-M" ranges are used as-is (ages N through M)
 }
 
 Input validation ensures proper column types and structure before processing.

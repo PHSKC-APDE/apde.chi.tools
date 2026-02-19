@@ -19,27 +19,27 @@ function in this package.}
 }
 \value{
 Returns a data.table containing analysis sets with the following columns:
-  \itemize{
-    \item \code{cat1}: character. A standard value from the \code{'cat'} column
-    of \code{\link[rads.data]{misc_chi_byvars}}, e.g. \code{'Gender'}
-    \item \code{cat1_varname}: character. A standard value from the \code{'varname'}
-    column of \code{\link[rads.data]{misc_chi_byvars}}, e.g., \code{'chi_sex'}
-    \item \code{_kingcounty}: character \code{'x'}. Is the analysis for King County as a whole?
-    \item \code{_wastate}: character \code{'x'}. Is the analysis is for WA state as a whole?
-    \item \code{demgroups}: character \code{'x'}. Is the analysis for demgroups?
-    \item \code{crosstabs}: character \code{'x'}. Is the analysis for crosstabs?
-    \item \code{trends}: character \code{'x'}, Is the the analysis for trends?
-    \item \code{set}: Integer identifying groups of indicators with identical analysis patterns
-    \item \code{set_indicator_keys}: Comma-separated list of indicator keys sharing the pattern
-  }
+\itemize{
+\item \code{cat1}: character. A standard value from the \code{'cat'} column
+of \code{\link[rads.data]{misc_chi_byvars}}, e.g. \code{'Gender'}
+\item \code{cat1_varname}: character. A standard value from the \code{'varname'}
+column of \code{\link[rads.data]{misc_chi_byvars}}, e.g., \code{'chi_sex'}
+\item \code{_kingcounty}: character \code{'x'}. Is the analysis for King County as a whole?
+\item \code{_wastate}: character \code{'x'}. Is the analysis is for WA state as a whole?
+\item \code{demgroups}: character \code{'x'}. Is the analysis for demgroups?
+\item \code{crosstabs}: character \code{'x'}. Is the analysis for crosstabs?
+\item \code{trends}: character \code{'x'}, Is the the analysis for trends?
+\item \code{set}: Integer identifying groups of indicators with identical analysis patterns
+\item \code{set_indicator_keys}: Comma-separated list of indicator keys sharing the pattern
+}
 }
 \description{
 Creates sets of indicator keys that share common analysis patterns within CHI
 (Community Health Indicators) data. This function can either:
 
 \enumerate{
-   \item Read the most recent production version of CHI estimates from the TSQL Production Server for a specified data source, or
-   \item Process a provided data.table/data.frame containing CHI data
+\item Read the most recent production version of CHI estimates from the TSQL Production Server for a specified data source, or
+\item Process a provided data.table/data.frame containing CHI data
 }
 
 It groups indicators that use the same combinations of \code{cat1}, \code{cat1_varname}, and

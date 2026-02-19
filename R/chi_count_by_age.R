@@ -111,7 +111,7 @@ chi_count_by_age <- function(ph.data = NULL,
 
   # Verify that categorical variables follow CHI encoding standards ----
     # Get standardized byvar values from reference data
-      std_byvars <- rads.data::misc_chi_byvars
+      std_byvars <- chi_standard_varnames
       std_byvars <- std_byvars[varname %in% setdiff(unique(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)), c(NA))]
       std_byvars <- std_byvars[, list(varname, group, keepme, reference = 1)]
 
@@ -344,7 +344,7 @@ chi_count_by_age <- function(ph.data = NULL,
     # variable in Tableau viz so the variable names need to be harmonized
       count_results[cat1_varname == 'race3_hispanic', cat1_varname := 'race3']
       count_results[cat2_varname == 'race3_hispanic', cat2_varname := 'race3']
-      drop_race3_groups <- rads.data::misc_chi_byvars[varname == 'race3' & keepme == 'No']$group
+      drop_race3_groups <- chi_standard_varnames[varname == 'race3' & keepme == 'No']$group
       count_results <- count_results[!(cat1_varname == 'race3' & cat1_group %in% drop_race3_groups)]
       count_results <- count_results[is.na(cat2) | !(cat2_varname == 'race3' & cat2_group %in% drop_race3_groups)]
 

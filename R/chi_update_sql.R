@@ -7,8 +7,7 @@
 #' @details
 #' For details on server access, and to configure your local settings,
 #' please review documentation:
-#' \href{https://kc1.sharepoint.com/teams/DPH-KCCross-SectorData/Shared\%20Documents/References/SQL/SQL Server Setup APDE.docx}{
-#' SharePoint > DPH-KCCross-SectorData > Documents > References > SQL > SQL Server Setup APDE.docx}.
+#' SharePoint > DPH-KCCross-SectorData > Documents > References > SQL > SQL Server Setup APDE.docx.
 #'
 #' @param CHIestimates data.frame/data.table containing CHI analytic results
 #' @param CHImetadata data.frame/data.table containing CHI metadata

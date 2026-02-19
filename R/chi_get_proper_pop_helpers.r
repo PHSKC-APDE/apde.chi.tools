@@ -17,6 +17,16 @@
       pop.template <- data.table::setDT(data.table::copy(pop.template))
     }
 
+    # convert race3_hispanic to race3 (race3_hispanic should not exist, but just in case!)
+    pop.template[cat1_varname == 'race3_hispanic', cat1_varname := 'race3']
+    pop.template[cat2_varname == 'race3_hispanic', cat2_varname := 'race3']
+    pop.template <- unique(pop.template)
+
+    # if cat1|cat2 == 'Ethnicity', eliminate those rows because getting race3 will already get Ethnicity
+    pop.template[cat1 == 'Ethnicity', `:=` (cat1 = 'Race', race_type = 'race', group_by1 = 'race')]
+    pop.template[cat2 == 'Ethnicity', `:=` (cat2 = 'Race', race_type = 'race', group_by2 = 'race')]
+    pop.template <- unique(pop.template)
+
     # Check for required columns
     required_columns <- c("year", "cat1", "cat1_varname", "cat2", "cat2_varname",
                           "start", "stop", "race_type", "geo_type", "tab")
@@ -63,20 +73,6 @@
       age_values = age_values,
       is_chars = is_chars
     ))
-  }
-
-# Standardize Category Names: standardize_category_names() ----
-#' Standardize Category Names: standardize_category_names() ----
-#' @keywords internal
-#' @noRd
-  standardize_category_names <- function(pop.template) {
-    # Remove birthing person prefixes to standardize maternal data categories
-    pop.template[grepl("birthing person", cat1, ignore.case = TRUE),
-                 cat1 := tools::toTitleCase(gsub("Birthing person's ", "", cat1))]
-    pop.template[grepl("birthing person", cat2, ignore.case = TRUE),
-                 cat2 := tools::toTitleCase(gsub("Birthing person's ", "", cat2))]
-
-    return(pop.template)
   }
 
 # Create Query Keys for Consolidation: create_query_keys() ----
@@ -143,7 +139,7 @@
     template_row <- pop.template[current_query$representative_row_index]
 
     # Show progress
-    message(paste0("Process ID ", Sys.getpid(), ": get_population call ",
+    message(paste0("Process ID ", Sys.getpid(), ": apde.data::population() call ",
                query_id, " (covers ", sum(pop.template$batched_id == query_id),
                " original queries: ", current_query$query_key, ")"))
 
@@ -153,19 +149,45 @@
       setdiff(c(template_row$group_by1, template_row$group_by2), c(NA))
     ))
 
-    # Call get_population with the batched year range
+    # Call apde.data::population() with the batched year range
     if (is_chars && template_row$geo_type == 'kc') {
       # For CHARS data, use ZIP aggregation method for King County
-      population_data <- rads::get_population(
-        kingco = FALSE, # intentionally FALSE to retrieve ALL ZIP codes, which we'll filter later
-        group_by = grouping_vars,
-        geo_type = 'zip', # note this is purposefully not 'kc'
-        race_type = template_row$race_type,
-        years = current_query$min_start:current_query$max_stop,
-        genders = gender_values,
-        ages = age_values,
-        round = FALSE
-      )
+      # When grouping by race with race_type='race', we need to make two calls:
+      # one for race categories and one specifically for Hispanic ethnicity
+      if('race' %in% grouping_vars & template_row$race_type == 'race'){
+        population_data <- rbind(
+          apde.data::population(
+            kingco = FALSE, # intentionally FALSE to retrieve ALL ZIP codes, which we'll filter later
+            group_by = grouping_vars,
+            geo_type = 'zip', # note this is purposefully not 'kc'
+            race_type = template_row$race_type,
+            years = current_query$min_start:current_query$max_stop,
+            genders = gender_values,
+            ages = age_values,
+            round = FALSE),
+          apde.data::population(
+            kingco = FALSE, # intentionally FALSE to retrieve ALL ZIP codes, which we'll filter later
+            group_by = grouping_vars,
+            geo_type = 'zip', # note this is purposefully not 'kc'
+            race_type = template_row$race_type,
+            years = current_query$min_start:current_query$max_stop,
+            genders = gender_values,
+            ages = age_values,
+            races = 'hispanic',
+            round = FALSE
+          )
+        )
+      } else {
+        population_data <- apde.data::population(
+          kingco = FALSE, # intentionally FALSE to retrieve ALL ZIP codes, which we'll filter later
+          group_by = grouping_vars,
+          geo_type = 'zip', # note this is purposefully not 'kc'
+          race_type = template_row$race_type,
+          years = current_query$min_start:current_query$max_stop,
+          genders = gender_values,
+          ages = age_values,
+          round = FALSE)
+      }
 
       # Filter to Define King County as ZIPs that begin with 980/981
       population_data <- population_data[grepl('^980|^981', geo_id)]
@@ -178,24 +200,70 @@
       population_data[, geo_type := 'kc']
       population_data[, geo_id := 'King County']
     } else if (is.na(template_row$geo_type)) {
-      population_data <- rads::get_population(
-        group_by = grouping_vars,
-        race_type = template_row$race_type,
-        years = current_query$min_start:current_query$max_stop,
-        genders = gender_values,
-        ages = age_values,
-        round = FALSE
-      )
+      # When grouping by race with race_type='race', we need to make two calls:
+      # one for race categories and one specifically for Hispanic ethnicity
+      if('race' %in% grouping_vars & template_row$race_type == 'race'){
+        population_data <- rbind(
+          apde.data::population(
+            group_by = grouping_vars,
+            race_type = template_row$race_type,
+            years = current_query$min_start:current_query$max_stop,
+            genders = gender_values,
+            ages = age_values,
+            round = FALSE),
+          apde.data::population(
+            group_by = grouping_vars,
+            race_type = template_row$race_type,
+            years = current_query$min_start:current_query$max_stop,
+            genders = gender_values,
+            ages = age_values,
+            races = 'hispanic',
+            round = FALSE)
+        )
+      } else {
+        population_data <- apde.data::population(
+          group_by = grouping_vars,
+          race_type = template_row$race_type,
+          years = current_query$min_start:current_query$max_stop,
+          genders = gender_values,
+          ages = age_values,
+          round = FALSE
+        )
+      }
     } else {
-      population_data <- rads::get_population(
-        group_by = grouping_vars,
-        geo_type = template_row$geo_type,
-        race_type = template_row$race_type,
-        years = current_query$min_start:current_query$max_stop,
-        genders = gender_values,
-        ages = age_values,
-        round = FALSE
-      )
+      # When grouping by race with race_type='race' (i.e., for race3), we need to make two calls:
+      # one for race categories and one specifically for Hispanic ethnicity
+      if('race' %in% grouping_vars & template_row$race_type == 'race'){
+        population_data <- rbind(
+          apde.data::population(
+            group_by = grouping_vars,
+            geo_type = template_row$geo_type,
+            race_type = template_row$race_type,
+            years = current_query$min_start:current_query$max_stop,
+            genders = gender_values,
+            ages = age_values,
+            round = FALSE),
+          apde.data::population(
+            group_by = grouping_vars,
+            geo_type = template_row$geo_type,
+            race_type = template_row$race_type,
+            years = current_query$min_start:current_query$max_stop,
+            genders = gender_values,
+            ages = age_values,
+            races = 'hispanic',
+            round = FALSE)
+        )
+      } else {
+        population_data <- apde.data::population(
+          group_by = grouping_vars,
+          geo_type = template_row$geo_type,
+          race_type = template_row$race_type,
+          years = current_query$min_start:current_query$max_stop,
+          genders = gender_values,
+          ages = age_values,
+          round = FALSE
+        )
+      }
     }
 
     # Add batched_id to population data for later processing
@@ -210,10 +278,10 @@
 #' @noRd
   process_age_patterns <- function(age_var) {
     # Check if this age variable exists in misc_chi_byvars
-    chi_age_groups <- rads.data::misc_chi_byvars[cat == "Age" & varname == age_var]
+    chi_age_groups <- chi_standard_varnames[cat == "Age" & varname == age_var]
 
     if (nrow(chi_age_groups) == 0) {
-      stop(paste0("\n\U1F6D1 Age variable ", age_var, " not found in rads.data::misc_chi_byvars[cat == \"Age\"]"))
+      stop(paste0("\n\U1F6D1 Age variable ", age_var, " not found in chi_standard_varnames[cat == \"Age\"]"))
     }
 
     # Create a result table with age ranges
@@ -254,7 +322,7 @@
       else {
         stop(paste0("\n\U1F6D1 Age group ", g, " in age_var = ", age_var,
                     " does not follow the expected pattern (<#, #-#, or #+) and cannot be used",
-                    "\n Valid options are found in rads.data::misc_chi_byvars[cat == \"Age\"]"))
+                    "\n Valid options are found in chi_standard_varnames[cat == \"Age\"]"))
       }
     }
 
@@ -285,11 +353,6 @@
 
     # Process specific race/ethnicity groups
     population_data[get(catvarname) %in% c('race4', 'race3'), (catgroup) := race]
-
-    # Filter out Ethnicity unless the group == 'Hispanic'
-    population_data <- population_data[get(catnum) != "Ethnicity" |
-                                         (get(catnum) == "Ethnicity" &
-                                            get(catgroup) == 'Hispanic'), ]
 
     # Standardize "Multiple" label
     population_data[get(catgroup) == "Multiple race", (catgroup) := "Multiple"]
@@ -597,7 +660,7 @@
     # Basic subsetting tidying ----
       current_row <- pop.template[row_index, ]
 
-      # Set the correct year format
+      # Set the correct year format (will aggregate/sum for the binned years below)
       population_data[, year := current_row$year]
 
     # Process demographic categories ----
@@ -608,9 +671,9 @@
         temp.groupby <- paste0("group_by", gsub('cat', '', catnum))
 
         # Set basic category info from template
-        population_data[, (catnum) := current_row[[catnum]]]
-        population_data[, (catvarname) := current_row[[catvarname]]]
-        population_data[, (catgroup) := current_row[[temp.groupby]]]
+        population_data[, (catnum) := as.character(current_row[[catnum]])]
+        population_data[, (catvarname) := as.character(current_row[[catvarname]])]
+        population_data[, (catgroup) := as.character(current_row[[temp.groupby]])]
 
         # Process standard geographic categories
         # King County
@@ -686,17 +749,20 @@
       # Generate complete demographic combinations
       complete_demographics <- create_demographic_shell(population_data, current_row, age_values)
 
-
       # Merge population data with complete demographics grid
       population_data <- suppressWarnings(merge(population_data,
                                                 complete_demographics,
                                                 all = TRUE))
 
-      # Fill missing population values with zero
-      population_data[is.na(pop), pop := 0]
-
       # Add tab column
       population_data[, tab := current_row$tab]
+
+      # Automatically made Hispanic with race3, so now mark the cat# as Ethnicity
+      population_data[cat1_varname == 'race3' & cat1_group == 'Hispanic' & tab != 'trends', cat1 := 'Ethnicity']
+      population_data[cat2_varname == 'race3' & cat2_group == 'Hispanic' & tab != 'trends', cat2 := 'Ethnicity']
+
+      # Fill missing population values with zero
+      population_data[is.na(pop), pop := 0]
 
       # Convert placeholder "NA" strings back to true NA values
       population_data[cat2 == "NA", c("cat2", "cat2_varname", "cat2_group") := NA]

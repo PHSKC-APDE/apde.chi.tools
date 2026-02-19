@@ -3,7 +3,6 @@ title: "Generating CHI Rate Estimates"
 format: gfm
 prefer-html: false
 self-contained: true
-editor: visual
 ---
 
 # Introduction
@@ -12,7 +11,7 @@ The `apde.chi.tools` package provides tools for a standardized workflow for prep
 
 For the sake of simplicity, we'll walk through the analysis pipeline for calculating the adolescent birth rate as an example. However, estimation of CHARS and death rates follows the same basic process, albeit with some additional complexity that can be observed in the most recent code in the [CHI repository](https://github.com/PHSKC-APDE/chi). To view a complete list of documented functions available from the `apde.chi.tools` package, enter `help(package = 'apde.chi.tools')` at the R prompt.
 
-The CHI standards are documented in [SharePoint \> Community Health Indicators \> CHI-Vizes](https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/Forms/AllItems.aspx) \> CHI-Standards-TableauReady Output.xlsx. We'll follow those standards throughout our analysis.
+The CHI standards are documented in [SharePoint \> Community Health Indicators](https://kc1.sharepoint.com/teams/DPH-CHI/)  \> CHI-Vizes \> CHI-Standards-TableauReady Output.xlsx. We'll follow those standards throughout our analysis.
 
 Finally, please remember that you can always get more information about a specific function by accessing its help file, e.g., `?chi_count_by_age`, `?chi_generate_tro_shell`, etc.
 
@@ -30,6 +29,7 @@ library(openxlsx)       # For Excel output
 library(rads)           # For APDE analyses
 library(data.table)     # For wicked fast data manipulation
 library(apde.chi.tools) # The package we're demonstrating
+library(apde.data)      # For importing analytic data
 ```
 
 ```{r pretty_kable}
@@ -60,12 +60,12 @@ sharepoint_output_dir <- paste0('JUNK_testing/', latest_year, '-update/')
 
 # Getting the Raw Data
 
-Next, let's retrieve the birth data we'll be analyzing. The `rads::get_data_birth()` function pulls data from SQL, filtered to our specifications.
+Next, let's retrieve the birth data we'll be analyzing. The `apde.data::birth()` function pulls data from SQL, filtered to our specifications.
 
 ::: callout-note
-## What is`race3_hispanic` and why do I need it?
+## What is `race3_hispanic` and why do I need it?
 
-Generally, CHI has two versions of composite race/ethnicity data. In `race4`, Hispanic is defined as a race and overwrites other OMB race categories. For example, if someone is Black and Hispanic, in `race4`, the person would be categorized as Hispanic. In contrast, `race3` defines Hispanic as an ethnicity. This means a person can be any OMB race (e.g., AIAN, Asian, Black, etc.) AND be of Hispanic ethnicity. A single analytic ready variable cannot contain both race and ethnicity data since it can only have one value. Therefore, every time you want to process `race3` estimates, you must download and use both `'race3'` and `'race3_hispanic'` columns from the analytic ready data that you get with the `rads::get_data_*()` functions. The `apde.chi.tools` functions will "know" how to appropriately use `race3` and `race3_hispanic`, but you must get both from the analytic ready data.
+Generally, CHI has two versions of composite race/ethnicity data. In `race4`, Hispanic is defined as a race and overwrites other OMB race categories. For example, if someone is Black and Hispanic, in `race4`, the person would be categorized as Hispanic. In contrast, `race3` defines Hispanic as an ethnicity. This means a person can be any OMB race (e.g., AIAN, Asian, Black, etc.) AND be of Hispanic ethnicity. A single analytic ready variable cannot contain both race and ethnicity data since it can only have one value. Therefore, every time you want to process `race3` estimates, you must download and use both `'race3'` and `'race3_hispanic'` columns from the analytic ready data that you get with the `apde.data` package. The `apde.chi.tools` functions will "know" how to appropriately use `race3` and `race3_hispanic`, but you must get both from the analytic ready data.
 :::
 
 ```{r get-data}
@@ -73,7 +73,7 @@ Generally, CHI has two versions of composite race/ethnicity data. In `race4`, Hi
 #| message: false
 
 # Get birth data for the past 10 years
-birthsdt <- get_data_birth(
+birthsdt <- apde.data::birth(
   cols = c("bigcities", "chi_geo_kc", "chi_geo_region", "chi_race_aic_asianother",
            "chi_race_aic_chinese", "chi_race_aic_filipino",
            "chi_race_aic_guam_or_chamorro", "chi_race_aic_hawaiian",
@@ -125,7 +125,7 @@ We use `chi_generate_tro_shell()` to create a standardized set of calculation in
 #| message: false
 
 myinstructions <- chi_generate_tro_shell(
-  ph.analysis_set = analysis_sets,  # from by chi_generate_analysis_set 
+  ph.analysis_set = analysis_sets,  # from chi_generate_analysis_set 
   end.year = latest_year,           # latest year used in analyses
   year.span = 5,                    # number of years in a single analysis period
   trend.span = 3,                   # number of years in a single trend period
@@ -133,7 +133,7 @@ myinstructions <- chi_generate_tro_shell(
 )
 ```
 
-As stated in the introduction, for this vignette we will focus on the adolescent birth birth rate (`teen1517`). This is because it is the only true rate, with a population denominator, among all of the birth indicators.
+As stated in the introduction, for this vignette we will focus on the adolescent birth rate (`teen1517`). This is because it is the only true rate, with a population denominator, among all of the birth indicators.
 
 ```{r filter-instructions}
 #| warning: false
@@ -158,14 +158,15 @@ Now, let's clean up our instructions to prevent illogical cross-tabulations like
 #| message: false
 
 # Remove crosstabs of big cities with HRAs or Regions
-myinstructions <- myinstructions[is.na(cat2) | 
-                                   !(cat1_varname == 'bigcities' &
-                                     cat2_varname %in% c('hra20_name', 'chi_geo_region'))]
-
-# Remove crosstabs of HRAs or Regions with big cities
-myinstructions <- myinstructions[is.na(cat2) | 
-                                   !(cat2_varname == 'bigcities' &
-                                     cat1_varname %in% c('hra20_name', 'chi_geo_region'))]
+myinstructions <- myinstructions[
+  is.na(cat2_varname) |
+  !(
+    (cat1_varname == "bigcities" &
+     cat2_varname %in% c("hra20_name", "chi_geo_region")) |
+    (cat2_varname == "bigcities" &
+     cat1_varname %in% c("hra20_name", "chi_geo_region"))
+  )
+]
 
 ```
 
@@ -200,9 +201,8 @@ As its name implies, `chi_count_by_age()` creates a detailed breakdown of counts
 ::: callout-note
 ## What's going on under the hood?
 
-The `chi_count_by_age()`function shares many validation steps with`chi_calc()`, including checking inputs against`rads.data::misc_chi_byvars` to ensure they follow CHI encoding standards. After validation, the function uses `rads::calc()` to generate counts by single-year age values (default = 0-100). Like `chi_calc()`, `chi_count_by_age()` applies special handling for race and ethnicity variables, particularly the relationship between race3 and race3_hispanic, to ensure consistent representation in output data. A key feature of `chi_count_by_age()` is its handling of missing combinations. When no data exists for a specific demographic-age group combination (e.g., a particular racial group at age 97), the function creates a complete reference table using Cartesian products to ensure all possible combinations are represented with counts of zero rather than being omitted entirely. This comprehensive approach enables proper age standardization in downstream analyses.
+The `chi_count_by_age()`function shares many validation steps with`chi_calc()`, including checking inputs against`apde.chi.tools::chi_standard_varnames` to ensure they follow CHI encoding standards. After validation, the function uses `rads::calc()` to generate counts by single-year age values (default = 0-100). Like `chi_calc()`, `chi_count_by_age()` applies special handling for race and ethnicity variables, particularly the relationship between race3 and race3_hispanic, to ensure consistent representation in output data. A key feature of `chi_count_by_age()` is its handling of missing combinations. When no data exists for a specific demographic-age group combination (e.g., a particular racial group at age 97), the function creates a complete reference table using Cartesian products to ensure all possible combinations are represented with counts of zero rather than being omitted entirely. This comprehensive approach enables proper age standardization in downstream analyses.
 
-The demographic grouping standards in `rads.data::misc_chi_byvars` can be traced back to [SharePoint \> Community Health Indicators \> CHI-Vizes](https://kc1.sharepoint.com/teams/DPH-CommunityHealthIndicators/CHIVizes/Forms/AllItems.aspx) \> CHI-Standards-TableauReady Output.xlsx. However, directly referencing a SharePoint file from within an R package creates a fragile dependency on external, user-specific infrastructure that can break portability, reproducibility, and automation.
 :::
 
 ```{r calculate}
@@ -278,24 +278,6 @@ pretty_kable(
 )
 ```
 
-### Tidy `chi_get_proper_pop()` output
-
-Race and ethnicity `cat1` and `cat2` values in `mypop` need to be brought into alignment with the values in the `mycounts`. This is specific to the quirks of the CHI birth standards.
-
-```{r tidy-race_eth_1}
-#| warning: false
-#| message: false
-mypop[cat1 == 'Ethnicity', cat1 := "Birthing person's ethnicity"]
-mypop[cat1 == 'Race', cat1 := "Birthing person's race"]
-mypop[cat1 == 'Race/Ethnicity', cat1 := "Birthing person's race/ethnicity"]
-mypop[cat1 == 'Detailed Race/Ethnicity', cat1 := "Birthing person's detailed race/ethnicity"]
-
-mypop[cat2 == 'Ethnicity', cat2 := "Birthing person's ethnicity"]
-mypop[cat2 == 'Race', cat2 := "Birthing person's race"]
-mypop[cat2 == 'Race/Ethnicity', cat2 := "Birthing person's race/ethnicity"]
-mypop[cat2 == 'Detailed Race/Ethnicity', cat2 := "Birthing person's detailed race/ethnicity"]
-```
-
 ### Restoring Sequential Processing
 
 Now that we've completed the steps that use parallel processing, it's a good idea to set `future::plan(sequential)`. This returns R to its normal, single-threaded mode and prevents surprises in subsequent code.
@@ -333,34 +315,6 @@ setnames(mycombo, 'chi_age', 'age')
 ```
 
 Due to the way that APDE decided to display `race3` (Hispanic as ethnicity) and `race4` (Hispanic as race), we need to manipulate the results to align them with CHI standards.
-
-```{r tidy-race}
-#| warning: false
-#| message: false
-
-# For race4 categories (both cat1 and cat2)
-mycombo[tab %in% c('demgroups', 'crosstabs') & cat1_varname == 'race4', 
-            cat1 := "Birthing person's race"]
-mycombo[tab %in% c('demgroups', 'crosstabs') & cat2_varname == 'race4', 
-            cat2 := "Birthing person's race"]
-
-# For race3 categories - default to race, override for Hispanic ethnicity
-mycombo[tab %in% c('demgroups', 'crosstabs') & cat1_varname == 'race3', 
-            cat1 := "Birthing person's race"]
-mycombo[tab %in% c('demgroups', 'crosstabs') & cat1_varname == 'race3' & cat1_group == 'Hispanic', 
-            cat1 := "Birthing person's ethnicity"]
-
-mycombo[tab %in% c('demgroups', 'crosstabs') & cat2_varname == 'race3', 
-            cat2 := "Birthing person's race"]
-mycombo[tab %in% c('demgroups', 'crosstabs') & cat2_varname == 'race3' & cat2_group == 'Hispanic', 
-            cat2 := "Birthing person's ethnicity"]
-
-# Update trend data labels (both race3 and race4 at once)
-mycombo[tab == 'trends' & cat1_varname %in% c('race3', 'race4'), 
-            cat1 := "Birthing person's race/ethnicity"]
-mycombo[tab == 'trends' & cat2_varname %in% c('race3', 'race4'), 
-            cat2 := "Birthing person's race/ethnicity"]
-```
 
 ## Calculating Rates
 
@@ -434,7 +388,6 @@ myrates <- apde.chi.tools::chi_suppress_results(
 
 # Only keep CHI columns
 myrates <- myrates[, chi_get_cols(), with = F]
-
 ```
 
 # Updating Metadata
@@ -482,15 +435,14 @@ After calculation, we need to perform quality assurance checks to ensure our est
 
 -   Internal YAML configurations accessed via `chi_get_yaml()`
 -   Standard column names from `chi_get_cols()`
--   Category validation using `rads.data::misc_chi_byvars`
+-   Category validation using `apde.chi.tools::chi_standard_varnames`
 -   Field type / data class validation using `rads::tsql_validate_field_types()`
 
 It performs numerous checks including proper rounding based on result type, absence of missing critical data, and data integrity rules such as ensuring confidence intervals are properly bounded (lower_bound ≤ result ≤ upper_bound) and that proportions fall within \[0,1\].
 :::
 
 ```{r qa}
-#| message: true
-#| output: true
+#| output: false
 
 # Perform QA checks
 qa_result <- chi_qa_tro(CHIestimates = myrates,
@@ -500,20 +452,48 @@ qa_result <- chi_qa_tro(CHIestimates = myrates,
 print(qa_result)
 ```
 
+```{r qa-print}
+#| echo: false
+print(qa_result)
+```
+
+## Add `Birthing person's` prefix to birth race/ethnicity data
+
+Now that we passed the QA, we have to address a wonky tweak needed for the birth estimates. Since ***race/ethnicity data are that of the person giving birth and not the child***, we need to prefix the `cat#` values when `cat#_varname == race3` (Hispanic as ethnicity) `cat#_varname == race4` (Hispanic as race).
+
+```{r tidy-race}
+#| warning: false
+#| message: false
+myrates[ , cat1 := fifelse(
+  cat1 %chin% c("Ethnicity", "Race", "Race/ethnicity"),
+  paste0("Birthing person's ", tolower(cat1)),
+  cat1
+  )
+]
+
+myrates[ ,cat2 := fifelse(
+  cat2 %chin% c("Ethnicity", "Race", "Race/ethnicity"),
+  paste0("Birthing person's ", tolower(cat2)),
+  cat2
+  )
+]
+```
+
 # Comparing to Previous Estimates
 
 An important validation step is comparing our new estimates with previous ones to identify 'notable differences'. The notable differences criteria were specified by Joie McCracken and are the same for each data source. They are used both for human QA and for sharing high-level summaries to accompany new releases of CHI estimates. If there is an issue, the table will have `notable == 1`, otherwise it will have `is.na(notable)`.
 
-```{r compare}
-#| warning: false 
-#| message: false
+Below is an example of how you would do this. Note that, in this case, the differences show are not real (they are synthetic) and are provided for purely illustrative purposes.
+
+```{r compare-just-code}
+#| eval: false 
 
 # Get previous _kingcounty and demgroups estimates from the database
-rates_old <- setDT(DBI::dbGetQuery(
+rates_old <- DBI::dbGetQuery(
   conn = db_chi_prod,
-  statement = glue::glue_sql("SELECT * FROM [PHExtractStore].[APDE].[birth_results]
+  statement = "SELECT * FROM [PHExtractStore].[APDE].[birth_results]
         WHERE tab IN ('_kingcounty', 'demgroups') AND chi = 1 AND
-        indicator_key IN ({unique(myrates$indicator_key)*})", .con = db_chi_prod)))
+        indicator_key = 'teen1517'")
 
 # Compare old and new estimates
 mycomparison <- chi_compare_estimates(OLD = rates_old,
@@ -523,11 +503,50 @@ mycomparison <- chi_compare_estimates(OLD = rates_old,
                                       META = mymetadata)
 ```
 
-Let's examine three rows from `mycomparison` to see the table structure:
+```{r synthetic-old}
+#| include: false
 
-```{r}
+# Create a synthetic 'old' table to use with chi_compare_estimates
+set.seed(98104) 
+olddt <- copy(myrates)[year == '2019-2023']
+olddt <- olddt[(cat1_group == 'Auburn city' & is.na(cat2)) |
+                 (cat1_group == 'Hispanic' & is.na(cat2)) |
+                 (cat1_group == 'South' & is.na(cat2)) ]
+
+original_rates <- fsetdiff(myrates, olddt)
+
+olddt[, result := fcase(cat1_group == 'Auburn city', result = 2.1, 
+                        cat1_group == 'Hispanic', result = 3.4, 
+                        cat1_group == 'South', result = 2.7)]
+
+# Recalculate numerator, se, CI, rse
+olddt[, numerator := round(result * denominator / 100000)]
+olddt[, se := sqrt(numerator) / denominator * 100000]
+olddt[, `:=`(lower_bound = round(pmax(0, result - 1.96 * se), 1),
+           upper_bound = round(result + 1.96 * se, 1),
+           rse         = round(se / pmax(result, 1e-8), 2) )]
+
+olddt[, year := paste0(latest_year-5, '-', latest_year-1)]
+
+rates_old <- rbind(olddt, original_rates)
+```
+
+```{r compare-for-real}
+#| include: false
+
+# Compare old 5-year rates to synthetic 5-year rates
+mycomparison <- chi_compare_estimates(OLD = rates_old,
+                                      NEW = myrates,
+                                      OLD.year = paste0(latest_year-5, '-', latest_year-1),
+                                      NEW.year = paste0(latest_year-4, '-', latest_year),
+                                      META = mymetadata)
+```
+
+Let's examine two rows from `mycomparison` where `notable == 1`, meaning there is a substantial difference:
+
+```{r compare-view}
 #| echo: false
-pretty_kable(mycomparison[1:3])
+pretty_kable(mycomparison[notable == 1][1:3])
 ```
 
 # Export Analyses to SharePoint
@@ -537,12 +556,7 @@ Now that we've finished our analyses, let's save our results to SharePoint.
 ## Exporting Estimates & Metadata
 
 ```{r save-excel}
-#| eval: true
-#| echo: true
-#| message: false
-#| warning: false
-#| output: false
-#| results: "hide"
+#| eval: false 
 
 # Connect to SharePoint
 team <- get_team("Community Health Indicators")
@@ -580,12 +594,7 @@ rm(tempy)
 ## Exporting `mycomparison`
 
 ```{r save-mycomparison}
-#| eval: true
-#| echo: true
-#| message: false
-#| warning: false
-#| output: false
-#| results: "hide"
+#| eval: false 
 
 # Connect to SharePoint
 team <- get_team("Community Health Indicators")
@@ -615,7 +624,7 @@ rm(tempy)
 Finally, we need to save our results and metadata to the development SQL Server using `chi_update_sql()`. Later, once it passes human QA, it will be transferred to the production SQL Server.
 
 ```{r save-sql}
-#| warning: false
+#| eval: false 
 
 chi_update_sql(CHIestimates = myrates,
                CHImetadata = mymetadata,
@@ -629,12 +638,7 @@ chi_update_sql(CHIestimates = myrates,
 In the process of creating this vignette, we created some temporary tables on SharePoint and SQL Server. Let's delete these tables to keep our servers clean. Obviously, in your real analyses, you'd skip this step.
 
 ```{r clean-up-temp-SQL}
-#| eval: true
-#| echo: true
-#| message: false
-#| warning: false
-#| output: false
-#| results: "hide"
+#| eval: false 
 
 # Drop SharePoint directory
 SharePoint_Parent <- strsplit(sharepoint_output_dir, "/")[[1]][1]
@@ -670,6 +674,6 @@ New functions you used:
 
 If you encounter issues or believe you've found a bug, please submit a GitHub issue at [Issues · PHSKC-APDE/apde.chi.tools](https://github.com/PHSKC-APDE/apde.chi.tools/issues).
 
-Remember that this workflow is specifically for rate calculations. For calculations of proportions or means, please refer to the dedicated [dedicated vignette](https://github.com/PHSKC-APDE/apde.chi.tools/wiki/Calculating_Proportions).
+Remember that this workflow is specifically for rate calculations. For calculations of proportions or means, please refer to the [dedicated vignette](https://github.com/PHSKC-APDE/apde.chi.tools/wiki/Calculating_Proportions).
 
 -- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (apde.chi.tools v', packageVersion('apde.chi.tools'), ')')`*
