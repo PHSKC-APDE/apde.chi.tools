@@ -11,15 +11,17 @@
 #'
 #' @param CHIestimates data.frame/data.table containing CHI analytic results
 #' @param CHImetadata data.frame/data.table containing CHI metadata
-#' @param table_name name of SQL Server table to update
-#' @param server type of server (\code{'development'} for KCITSQLUATHIP40 and
-#' \code{'production'} for KCITSQLPRPHIP40)
+#' @param table_name name of SQL Server table to update, e.g., `'acs'`, `'birth'`, `'death'`, etc.
+#' @param server type of server (`'development'` for KCITSQLUATHIP40 and
+#' `'production'` for KCITSQLPRPHIP40)
 #'
 #' Default \code{server = 'development'}
-#' @param replace_table If TRUE, drop existing table and insert data, if FALSE
-#' update matching rows and insert new data
+#' @param replace_table If `TRUE`, the existing SQL table is dropped and fully replaced with the
+#' new data. If `FALSE`, rows matching the `indicator_key` values in `CHIestimates` and
+#' `CHIestimates` are deleted from SQL and then replaced with the new data, leaving all other rows
+#' intact.
 #'
-#' Default \code{replace_table = FALSE}
+#' Default `replace_table = FALSE`
 #'
 #' @examples
 #' \dontrun{
@@ -70,7 +72,7 @@ chi_update_sql <- function(CHIestimates = NULL,
   if( inherits(CHImetadata, "data.table") == FALSE){setDT(CHImetadata)}
   rads::tsql_validate_field_types(ph.data = CHImetadata, field_types = unlist(chi_get_yaml()$metadata))
 
-  # checkt table_name ----
+  # check table_name ----
   if(is.null(table_name)){stop("\n\U0001f47f The table_name argument is missing ")}
   if(length(table_name) != 1 | !is.character(table_name)){stop("\n\U0001f47f table_name must be a character vector of length 1")}
 
@@ -84,9 +86,9 @@ chi_update_sql <- function(CHIestimates = NULL,
   if(!server %in% c('development', 'production')){stop("\n\U0001f47f The server argument is limited to: 'development', 'production'")}
   if(length(server) != 1){stop("\n\U0001f47f The `server` argument must be of length 1")}
 
-  # check replace argument----
-  if(!is.logical(replace_table)){stop("\n\U0001f47f The `replace` argument must be a logical, i.e., TRUE | FALSE")}
-  if(length(replace_table) != 1){stop("\n\U0001f47f The `server` argument must be of length 1")}
+  # check replace_table argument----
+  if(!is.logical(replace_table)){stop("\n\U0001f47f The `replace_table` argument must be a logical, i.e., TRUE | FALSE")}
+  if(length(replace_table) != 1){stop("\n\U0001f47f The `replace_table` argument must be of length 1")}
 
   # open database connection----
   if(server %in% c('development')){
