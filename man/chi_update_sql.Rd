@@ -17,15 +17,17 @@ chi_update_sql(
 
 \item{CHImetadata}{data.frame/data.table containing CHI metadata}
 
-\item{table_name}{name of SQL Server table to update}
+\item{table_name}{name of SQL Server table to update, e.g., \code{'acs'}, \code{'birth'}, \code{'death'}, etc.}
 
 \item{server}{type of server (\code{'development'} for KCITSQLUATHIP40 and
 \code{'production'} for KCITSQLPRPHIP40)
 
 Default \code{server = 'development'}}
 
-\item{replace_table}{If TRUE, drop existing table and insert data, if FALSE
-update matching rows and insert new data
+\item{replace_table}{If \code{TRUE}, the existing SQL table is dropped and fully replaced with the
+new data. If \code{FALSE}, rows matching the \code{indicator_key} values in \code{CHIestimates} and
+\code{CHIestimates} are deleted from SQL and then replaced with the new data, leaving all other rows
+intact.
 
 Default \code{replace_table = FALSE}}
 }
