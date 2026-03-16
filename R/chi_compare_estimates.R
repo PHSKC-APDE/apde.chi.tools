@@ -118,7 +118,7 @@ chi_compare_estimates <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.y
         qa_type[, qa_type := 'relative']
         qa_type[grepl('mean|proportion', result_type, ignore.case = T) & result >= 0.05, qa_type := 'absolute']
         qa_type[grepl('rate', result_type, ignore.case = T) & result >= 5, qa_type := 'absolute']
-        qa_type <- qa_type[, list(indicator_key, qa_type)]
+        qa_type <- unique(qa_type[, list(indicator_key, qa_type)])
 
       # Merge on qa_type
         comp <- merge(comp, qa_type, by = 'indicator_key', all = T)
