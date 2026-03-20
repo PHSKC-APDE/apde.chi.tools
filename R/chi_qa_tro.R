@@ -160,7 +160,7 @@ chi_qa_tro <- function(CHIestimates,
   ## Confirm variable class ----
   report_message("Checking that variables are of the proper class")
   report_message("Validating CHI estimates: ")
-  suppressWarnings(rads::tsql_validate_field_types(ph.data = CHIestimates, field_types = unlist(chi_get_yaml()$vars))) # check CHI estimate table
+  rads::tsql_validate_field_types(ph.data = CHIestimates, field_types = unlist(chi_get_yaml()$vars)) # check CHI estimate table
 
   report_message(paste("", "Validating CHI metadata: ", sep = "\n"))
   rads::tsql_validate_field_types(ph.data = CHImetadata, field_types = unlist(chi_get_yaml()$metadata)) # check CHI metadata table
