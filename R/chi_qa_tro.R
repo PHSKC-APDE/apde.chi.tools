@@ -55,7 +55,7 @@ chi_qa_tro <- function(CHIestimates,
                        verbose = TRUE){
   status <- 1
 
-  ## Helper functions
+  ## Helper functions ----
   report_issue <- function(message) {
     status <<- 0
     if(verbose) {
@@ -203,12 +203,19 @@ chi_qa_tro <- function(CHIestimates,
     warning("\U00026A0 Warning: 'rse' is missing in at least one row of the CHI data where the estimate is defined.")
   }
 
-  for(mycol in names(unlist(chi_get_yaml()$metadata))){
-    if(nrow(CHImetadata[is.na(get(mycol))]) > 0){
-      status <- 0
-      warning(paste0("'", mycol, "' is missing in at least one row but is a critical identifier column in CHI metadata."))
+  # check metadata missingness (median income special b/c no last year count)
+  metadata.cols <- names(unlist(chi_get_yaml()$metadata))
+  metadata.cols.medinc <- setdiff(metadata.cols, "latest_year_count")
+  check_missing <- function(dt, cols) {
+    for (mycol in cols) {
+      if (nrow(dt[is.na(get(mycol))]) > 0) {
+        status <- 0
+        warning(paste0("'", mycol, "' is missing in at least one row but is a critical identifier column in CHI metadata."))
+      }
     }
   }
+  check_missing(dt = CHImetadata[indicator_key != "medinc"], cols = metadata.cols)
+  check_missing(dt = CHImetadata[indicator_key == "medinc"], cols = metadata.cols.medinc)
 
   if(status == 0) {
     if(verbose) {
@@ -400,7 +407,7 @@ chi_qa_tro <- function(CHIestimates,
                                              !is.na(result) &
                                              result != rads::round2(result, 1)]
 
-      integers_wrong_rounding <- CHIestimates[result_type == "integer" &
+      integers_wrong_rounding <- CHIestimates[result_type %in% c("count", "dollars", "integer") &
                                                 !is.na(result) &
                                                 result != round(result)]
 
@@ -424,7 +431,7 @@ chi_qa_tro <- function(CHIestimates,
                                              !is.na(lower_bound) &
                                              lower_bound != rads::round2(lower_bound, 1)]
 
-      integers_wrong_rounding <- CHIestimates[result_type == "integer" &
+      integers_wrong_rounding <- CHIestimates[result_type %in% c("count", "dollars", "integer") &
                                                 !is.na(lower_bound) &
                                                 lower_bound != round(lower_bound)]
 
@@ -448,7 +455,7 @@ chi_qa_tro <- function(CHIestimates,
                                              !is.na(upper_bound) &
                                              upper_bound != rads::round2(upper_bound, 1)]
 
-      integers_wrong_rounding <- CHIestimates[result_type == "integer" &
+      integers_wrong_rounding <- CHIestimates[result_type %in% c("count", "dollars", "integer") &
                                                 !is.na(upper_bound) &
                                                 upper_bound != round(upper_bound)]
 
@@ -472,7 +479,7 @@ chi_qa_tro <- function(CHIestimates,
                                              !is.na(se) &
                                              se != rads::round2(se, 2)]
 
-      integers_wrong_rounding <- CHIestimates[result_type == "integer" &
+      integers_wrong_rounding <- CHIestimates[result_type %in% c("count", "dollars", "integer") &
                                                 !is.na(se) &
                                                 se != rads::round2(se, 1)]
 
@@ -680,7 +687,7 @@ chi_qa_tro <- function(CHIestimates,
       message("\u2B50\U2714 Your data has passed all CHI Tableau Ready formatting, style, and logic checks.")
 
     } else {
-      warning("\u26A0\ufe0f At least one check has failed. Please review messages, make corrections, and rerun this check.")
+      warning("\u26A0\ufe0f At least one check has failed. Please review messages above, make corrections if necessary, and rerun this check.")
     }
   }
 
