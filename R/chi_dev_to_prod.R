@@ -196,12 +196,12 @@ chi_dev_to_prod <- function(table_name   = NULL,
     }
 
     if (length(excluded_keys) == 0) {
-      stop(
+      stop(glue::glue(
         "\n\U1F6D1\U0001F92C\U1F6D1\n`exclude_keys` were provided but no matching ",
         "indicator_key values were found in dev.\n",
         "As a precaution, the function has stopped. Either correct your `exclude_keys` argument\n",
         "or remove it entirely and try again."
-      )
+      ))
     } else {
       message(glue::glue(
         "\U0001F4E3 The following {length(excluded_keys)} indicator_key value(s) ",
@@ -217,10 +217,7 @@ chi_dev_to_prod <- function(table_name   = NULL,
   transfer_keys <- setdiff(all_dev_keys, excluded_keys)
 
   if (length(transfer_keys) == 0) {
-    stop(
-      "\n\U0001f47f After applying `exclude_keys`, no indicator_key values ",
-      "remain to transfer. Nothing will be written to prod."
-    )
+    stop("\n\U0001f47f After applying `exclude_keys`, no indicator_key values remain to transfer. Nothing will be written to prod.")
   }
 
   # Flag indicator_keys that are new to prod (purely FYI) ----
@@ -312,7 +309,7 @@ chi_dev_to_prod <- function(table_name   = NULL,
     stop(glue::glue(
       "\n\U1F6D1\U0001f47f\U1F6D1 {length(missing_from_meta)} indicator_key value(s) ",
       "exist in the dev results table but are missing from the dev metadata table. ",
-      "Please fix add the following to the metadata table and try again.:\n",
+      "Please fix the metadata table and try again.:\n",
       paste0("  - ", sort(missing_from_meta), collapse = "\n")
     ))
   }
