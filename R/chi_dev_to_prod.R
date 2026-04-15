@@ -17,20 +17,20 @@
 #'    transferred.
 #' 3. Optionally shows the user a confirmation table (row counts per
 #'    `indicator_key` from dev) and waits for approval before writing to prod.
-#' 4. Pulls matching rows from dev into R (filtered in SQL).
+#' 4. Pulls matching rows from dev into R.
 #' 5. Deletes those `indicator_key` rows from the corresponding prod tables.
 #' 6. Appends the pulled rows to prod.
-#' 7. Runs a post-transfer row count check to confirm success.
+#' 7. Runs a post-copying row count check to confirm success.
 #'
-#' `indicator_key` values identified by `exclude_keys` are skipped entirely --
-#' they are neither deleted from prod nor copied from dev. All other rows
+#' `indicator_key` values identified by `exclude_keys` are skipped entirely.
+#' They are neither deleted from prod nor copied from dev. All other rows
 #' already in prod for those excluded keys are left as-is.
 #'
 #' For details on server access and local configuration, please review:
 #' SharePoint > DPH-KCCross-SectorData > Documents > References > SQL >
 #' SQL Server Setup APDE.docx.
 #'
-#' @param table_name character(1). The root name of the SQL table to transfer,
+#' @param table_name character. The root name of the SQL table to transfer,
 #'   e.g., `'birth'`, `'brfss'`, `'death'`. The function operates on
 #'   `[table_name]_results` and `[table_name]_metadata` in both dev and prod.
 #'
@@ -38,23 +38,23 @@
 #'   identify `indicator_key` values that should **NOT** be copied from dev to
 #'   prod. Matching behavior is controlled by `exact_match`.
 #'
-#'   Default `exclude_keys = NULL` means nothing is excluded (all dev `indicator_key` values
-#'   in dev are copied to prod).
+#'   Default `exclude_keys = NULL`; meaning nothing is excluded, i.e., all dev
+#'    `indicator_key` values are copied to prod.
 #'
 #' @param exact_match logical. Controls how `exclude_keys` are applied.
 #'
-#'   - `FALSE` (default): each string in `exclude_keys` is matched as a
-#'     substring pattern using base R's `grepl(). For example,
+#'   - `FALSE`: each string in `exclude_keys` is matched as a
+#'     substring pattern using base R's [base::grepl()]. For example,
 #'     `exclude_keys = 'uninsure'` will exclude any `indicator_key` containing
 #'     the text `'uninsure'` (e.g., `'uninsured_adult'`, `'uninsured_child'`).
 #'   - `TRUE`: each string in `exclude_keys` must match an `indicator_key`
 #'     exactly. Use this when indicator keys do not share a common root.
 #'
-#'    Default `exact_match = NULL` will not exclude any indicator_key values.
+#'    Default `exact_match = FALSE`.
 #'
 #' @param confirm logical. If `TRUE`, the user is shown a summary table of
 #'   `indicator_key` values and their dev row counts before any writing to prod.
-#'   The user must type `'y'` to continue. Set to `FALSE` to
+#'   The user must type **`y`** to continue. Set to `FALSE` to
 #'   skip the prompt.
 #'
 #'   Default `confirm = TRUE`.
@@ -69,7 +69,7 @@
 #'   table_name = "birth"
 #' )
 #'
-#' # Transfer acs indicators, excluding 'uninsured' indicator_keys
+#' # Transfer acs indicators, excluding indicator_keys starting with 'uninsured'
 #' chi_dev_to_prod(
 #'   table_name   = "acs",
 #'   exclude_keys = "^uninsure",
@@ -92,7 +92,7 @@
 #'
 #' @keywords CHI, Tableau, Production, SQL
 #'
-#' @export
+#' @export[JustTesting_metadata]
 #'
 chi_dev_to_prod <- function(table_name   = NULL,
                             exclude_keys = NULL,
@@ -196,15 +196,17 @@ chi_dev_to_prod <- function(table_name   = NULL,
     }
 
     if (length(excluded_keys) == 0) {
-      message(
-        "\U00026A0\U0000fe0f  `exclude_keys` were provided but no matching ",
-        "indicator_key values were found in dev. Nothing will be excluded."
+      stop(
+        "\n\U1F6D1\U0001F92C\U1F6D1\n`exclude_keys` were provided but no matching ",
+        "indicator_key values were found in dev.\n",
+        "As a precaution, the function has stopped. Either correct your `exclude_keys` argument\n",
+        "or remove it entirely and try again."
       )
     } else {
       message(glue::glue(
         "\U0001F4E3 The following {length(excluded_keys)} indicator_key value(s) ",
         "will be excluded from the transfer (left untouched in prod):\n",
-        paste0("  - ", sort(excluded_keys), collapse = "\n")
+        paste0("\u00A0\u00A0\u00A0\u00A0- ", sort(excluded_keys), collapse = "\n")
       ))
     }
   } else {
@@ -263,18 +265,18 @@ chi_dev_to_prod <- function(table_name   = NULL,
       )
     )
 
-    cat(glue::glue(
-      "\n\U0001f4cb The following indicator_key values will be transferred from dev to prod.",
-      "\n  Dev  : [KCITSQLUATHIP40].[PHExtractStore].[{dev_schema}].[{results_tbl}]",
-      "\n  Prod : [KCITSQLPRPHIP40].[PHExtractStore].[{prod_schema}].[{results_tbl}]",
-      "\n"
+    message(glue::glue(
+      "\n\n\U0001F4E3 The following indicator_key values will be transferred from dev to prod.",
+      "\n    Dev  : [KCITSQLUATHIP40].[PHExtractStore].[{dev_schema}].[{results_tbl}]",
+      "\n    Prod : [KCITSQLPRPHIP40].[PHExtractStore].[{prod_schema}].[{results_tbl}]",
+      "\n\n"
     ))
     print(count_tbl, row.names = FALSE)
-    cat("\nExisting prod rows for these indicator_key values will be replaced.\n\n")
+    message("\nExisting prod rows for these indicator_key values will be replaced.\n\n")
 
-    answer <- readline("Proceed with transfer? (y/n): ")
+    answer <- readline("Continue copying from dev to prod? (y/n): ")
     if (tolower(trimws(answer)) != "y") {
-      stop("\n\U0001f47f Transfer cancelled by user. No changes were made to prod.")
+      stop("\n\U1F6D1 Copying cancelled by user. No changes were made to prod.")
     }
     message("Continuing...")
   }
@@ -329,7 +331,7 @@ chi_dev_to_prod <- function(table_name   = NULL,
     warning(glue::glue(
       "\U00026A0\U0000fe0f  The prod results table [PHExtractStore].[{prod_schema}].[{results_tbl}] ",
       "does not yet exist. A new table will be created."
-    ))
+    ), immediate. = TRUE)
   }
 
   prod_metadata_exists <- DBI::dbExistsTable(
@@ -348,7 +350,7 @@ chi_dev_to_prod <- function(table_name   = NULL,
     warning(glue::glue(
       "\U00026A0\U0000fe0f  The prod metadata table [PHExtractStore].[{prod_schema}].[{metadata_tbl}] ",
       "does not yet exist. A new table will be created."
-    ))
+    ), immediate. = TRUE)
   }
 
   # Append dev data to prod ----
