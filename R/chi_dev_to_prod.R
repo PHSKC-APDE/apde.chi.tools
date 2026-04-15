@@ -92,7 +92,7 @@
 #'
 #' @keywords CHI, Tableau, Production, SQL
 #'
-#' @export[JustTesting_metadata]
+#' @export
 #'
 chi_dev_to_prod <- function(table_name   = NULL,
                             exclude_keys = NULL,
