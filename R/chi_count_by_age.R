@@ -137,11 +137,23 @@ chi_count_by_age <- function(ph.data = NULL,
                                 by = c("varname", "group"),
                                 all = TRUE)
 
+      byvar_comparison_zipcode <- byvar_comparison[varname == 'zipcode']
+      byvar_comparison <- byvar_comparison[varname != 'zipcode']
+
     # Check for any mismatches between data and reference standards
+      if (nrow(byvar_comparison_zipcode[is.na(reference) | is.na(ph.data)]) > 0) {
+        print(byvar_comparison_zipcode[is.na(reference) | is.na(ph.data)])
+        warning("\u26A0\ufe0f \U0001f6a8 \u26A0\ufe0f\n",
+                "The table above shows the zipcode combinations that do not align between the reference table and your ph.data.",
+                "\nUse your discretion to decide whether you need to make changes.")
+      }
       if (nrow(byvar_comparison[is.na(reference) | is.na(ph.data)]) > 0) {
         print(byvar_comparison[is.na(reference) | is.na(ph.data)])
         stop("\n\U2620 The table above shows the varname/group combinations that do not align between the reference table and your ph.data.")
-      } else {
+      }
+
+      if(nrow(byvar_comparison[is.na(reference) | is.na(ph.data)]) == 0 &
+         nrow(byvar_comparison_zipcode[is.na(reference) | is.na(ph.data)]) == 0) {
         message("\U0001f642 All specified cat1_group and cat2_group values align with the reference standard.")
       }
 
