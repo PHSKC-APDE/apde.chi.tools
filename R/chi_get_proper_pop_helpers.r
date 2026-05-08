@@ -689,7 +689,7 @@
         )
 
         # Cities/neighborhoods and Regions
-        population_data[get(catnum) %in% c("Cities/neighborhoods", "Regions") &
+        population_data[get(catnum) %in% c("Cities/neighborhoods", "Regions", "Zip code") &
                           current_row$geo_type != 'blk', (catgroup) := geo_id]
 
         # Process gender
