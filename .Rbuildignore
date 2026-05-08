@@ -4,3 +4,5 @@
 ^LICENSE\.md$
 ^quarto_docs$
 ^data-raw$
+^\.positai$
+^\.claude$
