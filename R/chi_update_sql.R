@@ -146,7 +146,7 @@ chi_update_sql <- function(CHIestimates = NULL,
 
     existing_indicators <- DBI::dbGetQuery(conn = CHI_db_cxn,
                                            statement = glue::glue_sql("SELECT DISTINCT indicator_key FROM [PHExtractStore].[APDE{DBI::SQL(schema_suffix)}].[{DBI::SQL(table_name)}_results]
-                                                                            WHERE indicator_key IS NOT NULL"))$indicator_key
+                                                                            WHERE indicator_key IS NOT NULL", .con = CHI_db_cxn))$indicator_key
     new_indicators <- unique(CHIestimates[]$indicator_key)
     missing_indicators <- setdiff(existing_indicators, new_indicators)
 
