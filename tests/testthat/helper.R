@@ -97,7 +97,7 @@ setup_test_data <- function() {
             malignant_neoplasm = sample(c(0,1), observations, replace = TRUE, prob = c(.65, .35)),
             chi_geo_region = sample(c(NA, 'Seattle', 'South', 'East', 'North'), observations, replace = TRUE, prob = c(0.204549990021952, 0.077230093793654, 0.287367790860108, 0.428124792123994, 0.00272733320029269)), # as a categorical non factor,
             wastate = sample(c('Washington State'), observations, replace = TRUE, prob = c(1)), # as a categorical non factor,
-            `chi_age` = runif(observations, 0, 99), # continuous with uniform distribution
+            `chi_age` = pmax(0,pmin(100,round(rnorm(observations, mean = 50, sd = 25)))), # integer with normal distribution
             chi_year = year,
             race3_hispanic = sample(c(NA, 'Hispanic'), observations, replace = TRUE, prob = c(0.0392469899554314, 0.960753010044569)) # as a categorical non factor
           )
