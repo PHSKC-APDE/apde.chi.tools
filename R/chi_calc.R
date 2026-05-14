@@ -97,7 +97,7 @@ chi_calc <- function(ph.data = NULL,
   # Input validation ----
     if (is.null(ph.data)) stop("\n\U1F6D1 ph.data must be provided")
     was_imputationList <- inherits(ph.data, "imputationList")
-    if (was_imputationList) {ph.data <- suppressMessages(apde.data::make_brfss_table(ph.data))}
+    if (was_imputationList) {ph.data <- ph.data[[1]][[1]]}
     if (!is.data.frame(ph.data)) stop("\n\U1F6D1 ph.data must be a data.frame, data.table, or imputationList")
     if (nrow(ph.data) == 0) stop("\n\U1F6D1 ph.data is empty")
     if (!is.data.table(ph.data)) setDT(ph.data)
