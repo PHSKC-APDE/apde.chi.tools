@@ -84,6 +84,9 @@ chi_generate_instructions_pop <- function(mycount.data,
 
       # Set geographic type based on category
       pop.template[get(catnum) == "Cities/neighborhoods", geo_type := "hra"]
+      pop.template[get(catnum) == "Big cities", geo_type := "hra"]
+      pop.template[get(catnum) == "Washington State", geo_type := "wa"]
+      pop.template[get(catnum) == "Zip code", geo_type := "zip"]
 
       # Set race_type and group_by based on race/ethnicity variable
       pop.template[get(catvarname) == "race3", c("race_type", temp.groupby) := 'race']
@@ -105,8 +108,6 @@ chi_generate_instructions_pop <- function(mycount.data,
       # Set geographic type based on regions
       pop.template[get(catnum) == "Regions" & (is.na(geo_type) | geo_type != 'hra'),
                    geo_type := "region"]
-      pop.template[get(catnum) == "Big cities", geo_type := "hra"]
-      pop.template[get(catnum) == "Washington State", geo_type := "wa"]
     }
 
   # Handle special geographic cases ----
