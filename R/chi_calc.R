@@ -285,6 +285,11 @@ chi_calc <- function(ph.data = NULL,
                                   fancy_time = TRUE)
           }
 
+          # to address chi_year == 'character(0)' when data don't exist
+          # e.g. chi_active_met_1824 is for those 18-24, so no data for those 75+
+          # the following line ensures that chi_year represents all year properly
+          tempest[, chi_year := rads::format_time(valid_years)]
+
           # add on CHI standard columns that are from ph.instructions (in order of standard results output)----
           tempest[, indicator_key := current_row$indicator_key]
           tempest[, tab := current_row$tab]
