@@ -44,12 +44,6 @@
 #'
 #' @keywords CHI, Tableau, Production
 #'
-#' @importFrom data.table setDT copy
-#' @importFrom DBI dbConnect dbWriteTable dbGetQuery dbExistsTable Id
-#' @importFrom odbc odbc
-#' @importFrom glue glue_sql
-#' @importFrom yaml yaml.load
-#'
 #' @export
 #'
 chi_update_sql <- function(CHIestimates = NULL,
@@ -62,13 +56,13 @@ chi_update_sql <- function(CHIestimates = NULL,
   # check CHIestimates argument----
   if(is.null(CHIestimates)){stop("\n\U0001f47f The results table to push to SQL (CHIestimates) is missing ")}
   if( inherits(CHIestimates, "data.frame") == FALSE){stop("\n\U0001f47f CHIestimates must be a data.frame or a data.table.")}
-  if( inherits(CHIestimates, "data.table") == FALSE){setDT(CHIestimates)}
+  if( inherits(CHIestimates, "data.table") == FALSE){data.table::setDT(CHIestimates)}
   apde.etl::tsql_validate_field_types(ph.data = CHIestimates, field_types = unlist(chi_get_yaml()$vars))
 
   # check CHImetadata argument----
   if(is.null(CHImetadata)){stop("\n\U0001f47f The metadata table to push to SQL (CHImetadata) is missing ")}
   if( inherits(CHImetadata, "data.frame") == FALSE){stop("\n\U0001f47f CHImetadata must be a data.frame or a data.table.")}
-  if( inherits(CHImetadata, "data.table") == FALSE){setDT(CHImetadata)}
+  if( inherits(CHImetadata, "data.table") == FALSE){data.table::setDT(CHImetadata)}
   apde.etl::tsql_validate_field_types(ph.data = CHImetadata, field_types = unlist(chi_get_yaml()$metadata))
 
   # check table_name ----
@@ -167,7 +161,7 @@ chi_update_sql <- function(CHIestimates = NULL,
     # results
     DBI::dbWriteTable(conn = CHI_db_cxn,
                       name = DBI::Id(schema = paste0('APDE', schema_suffix), table = paste0(table_name, '_results')),
-                      value = as.data.frame(copy(CHIestimates)),
+                      value = as.data.frame(data.table::copy(CHIestimates)),
                       overwrite = T,
                       append = F,
                       field.types = unlist(chi_get_yaml()$vars))
@@ -175,7 +169,7 @@ chi_update_sql <- function(CHIestimates = NULL,
     # metadata
     DBI::dbWriteTable(conn = CHI_db_cxn,
                       name = DBI::Id(schema = paste0('APDE', schema_suffix), table = paste0(table_name, '_metadata')),
-                      value = as.data.frame(copy(CHImetadata)),
+                      value = as.data.frame(data.table::copy(CHImetadata)),
                       overwrite = T,
                       append = F,
                       field.types = unlist(chi_get_yaml()$metadata))
@@ -185,14 +179,14 @@ chi_update_sql <- function(CHIestimates = NULL,
     # results
     DBI::dbWriteTable(conn = CHI_db_cxn,
                       name = DBI::Id(schema = paste0('APDE', schema_suffix), table = paste0(table_name, '_results')),
-                      value = as.data.frame(copy(CHIestimates)),
+                      value = as.data.frame(data.table::copy(CHIestimates)),
                       overwrite = F,
                       append = T)
 
     # metadata
     DBI::dbWriteTable(conn = CHI_db_cxn,
                       name = DBI::Id(schema = paste0('APDE', schema_suffix), table = paste0(table_name, '_metadata')),
-                      value = as.data.frame(copy(CHImetadata)),
+                      value = as.data.frame(data.table::copy(CHImetadata)),
                       overwrite = F,
                       append = T)
   }

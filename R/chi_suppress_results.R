@@ -57,8 +57,6 @@
 #'
 #' @keywords suppression
 #'
-#' @importFrom data.table data.table is.data.table setDT fsetdiff setorder setorderv copy
-#'
 #' @examples
 #' \dontrun{
 #' set.seed(98104)
@@ -173,7 +171,7 @@ chi_suppress_results  <- function(ph.data = NULL,
       warning('\u26A0\ufe0f `secondary_exclude` is a string. It was converted so that it would work, but in the future, this might turn into an error.
               In the future, please pass unquoted commands that will resolve to a logical')
     } else {
-      where = copy(call[['secondary_exclude']])
+      where = data.table::copy(call[['secondary_exclude']])
     }
 
     e <- substitute(expr = where) # get parse tree expression `where`
@@ -214,7 +212,7 @@ chi_suppress_results  <- function(ph.data = NULL,
 
 
   # ---- Copy ph.data to avoid changing the underlying data.table due to modification by references----
-  temp.dt <- data.table::setDT(copy(ph.data))
+  temp.dt <- data.table::setDT(data.table::copy(ph.data))
 
   # ---- Check for existing suppression and caution columns ----
   if("suppression" %in% names(temp.dt)){

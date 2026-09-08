@@ -52,10 +52,8 @@
 #'
 #' @examples
 #' \dontrun{
-#' library(data.table)
-#'
 #' # Create sample data with age inconsistencies
-#' test_data <- data.table(
+#' test_data <- data.table::data.table(
 #'   cat1 = "Gender",
 #'   cat1_group = c("Female", "Male"),
 #'   cat2 = "Age",
@@ -75,8 +73,6 @@
 #'                  cat2_group])
 #' }
 #'
-#' @importFrom data.table copy fcase between setDT is.data.table as.data.table
-#' @importFrom rads lossless_convert
 #' @export
 #'
 chi_drop_illogical_ages <- function(ph.data,
@@ -93,7 +89,7 @@ chi_drop_illogical_ages <- function(ph.data,
 
   # Convert to data.table if needed
   if (!data.table::is.data.table(ph.data)) {
-    setDT(ph.data)
+    data.table::setDT(ph.data)
   } else {
     # Make copy to avoid modifying original by reference
     ph.data <- data.table::copy(ph.data)

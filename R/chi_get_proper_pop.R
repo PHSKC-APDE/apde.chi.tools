@@ -52,25 +52,17 @@
 #' For better performance, we recommended using futures for parallel processing. Here is one suggested set up:
 #'
 #' \preformatted{
-#' library(future)
-#'
 #' options(future.globals.maxSize = 3000 * 1024^2)  # this sets a 3GB limit per future
 #'
 #' num.cores <- future::availableCores() - 1 # use one less than the available cores
 #'
-#' plan(multisession(workers = num.cores[1])) # set up a multisession plan
+#' future::plan(future::multisession(workers = num.cores[1])) # set up a multisession plan
 #' }
 #'
 #' @seealso
 #' \code{\link{chi_generate_instructions_pop}} which generates the instructions used as input
 #' for this function
 #'
-#' @importFrom data.table alloc.col copy rbindlist set setkey uniqueN
-#' @importFrom qs2 qs_read qs_save
-#' @importFrom future plan
-#' @importFrom future.apply future_lapply
-#' @importFrom tools toTitleCase
-#' @importFrom progressr handlers progressor with_progress handler_progress
 #' @export
 #'
 chi_get_proper_pop <- function(pop.template = NULL,

@@ -31,11 +31,6 @@
 #'
 #' @keywords CHI, Tableau, Production
 #'
-#' @importFrom data.table setDT copy setcolorder is.data.table %between% uniqueN
-#' @importFrom glue glue
-#' @importFrom yaml read_yaml
-#' @importFrom rads round2
-#'
 #' @examples
 #' \dontrun{
 #' # Basic QA check of estimates and metadata
@@ -104,8 +99,8 @@ chi_qa_tro <- function(CHIestimates,
     return(status)
   }
 
-  CHIestimates <- data.table::setDT(copy(CHIestimates))
-  CHImetadata <- data.table::setDT(copy(CHImetadata))
+  CHIestimates <- data.table::setDT(data.table::copy(CHIestimates))
+  CHImetadata <- data.table::setDT(data.table::copy(CHImetadata))
 
   ## Check columns ----
   report_message("Checking that all column names are unique")
@@ -225,8 +220,8 @@ chi_qa_tro <- function(CHIestimates,
   }
 
   ## Set the columns in standard order ----
-  setcolorder(CHIestimates, chi_get_cols())
-  setcolorder(CHImetadata, names(unlist(chi_get_yaml()$metadata)))
+  data.table::setcolorder(CHIestimates, chi_get_cols())
+  data.table::setcolorder(CHImetadata, names(unlist(chi_get_yaml()$metadata)))
 
   ## Basic logic checks for estimates ----
 
@@ -648,7 +643,7 @@ chi_qa_tro <- function(CHIestimates,
       if(length(single_years) > 1) {
         # Count observations by year for each indicator key (only for single years)
         year_count <- unique(CHIestimates[year %in% single_years, list(year, indicator_key)])
-        setorder(year_count, indicator_key, year)
+        data.table::setorder(year_count, indicator_key, year)
 
         # For each indicator, check if there are breaks in the year sequence
         year_count[, year := as.integer(year)]

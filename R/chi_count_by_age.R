@@ -34,10 +34,6 @@
 #' \code{\link{chi_generate_instructions_pop}} which uses the output of the output
 #' of \code{chi_count_by_age}
 #'
-#' @importFrom data.table setDT rbindlist setnames setorder data.table CJ
-#' @importFrom rads calc
-#' @importFrom future.apply future_lapply
-#' @importFrom progressr handlers progressor with_progress
 #' @export
 #'
 chi_count_by_age <- function(ph.data = NULL,
@@ -66,8 +62,8 @@ chi_count_by_age <- function(ph.data = NULL,
     }
 
   # Convert inputs to data.table if they're not already ----
-    ph.data <- setDT(copy(ph.data))
-    ph.instructions <- setDT(copy(ph.instructions))
+    ph.data <- data.table::setDT(data.table::copy(ph.data))
+    ph.instructions <- data.table::setDT(data.table::copy(ph.instructions))
 
   # Create 'Overall' category if needed for crosstabs ----
     if (!"overall" %in% names(ph.data)) {
@@ -120,10 +116,10 @@ chi_count_by_age <- function(ph.data = NULL,
                  varname := "race3_hispanic"]
 
     # Extract unique values for each byvar in the actual data
-      data_byvars <- rbindlist(lapply(
+      data_byvars <- data.table::rbindlist(lapply(
         X = as.list(needed_byvars),
         FUN = function(x) {
-          data.table(
+          data.table::data.table(
             varname = x,
             group = setdiff(unique(ph.data[[x]]), NA),
             ph.data = 1
@@ -160,10 +156,10 @@ chi_count_by_age <- function(ph.data = NULL,
   # Generate counts for each row in instructions ----
     message("\U023F3 Be patient! The function is generating counts for each row of ph.instructions.")
 
-      progressr::handlers(handler_progress())
-      with_progress({
-        p <- progressor(nrow(ph.instructions))
-        count_results <- rbindlist(future_lapply(
+      progressr::handlers(progressr::handler_progress())
+      progressr::with_progress({
+        p <- progressr::progressor(nrow(ph.instructions))
+        count_results <- data.table::rbindlist(future.apply::future_lapply(
           X = as.list(seq_len(nrow(ph.instructions))),
           FUN = function(row_idx) {
             p(paste0("Processing row ", row_idx, " of ", nrow(ph.instructions) ))
@@ -202,13 +198,13 @@ chi_count_by_age <- function(ph.data = NULL,
             # Add cat1/cat2 information to results ----
               # Add cat1# info
               age_counts[, cat1 := current_instruction[["cat1"]]]
-              setnames(age_counts, primary_byvar, "cat1_group")
+              data.table::setnames(age_counts, primary_byvar, "cat1_group")
               age_counts[, cat1_varname := primary_byvar]
 
               # Add cat2# info
               age_counts[, cat2 := current_instruction[["cat2"]]]
               if (!is.na(secondary_byvar) & primary_byvar != secondary_byvar) {
-                setnames(age_counts, secondary_byvar, "cat2_group")
+                data.table::setnames(age_counts, secondary_byvar, "cat2_group")
               } else {
                 age_counts[, cat2_group := NA]
               }
@@ -232,7 +228,7 @@ chi_count_by_age <- function(ph.data = NULL,
               # noted but with the count of 0, not NA.
 
               # cat1 summary table
-              cat1_table <- data.table(
+              cat1_table <- data.table::data.table(
                 cat1 = current_instruction[["cat1"]],
                 cat1_varname = primary_byvar,
                 cat1_group = sort(setdiff(as.character(unique(ph.data[[primary_byvar]])), NA))
@@ -240,13 +236,13 @@ chi_count_by_age <- function(ph.data = NULL,
 
               # cat2 summary table
               if (!is.na(secondary_byvar)) {
-                cat2_table <- data.table(
+                cat2_table <- data.table::data.table(
                   cat2 = current_instruction[["cat2"]],
                   cat2_varname = secondary_byvar,
                   cat2_group = sort(setdiff(as.character(unique(ph.data[[secondary_byvar]])), NA))
                 )
               } else {
-                cat2_table <- data.table(
+                cat2_table <- data.table::data.table(
                   cat2 = current_instruction[["cat2"]],
                   cat2_varname = secondary_byvar,
                   cat2_group = NA_character_
@@ -270,9 +266,9 @@ chi_count_by_age <- function(ph.data = NULL,
               all_combinations <- NULL
               if (nrow(cat2_table) > 0) {
                 # For each row in cat1_table, combine with each row in cat2_table
-                all_combinations <- rbindlist(lapply(1:nrow(cat1_table), function(i) {
-                  rbindlist(lapply(1:nrow(cat2_table), function(j) {
-                    data.table(
+                all_combinations <- data.table::rbindlist(lapply(1:nrow(cat1_table), function(i) {
+                  data.table::rbindlist(lapply(1:nrow(cat2_table), function(j) {
+                    data.table::data.table(
                       cat1 = cat1_table[i]$cat1,
                       cat1_varname = cat1_table[i]$cat1_varname,
                       cat1_group = cat1_table[i]$cat1_group,
@@ -292,7 +288,7 @@ chi_count_by_age <- function(ph.data = NULL,
               }
 
               # Now add all ages to create the final cartesian product
-              all_combinations_with_age <- CJ(
+              all_combinations_with_age <- data.table::CJ(
                 combo_idx  = 1:nrow(all_combinations),
                 chi_age = 0:100,
                 unique = TRUE
@@ -337,7 +333,7 @@ chi_count_by_age <- function(ph.data = NULL,
                 chi_age, count
               )]
 
-              setorder(complete_counts, cat1_group, cat2_group, chi_age)
+              data.table::setorder(complete_counts, cat1_group, cat2_group, chi_age)
               return(complete_counts)
             } # close function within future_lapply
           ), # close future_lapply

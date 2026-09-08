@@ -32,8 +32,6 @@
 #' is also an internal function used by \code{\link{chi_generate_analysis_set}}
 #'
 #' @keywords CHI, Tableau, Production, internal
-#' @importFrom data.table setDT setorder
-#' @importFrom tidyr crossing
 
 chi_process_trends <- function(indicator_key = NULL,
                                      trend.span = NULL,
@@ -42,7 +40,7 @@ chi_process_trends <- function(indicator_key = NULL,
   last.start <- end.year-(trend.span-1)
   all.start.years <- last.start:(last.start-(trend.periods-1))
   all.end.years <- end.year:(end.year-(trend.periods-1))
-  spandt <- data.table(end = all.end.years, start = all.start.years)
-  spandt <- setorder(setDT(tidyr::crossing(data.table(indicator_key), spandt)), indicator_key, -end)
+  spandt <- data.table::data.table(end = all.end.years, start = all.start.years)
+  spandt <- data.table::setorder(data.table::setDT(tidyr::crossing(data.table::data.table(indicator_key), spandt)), indicator_key, -end)
   return(spandt)
 }
