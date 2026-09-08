@@ -69,11 +69,6 @@
 #'
 #' \code{\link{chi_generate_metadata}} for creating metadata from results
 #'
-#' @importFrom data.table setDT copy setnames setorder set .SD data.table setcolorder
-#' @importFrom rads calc round2
-#' @importFrom future.apply future_lapply
-#' @importFrom stats na.omit qnorm
-#' @import progressr
 #' @export
 #'
 #'
@@ -100,12 +95,12 @@ chi_calc <- function(ph.data = NULL,
     if (was_imputationList) {ph.data <- ph.data[[1]][[1]]}
     if (!is.data.frame(ph.data)) stop("\n\U1F6D1 ph.data must be a data.frame, data.table, or imputationList")
     if (nrow(ph.data) == 0) stop("\n\U1F6D1 ph.data is empty")
-    if (!is.data.table(ph.data)) setDT(ph.data)
+    if (!data.table::is.data.table(ph.data)) data.table::setDT(ph.data)
 
     if (is.null(ph.instructions)) stop("\n\U1F6D1 ph.instructions must be provided")
     if (!is.data.frame(ph.instructions)) stop("\n\U1F6D1 ph.instructions must be a data.frame or data.table")
     if (nrow(ph.instructions) == 0) stop("\n\U1F6D1 ph.instructions is empty")
-    if (!is.data.table(ph.instructions)) setDT(ph.instructions)
+    if (!data.table::is.data.table(ph.instructions)) data.table::setDT(ph.instructions)
 
     # Validate year range in ph.instructions
       if (nrow(ph.instructions[end > max(ph.data[['chi_year']], na.rm = T), ]) > 0){
@@ -156,7 +151,7 @@ chi_calc <- function(ph.data = NULL,
     }
 
   # Check to make sure all variables needed exist in the data ----
-  neededbyvars <- unique(na.omit(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)))
+  neededbyvars <- unique(stats::na.omit(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)))
 
   # Handle the race3/race3_hispanic relationship
   if("race3" %in% neededbyvars & !"race3_hispanic" %in% neededbyvars) {
@@ -169,7 +164,7 @@ chi_calc <- function(ph.data = NULL,
     message("\U00002139 Note: Adding 'race3' as a required variable because 'race3_hispanic' is present. These two variables work together to represent race/ethnicity.")
   }
 
-  neededvars <- unique(na.omit(c(ph.instructions$indicator_key, neededbyvars)))
+  neededvars <- unique(stats::na.omit(c(ph.instructions$indicator_key, neededbyvars)))
 
   missingvars <- setdiff(neededvars, names(ph.data))
   if(length(missingvars) > 0 ){
@@ -192,15 +187,15 @@ chi_calc <- function(ph.data = NULL,
       }
 
     # Only validate CHI variables
-      unique_byvars <- unique(na.omit(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)))
+      unique_byvars <- unique(stats::na.omit(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)))
       unique_byvars <- gsub('race3_hispanic', 'race3', unique_byvars) # needed because of of annoyance of race3 defined by two distinct variables
       stdbyvars <- apde.etl::chi_standard_varnames[varname %in% unique_byvars]
       stdbyvars <- stdbyvars[!varname %in% non_chi_byvars][, list(varname, group, keepme, reference = 1)]
       stdbyvars[group %in% c("Hispanic", 'Non-Hispanic') & varname == 'race3', varname := 'race3_hispanic'] # necessary because race3 & Hispanic must be two distinct variables in raw data
 
-      phbyvars <- rbindlist(lapply(
+      phbyvars <- data.table::rbindlist(lapply(
         X=as.list(chi_byvars),
-        FUN = function(X){data.table::data.table(varname = X, group = unique(na.omit(ph.data[[X]])), ph.data = 1)}))
+        FUN = function(X){data.table::data.table(varname = X, group = unique(stats::na.omit(ph.data[[X]])), ph.data = 1)}))
 
     # Skip validation if there are no CHI variables to validate after excluding non_chi_byvars
       if(nrow(phbyvars) > 0 && nrow(stdbyvars) > 0) {
@@ -235,7 +230,7 @@ chi_calc <- function(ph.data = NULL,
           if(length(tempbv2) == 0){tempbv2 = NA}
 
           # create variables of interest used in calc function below
-          tempbv <- unique(na.omit(c(tempbv1, tempbv2)))
+          tempbv <- unique(stats::na.omit(c(tempbv1, tempbv2)))
           tempend <- current_row$end
           tempstart <- current_row$start
           temptab <- current_row$tab
@@ -246,7 +241,7 @@ chi_calc <- function(ph.data = NULL,
 
           # Keep only necessary columns for speed / efficiency (only for non-survey data)
           if(!inherits(ph.data, 'dtsurvey') && !inherits(ph.data, 'imputationList')) {
-            needed_cols <- unique(na.omit(c(temp_indicator_key, tempbv, "chi_year", "chi_geo_kc", "wastate")))
+            needed_cols <- unique(stats::na.omit(c(temp_indicator_key, tempbv, "chi_year", "chi_geo_kc", "wastate")))
             data_4_calc <- ph.data[, .SD, .SDcols = intersect(names(ph.data), needed_cols)]
           }
 
@@ -293,7 +288,7 @@ chi_calc <- function(ph.data = NULL,
           # add on CHI standard columns that are from ph.instructions (in order of standard results output)----
           tempest[, indicator_key := current_row$indicator_key]
           tempest[, tab := current_row$tab]
-          setnames(tempest, 'chi_year', 'year')
+          data.table::setnames(tempest, 'chi_year', 'year')
           tempest[, cat1 := current_row$cat1]
           data.table::setnames(tempest, current_row$cat1_varname, 'cat1_group')
           tempest[, cat1_varname := current_row$cat1_varname]
@@ -326,12 +321,12 @@ chi_calc <- function(ph.data = NULL,
 
     # Batch process with future_lapply ----
       message("\U023F3 Be patient! The function is generating estimates for each row of ph.instructions.")
-      progressr::handlers(handler_progress())
-      with_progress({
-        p <- progressor(nrow(ph.instructions))
+      progressr::handlers(progressr::handler_progress())
+      progressr::with_progress({
+        p <- progressr::progressor(nrow(ph.instructions))
 
-        tempCHIest <- rbindlist(
-          future_lapply(
+        tempCHIest <- data.table::rbindlist(
+          future.apply::future_lapply(
             X = seq_len(nrow(ph.instructions)),
             FUN = process_instruction_row
           ),
@@ -378,7 +373,7 @@ chi_calc <- function(ph.data = NULL,
       # bounds that don't exceed the logical limits while maintaining the specified confidence level
 
       # Calculate z-value based on the provided confidence interval
-      z_value <- qnorm(1-0.5*(1-ci)) # compute once and use below
+      z_value <- stats::qnorm(1-0.5*(1-ci)) # compute once and use below
       z_squared <- z_value^2 # computer once and use below
       idx <- tempCHIest$result %in% c(0, 1) & tempCHIest$denominator > 10 # again, computer once and use below
 
@@ -404,19 +399,19 @@ chi_calc <- function(ph.data = NULL,
       tempCHIest <- tempCHIest[!dropme, on = list(cat2_varname = varname, cat2_group = group)]
 
     # change all NaN to a normal NA or SQL will vomit ----
-    for(col in names(tempCHIest)) set(tempCHIest, i=which(is.nan(tempCHIest[[col]])), j=col, value=NA)
+    for(col in names(tempCHIest)) data.table::set(tempCHIest, i=which(is.nan(tempCHIest[[col]])), j=col, value=NA)
 
     # apply rounding rules for proportions----
     if(rate == FALSE){
-      tempCHIest[, c("result", "lower_bound", "upper_bound", "rse") := lapply(.SD, round2, 3), .SDcols = c("result", "lower_bound", "upper_bound", "rse")]
-      tempCHIest[, c("se") := lapply(.SD, round2, 4), .SDcols = c("se")]
+      tempCHIest[, c("result", "lower_bound", "upper_bound", "rse") := lapply(.SD, rads::round2, 3), .SDcols = c("result", "lower_bound", "upper_bound", "rse")]
+      tempCHIest[, c("se") := lapply(.SD, rads::round2, 4), .SDcols = c("se")]
     }
 
     # apply rounding rules for rates----
     if(rate == TRUE){
-      tempCHIest[, c("result", "lower_bound", "upper_bound") := lapply(.SD, round2, 1), .SDcols = c("result", "lower_bound", "upper_bound")]
-      tempCHIest[, c("rse") := lapply(.SD, round2, 3), .SDcols = c("rse")]
-      tempCHIest[, c("se") := lapply(.SD, round2, 2), .SDcols = c("se")]
+      tempCHIest[, c("result", "lower_bound", "upper_bound") := lapply(.SD, rads::round2, 1), .SDcols = c("result", "lower_bound", "upper_bound")]
+      tempCHIest[, c("rse") := lapply(.SD, rads::round2, 3), .SDcols = c("rse")]
+      tempCHIest[, c("se") := lapply(.SD, rads::round2, 2), .SDcols = c("se")]
     }
 
     # prevent negative lower CI ----
@@ -460,10 +455,10 @@ chi_calc <- function(ph.data = NULL,
 
     tempCHIest <- tempCHIest[, cat1 := factor(cat1, levels = c("King County", sort(setdiff(unique(tempCHIest$cat1), "King County"))) )]
     tempCHIest <- tempCHIest[, tab := factor(tab, levels = c(c("_kingcounty","demgroups", "trends"),  sort(setdiff(unique(tempCHIest$tab), c("_kingcounty","demgroups", "trends")))) )]
-    setorder(tempCHIest, indicator_key, tab, -year, cat1, cat1_group, cat2, cat2_group)
+    data.table::setorder(tempCHIest, indicator_key, tab, -year, cat1, cat1_group, cat2, cat2_group)
     tempCHIest[, cat1 := as.character(cat1)]
     tempCHIest[, tab := as.character(tab)]
-    setcolorder(tempCHIest, c('data_source', 'indicator_key', 'level'))
+    data.table::setcolorder(tempCHIest, c('data_source', 'indicator_key', 'level'))
 
   # return the CHI table ----
   return(tempCHIest)

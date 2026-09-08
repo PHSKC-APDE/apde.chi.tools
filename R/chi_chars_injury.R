@@ -46,12 +46,9 @@
 #' @examples
 #' \dontrun{
 #' # Example of how to run with future_lapply for memory efficiency
-#' library(future)
-#' library(future.apply)
+#' future::plan(future::multisession, workers = future::availableCores() - 1)
 #'
-#' plan(multisession, workers = future::availableCores() - 1)
-#'
-#' countsINJURY <- rbindlist(future_lapply(VectorOfIndicators, function(indicator) {
+#' countsINJURY <- data.table::rbindlist(future.apply::future_lapply(VectorOfIndicators, function(indicator) {
 #'   chi_chars_injury(
 #'     ph.indicator = indicator,
 #'     ph.data = chars,
@@ -60,7 +57,7 @@
 #'     def = 'narrow')
 #' }, future.seed = TRUE))
 #'
-#' plan(sequential)
+#' future::plan(future::sequential)
 #'
 #' }
 #'
@@ -72,9 +69,6 @@
 #'
 #' \code{\link{chi_generate_tro_shell}}, which creates ph.instructions
 #'
-#' @import data.table
-#' @import rads
-#' @importFrom utils capture.output
 #' @export
 chi_chars_injury <- function(ph.indicator = NA,
                              ph.data = NULL,
@@ -92,7 +86,7 @@ chi_chars_injury <- function(ph.indicator = NA,
       stop(paste0("\n\U1F6D1 ", arg_name, " must be specified."))
     }
     if (is.data.frame(arg_value)) {
-      setDT(arg_value)
+      data.table::setDT(arg_value)
     } else if (!is.data.frame(arg_value)) {
       stop(paste0("\n\U1F6D1 ", arg_name, " must be a data.table or data.frame."))
     }
@@ -319,7 +313,7 @@ chi_chars_injury <- function(ph.indicator = NA,
 
   result <- result[, list(indicator_key, year, chi_age = as.integer(chi_age), hospitalizations, tab, cat1, cat1_varname, cat1_group, cat2, cat2_varname, cat2_group)]
 
-  setorder(result, tab, year, cat1, cat1_varname, cat1_group, cat2, cat2_varname, cat2_group, chi_age, hospitalizations)
+  data.table::setorder(result, tab, year, cat1, cat1_varname, cat1_group, cat2, cat2_varname, cat2_group, chi_age, hospitalizations)
 
   # Identify instructions that caused all data to be filtered out ----
   # this helps diagnose data quality issues, either in ph.instructions or in ph.data
@@ -334,15 +328,15 @@ chi_chars_injury <- function(ph.indicator = NA,
     result_combos[cat2_varname == 'race3' & cat2 == 'Ethnicity', cat2_varname := 'race3_hispanic']
 
     # Use fsetdiff to find instructions that didn't produce results
-    unused_instructions <- fsetdiff(
-      setcolorder(instructions[, start := pmax(2012, start)], names(result_combos)),
+    unused_instructions <- data.table::fsetdiff(
+      data.table::setcolorder(instructions[, start := pmax(2012, start)], names(result_combos)),
       result_combos
     )
 
     # Sort for warning display
-    setorder(unused_instructions, indicator_key, tab, cat1, cat1_varname, cat2, cat2_varname, start, end)
+    data.table::setorder(unused_instructions, indicator_key, tab, cat1, cat1_varname, cat2, cat2_varname, start, end)
   } else {
-    unused_instructions <- copy(instructions)
+    unused_instructions <- data.table::copy(instructions)
   }
 
   # Generate warnings and attach to result
@@ -372,7 +366,7 @@ chi_chars_injury <- function(ph.indicator = NA,
   result[, year := gsub("^(\\d{4})-(\\1)$", "\\1", year)] # \\1 is a back reference to what was found before hyphen
 
   # Order columns ----
-  setcolorder(result, c("indicator_key", "year", "chi_age", "hospitalizations", "tab", "cat1", "cat1_varname", "cat1_group", "cat2", "cat2_varname", "cat2_group"))
+  data.table::setcolorder(result, c("indicator_key", "year", "chi_age", "hospitalizations", "tab", "cat1", "cat1_varname", "cat1_group", "cat2", "cat2_varname", "cat2_group"))
 
   # Return data.table ----
   return(result)
