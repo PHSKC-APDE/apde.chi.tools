@@ -48,7 +48,7 @@
 #'
 #' @keywords CHI, Tableau, Production, internal
 #'
-#' @importFrom data.table setDT rbindlist setcolorder `:=`
+#' @importFrom data.table setDT rbindlist setcolorder
 #' @import dtsurvey
 #' @import future
 #' @import future.apply

@@ -240,9 +240,8 @@ chi_chars_injury <- function(ph.indicator = NA,
         ph.data = data_subset,
         intent = indicator_def$intent,
         mechanism = indicator_def$mechanism,
-        group_by = group_by_arg,
-        def = def,
-        kingco = FALSE  # Already filtered data above
+        by = group_by_arg,
+        def = def
       )
 
       # Return NULL if no results

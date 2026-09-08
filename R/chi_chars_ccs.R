@@ -217,8 +217,7 @@ chi_chars_ccs <- function(ph.indicator = NA,
       midlevel = midlevel_arg,
       detailed = detailed_arg,
       icdcol = 'diag1',
-      group_by = group_by_arg,
-      kingco = FALSE  # Already filtered data above, so always FALSE
+      by = group_by_arg
     )
 
     # Format the results ----
