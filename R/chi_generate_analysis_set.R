@@ -50,7 +50,7 @@
 #' bypassing the database connection. The data must comply with the latest CHI
 #' standard, which can be assessed/tested with the \code{\link{chi_qa_tro}} function.
 #'
-#' @importFrom data.table setDT setorderv copy := .SD fifelse fsetdiff .GRP
+#' @importFrom data.table setDT setorderv copy .SD fifelse fsetdiff .GRP
 #' @importFrom DBI dbConnect dbDisconnect dbExistsTable dbGetQuery
 #' @importFrom odbc odbc
 #'

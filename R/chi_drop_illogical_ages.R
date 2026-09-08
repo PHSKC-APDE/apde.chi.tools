@@ -75,7 +75,7 @@
 #'                  cat2_group])
 #' }
 #'
-#' @importFrom data.table copy := fcase between setDT is.data.table as.data.table
+#' @importFrom data.table copy fcase between setDT is.data.table as.data.table
 #' @importFrom rads lossless_convert
 #' @export
 #'

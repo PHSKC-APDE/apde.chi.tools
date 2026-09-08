@@ -16,7 +16,7 @@ testthat::test_that("does not issue zip code warning when all zip codes are in e
   set.seed(100)
   DT <- setup_test_data()$my.death_data
   DT[, zipcode := death_zip_code]
-  validZips <- chi_standard_varnames[varname == "zipcode",group]
+  validZips <- apde.etl::chi_standard_varnames[varname == "zipcode",group]
   DT <- DT[zipcode %in% validZips,]
   missingZips <- validZips[!(validZips %in% DT[,zipcode])]
   #add missing zips to test warning

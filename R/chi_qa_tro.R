@@ -34,7 +34,7 @@
 #' @importFrom data.table setDT copy setcolorder is.data.table %between% uniqueN
 #' @importFrom glue glue
 #' @importFrom yaml read_yaml
-#' @importFrom rads tsql_validate_field_types round2
+#' @importFrom rads round2
 #'
 #' @examples
 #' \dontrun{
@@ -160,10 +160,10 @@ chi_qa_tro <- function(CHIestimates,
   ## Confirm variable class ----
   report_message("Checking that variables are of the proper class")
   report_message("Validating CHI estimates: ")
-  rads::tsql_validate_field_types(ph.data = CHIestimates, field_types = unlist(chi_get_yaml()$vars)) # check CHI estimate table
+  apde.etl::tsql_validate_field_types(ph.data = CHIestimates, field_types = unlist(chi_get_yaml()$vars)) # check CHI estimate table
 
   report_message(paste("", "Validating CHI metadata: ", sep = "\n"))
-  rads::tsql_validate_field_types(ph.data = CHImetadata, field_types = unlist(chi_get_yaml()$metadata)) # check CHI metadata table
+  apde.etl::tsql_validate_field_types(ph.data = CHImetadata, field_types = unlist(chi_get_yaml()$metadata)) # check CHI metadata table
   if(verbose) message(paste("", "", sep = "\n"))
 
   ## Check for missingness ----
@@ -510,7 +510,7 @@ chi_qa_tro <- function(CHIestimates,
   }
 
   # Get reference data
-  ref_combos <- chi_standard_varnames[, list(cat, varname, group)]
+  ref_combos <- apde.etl::chi_standard_varnames[, list(cat, varname, group)]
 
   # Address race3/race4 insanity again
   # The CHI viz needs / wants race3 & race4 cat values to be 'Race/ethnicity' but only on trends tab, otherwise it is 'Race'
@@ -536,7 +536,7 @@ chi_qa_tro <- function(CHIestimates,
         warning("\U00026A0 \U0001F4E3 WARNING: Found non-standard cat1 combinations:\n",
                 paste0(" - cat1='", cat1_invalid$cat, "', cat1_group='",
                        cat1_invalid$group, "'", collapse = "\n"),
-                "\nThese combinations are not found in chi_standard_varnames reference table.")
+                "\nThese combinations are not found in apde.etl::chi_standard_varnames reference table.")
       }
     }
 
@@ -554,7 +554,7 @@ chi_qa_tro <- function(CHIestimates,
         warning("\U00026A0 \U0001F4E3 WARNING: Found non-standard cat2 combinations:\n",
                 paste0(" - cat2='", cat2_invalid$cat, "', cat2_group='",
                        cat2_invalid$group, "'", collapse = "\n"),
-                "\nThese combinations are not found in chi_standard_varnames reference table.")
+                "\nThese combinations are not found in apde.etl::chi_standard_varnames reference table.")
       }
     }
   } else {
@@ -575,7 +575,7 @@ chi_qa_tro <- function(CHIestimates,
                 paste0(" - cat1='", cat1_invalid$cat, "', cat1_varname='",
                        cat1_invalid$varname, "', cat1_group='", cat1_invalid$group, "'",
                        collapse = "\n"),
-                "\nThese combinations are not found in chi_standard_varnames reference table.")
+                "\nThese combinations are not found in apde.etl::chi_standard_varnames reference table.")
       }
     }
 
@@ -595,7 +595,7 @@ chi_qa_tro <- function(CHIestimates,
                 paste0(" - cat2='", cat2_invalid$cat, "', cat2_varname='",
                        cat2_invalid$varname, "', cat2_group='", cat2_invalid$group, "'",
                        collapse = "\n"),
-                "\nThese combinations are not found in chi_standard_varnames reference table.")
+                "\nThese combinations are not found in apde.etl::chi_standard_varnames reference table.")
       }
     }
   }
