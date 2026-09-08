@@ -48,7 +48,9 @@
 #' # Example of how to run with future_lapply for memory efficiency
 #' future::plan(future::multisession, workers = future::availableCores() - 1)
 #'
-#' countsINJURY <- data.table::rbindlist(future.apply::future_lapply(VectorOfIndicators, function(indicator) {
+#' countsINJURY <- data.table::rbindlist(future.apply::future_lapply(
+#'                                         X = VectorOfIndicators,
+#'                                         FUN = function(indicator) {
 #'   chi_chars_injury(
 #'     ph.indicator = indicator,
 #'     ph.data = chars,

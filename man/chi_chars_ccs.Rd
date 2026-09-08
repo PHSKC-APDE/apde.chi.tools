@@ -58,12 +58,11 @@ age to perform age-standardization.
 \examples{
 \dontrun{
 # Example of how to run with future_lapply for memory efficiency
-library(future)
-library(future.apply)
+future::plan(future::multisession, workers = future::availableCores() - 1)
 
-plan(multisession, workers = future::availableCores() - 1)
-
-countsCCS <- rbindlist(future_lapply(VectorOfIndicators, function(indicator) {
+countsCCS <- data.table::rbindlist(future.apply::future_lapply(
+                                     X = VectorOfIndicators,
+                                     FUN = function(indicator) {
   chi_chars_ccs(
     ph.indicator = indicator,
     ph.data = chars,
@@ -71,7 +70,7 @@ countsCCS <- rbindlist(future_lapply(VectorOfIndicators, function(indicator) {
     chars.defs = chars.defs)
 }, future.seed = TRUE))
 
-plan(sequential)
+future::plan(future::sequential)
 
 }
 
