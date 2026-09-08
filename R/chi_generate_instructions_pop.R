@@ -39,8 +39,6 @@
 #'
 #' \code{\link{chi_get_proper_pop}} which uses the output of this function
 #'
-#' @importFrom data.table copy setorder tstrsplit
-#' @importFrom tools toTitleCase
 #' @export
 #'
 chi_generate_instructions_pop <- function(mycount.data,
@@ -53,18 +51,18 @@ chi_generate_instructions_pop <- function(mycount.data,
 
     if (!is.data.frame(mycount.data)) {
       stop("\n\U1F6D1 mycount.data must be a data.frame or data.table")
-    } else {mycount.data <- setDT(copy(mycount.data))}
+    } else {mycount.data <- data.table::setDT(data.table::copy(mycount.data))}
 
     povgeo <- match.arg(povgeo)
 
   # Initial data preparation ----
     # Create a template with only the necessary columns to avoid duplicates
-    pop.template <- copy(mycount.data)
-    pop.template <- unique(copy(pop.template)[, list(year, cat1, cat1_varname, cat2, cat2_varname, tab)])
+    pop.template <- data.table::copy(mycount.data)
+    pop.template <- unique(data.table::copy(pop.template)[, list(year, cat1, cat1_varname, cat2, cat2_varname, tab)])
 
   # Process year ranges ----
     # Split year ranges (e.g., "2019-2021") into start and stop years
-    pop.template[, c("start", "stop") := tstrsplit(year, split = '-')]
+    pop.template[, c("start", "stop") := data.table::tstrsplit(year, split = '-')]
     # For single years, set the stop year equal to the start year
     pop.template[is.na(stop), stop := start]
 

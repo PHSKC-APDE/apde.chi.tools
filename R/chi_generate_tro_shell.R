@@ -55,10 +55,6 @@
 #'
 #' @keywords CHI, Tableau, Production
 #'
-#' @importFrom data.table rbindlist
-#' @import future
-#' @import future.apply
-#'
 #' @export
 #'
 chi_generate_tro_shell <- function(ph.analysis_set,
@@ -90,7 +86,7 @@ chi_generate_tro_shell <- function(ph.analysis_set,
 
 
   # Convert to data.table if needed
-  if (!is.data.table(ph.analysis_set)) setDT(ph.analysis_set)
+  if (!data.table::is.data.table(ph.analysis_set)) data.table::setDT(ph.analysis_set)
 
   # parameterization checks
   if("x" %in% ph.analysis_set$trends & (is.null(trend.span) | is.null(trend.periods))) {stop("you have indicated that a trends analysis is to be conducted, but have not indicated both the span and number of periods for this analysis.")}
@@ -104,7 +100,7 @@ chi_generate_tro_shell <- function(ph.analysis_set,
   # apply the template generating function
   # generate vector of sets
   sets <- unique(ph.analysis_set$set)
-  template <- rbindlist(
+  template <- data.table::rbindlist(
     lapply(X = sets,
            FUN = chi_process_nontrends, ph.analysis_set = ph.analysis_set))
 

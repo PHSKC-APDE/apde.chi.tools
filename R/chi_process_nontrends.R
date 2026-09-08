@@ -48,13 +48,6 @@
 #'
 #' @keywords CHI, Tableau, Production, internal
 #'
-#' @importFrom data.table setDT rbindlist setcolorder
-#' @import dtsurvey
-#' @import future
-#' @import future.apply
-#' @importFrom tidyr crossing
-#' @importFrom rads string_clean
-#'
 chi_process_nontrends <- function(ph.analysis_set = NULL,
                                   myset = NULL){
 
@@ -63,16 +56,16 @@ chi_process_nontrends <- function(ph.analysis_set = NULL,
   subtabs = setdiff(names(subsets), c('set', 'set_indicator_keys', 'cat1', 'cat1_varname', 'crosstabs')) # identify the tabs of interest
 
   # create table for all tabs except crosstabs
-  tempy <- rbindlist(lapply(as.list(seq(1, length(subtabs))),
+  tempy <- data.table::rbindlist(lapply(as.list(seq(1, length(subtabs))),
                             FUN = function(subtab){
                               tempx <- subsets[get(subtabs[subtab]) == 'x',
                                                list(tab = subtabs[subtab], cat1, cat1_varname, cat2 = NA_character_, cat2_varname = NA_character_)]
-                              tempx <- setDT(tidyr::crossing(tempx, data.table(indicator_key = sub_indicators)))
+                              tempx <- data.table::setDT(tidyr::crossing(tempx, data.table::data.table(indicator_key = sub_indicators)))
 
                             }))
 
   # crosstabs are a bit more complicated
-  sub_crosstabs = setDT(tidyr::crossing(
+  sub_crosstabs = data.table::setDT(tidyr::crossing(
     unique(subsets[crosstabs == 'x', list(cat1, cat1_varname)]),
     unique(subsets[crosstabs == 'x', list(cat2 = cat1, cat2_varname = cat1_varname)]) ))
   sub_crosstabs <- sub_crosstabs[cat1 == 'King County' | cat1_varname != cat2_varname]
@@ -83,7 +76,7 @@ chi_process_nontrends <- function(ph.analysis_set = NULL,
   sub_crosstabs <- sub_crosstabs[!(grepl('_aic_', cat1_varname) & grepl('_aic_', cat2_varname))] # do not want race_aic x race_aic
 
   sub_crosstabs[, tab := 'crosstabs']
-  sub_crosstabs <- setDT(tidyr::crossing(sub_crosstabs, data.table(indicator_key = sub_indicators)))
+  sub_crosstabs <- data.table::setDT(tidyr::crossing(sub_crosstabs, data.table::data.table(indicator_key = sub_indicators)))
 
 
   # append crosstabs
@@ -96,7 +89,7 @@ chi_process_nontrends <- function(ph.analysis_set = NULL,
   tempy[cat2_varname %in% c('race3', 'race4') & tab != 'trends', cat2 := 'Race'] # 'Race/ethnicity' is only for trends
   tempy[cat1_varname %in% c('race3', 'race4', 'race3_hispanic') & tab == 'trends', cat1 := 'Race/ethnicity'] # 'Race/ethnicity' is only for trends
   tempy[cat2_varname %in% c('race3', 'race4', 'race3_hispanic') & tab == 'trends', cat2 := 'Race/ethnicity'] # 'Race/ethnicity' is only for trends
-  setcolorder(tempy, 'indicator_key')
+  data.table::setcolorder(tempy, 'indicator_key')
   rads::string_clean(tempy)
   tempy <- tempy[!(tab == 'crosstabs' & cat1 == 'King County' & cat2 != 'King County')] # only legit xtab for KC is KC by itself
   tempy[tab == 'crosstabs' & cat2 == 'King County', `:=` (cat2 = 'Overall', cat2_varname = 'overall')]

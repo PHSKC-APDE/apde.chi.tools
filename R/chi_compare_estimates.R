@@ -48,7 +48,6 @@
 #'   \item Diagnostic information (bounds, numerators, denominators, standard errors)
 #' }
 #'
-#' @importFrom data.table data.table setnames setDT copy
 #' @export
 #'
 chi_compare_estimates <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = NULL, META = NULL){
@@ -63,15 +62,15 @@ chi_compare_estimates <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.y
     # Check if objects are data.frames & make into data.table if need be
       if(is.data.frame(OLD) == FALSE){
         stop("'OLD' must be a data.frame or a data.table")
-      }else{OLD <- data.table::setDT(copy(OLD))}
+      }else{OLD <- data.table::setDT(data.table::copy(OLD))}
 
       if(is.data.frame(NEW) == FALSE){
         stop("'NEW' must be a data.frame or a data.table")
-      }else{NEW <- data.table::setDT(copy(NEW))}
+      }else{NEW <- data.table::setDT(data.table::copy(NEW))}
 
       if(is.data.frame(META) == FALSE){
         stop("'META' must be a data.frame or a data.table")
-      }else{META <- data.table::setDT(copy(META))}
+      }else{META <- data.table::setDT(data.table::copy(META))}
 
   # Process data ----
     # If metadata provided, add it to the columns to help interpret the output
@@ -80,17 +79,17 @@ chi_compare_estimates <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.y
       } else { NEW[, result_type := "Metadata not provided"]}
 
     # Merge old and new data based on identifiers
-      comp <- merge(copy(OLD[year == OLD.year]),
-                    copy(NEW[year == NEW.year]),
+      comp <- merge(data.table::copy(OLD[year == OLD.year]),
+                    data.table::copy(NEW[year == NEW.year]),
                     by = c("indicator_key", "tab",
                            "cat1", "cat1_group", "cat1_varname",
                            "cat2", "cat2_group", "cat2_varname"),
                     all = T)
 
     # calculate percent differences between old (x) and new(y)
-      comp[, relative.diff := round2(abs((result.x - result.y) / result.x)*100, 1)]
-      comp[grepl("mean|proportion", result_type, ignore.case = T), absolute.diff := round2(abs(result.x - result.y)*100, 1)]
-      comp[grepl("rate", result_type, ignore.case = T), absolute.diff := round2(abs(result.x - result.y), 1)]
+      comp[, relative.diff := rads::round2(abs((result.x - result.y) / result.x)*100, 1)]
+      comp[grepl("mean|proportion", result_type, ignore.case = T), absolute.diff := rads::round2(abs(result.x - result.y)*100, 1)]
+      comp[grepl("rate", result_type, ignore.case = T), absolute.diff := rads::round2(abs(result.x - result.y), 1)]
       comp <- comp[!is.na(absolute.diff)]  # drop if absolute difference is NA
 
     # order variables
@@ -104,11 +103,11 @@ chi_compare_estimates <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.y
                        "se.x", "se.y")]
 
     # rename suffixes
-      setnames(comp, names(comp), gsub("\\.x$", ".OLD", names(comp)))
-      setnames(comp, names(comp), gsub("\\.y$", ".NEW", names(comp)))
+      data.table::setnames(comp, names(comp), gsub("\\.x$", ".OLD", names(comp)))
+      data.table::setnames(comp, names(comp), gsub("\\.y$", ".NEW", names(comp)))
 
     # order based on percent difference
-      setorder(comp, -absolute.diff)
+      data.table::setorder(comp, -absolute.diff)
 
   # Identify notable changes based on Joie's criteria ----
     # 1) absolute 3-point difference (for any indicators with KC estimate >=5% or RATE >=5)

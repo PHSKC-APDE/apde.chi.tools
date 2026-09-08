@@ -23,7 +23,7 @@
   mock_chars[injury_mechanism == 'poisoning', .N, .(injury_intent, injury_mechanism)]
 
 # Create mock_instructions ----
-mock_instructions <- data.table(
+mock_instructions <- data.table::data.table(
   indicator_key = rep(c("hos1901000_v1", "hos1901000_v2"), 3),
   tab = rep(c("trends", "_wastate"), each = 3),
   cat1 = rep("Ethnicity", 6),
@@ -35,7 +35,7 @@ mock_instructions <- data.table(
 )
 
 # Create mock_chars_def ----
-mock_chars_def <- data.table(
+mock_chars_def <- data.table::data.table(
   indicator_name = c("Fall injuries (all ages)", "Fall injuries (children)"),
   indicator_key = c("hos1901000_v1", "hos1901000_v2"),
   intent = c("unintentional", "unintentional"),
@@ -45,7 +45,7 @@ mock_chars_def <- data.table(
 )
 
 # Add poisoning self-harm indicator
-mock_chars_def <- rbind(mock_chars_def, data.table(
+mock_chars_def <- rbind(mock_chars_def, data.table::data.table(
   indicator_name = "Self-harm poisoning",
   indicator_key = "hos1902000_v1",
   intent = "intentional", # Changed from intentional_self_harm to match intent column names
@@ -55,7 +55,7 @@ mock_chars_def <- rbind(mock_chars_def, data.table(
 ))
 
 # Add row to instructions for self-harm
-mock_instructions <- rbind(mock_instructions, data.table(
+mock_instructions <- rbind(mock_instructions, data.table::data.table(
   indicator_key = "hos1902000_v1",
   tab = "trends",
   cat1 = "Ethnicity",
@@ -93,7 +93,7 @@ test_that("chi_chars_injury validates inputs correctly", {
                "not found in ph.instructions")
 
   # Test invalid column in instructions
-  bad_instructions <- copy(mock_instructions)
+  bad_instructions <- data.table::copy(mock_instructions)
   bad_instructions[1, cat1_varname := "not_a_column"]
 
   expect_error(chi_chars_injury(ph.indicator = "hos1901000_v1",
@@ -122,7 +122,7 @@ test_that("chi_chars_injury processes fall injury data correctly", {
   )
 
   # Check if result has expected structure
-  expect_true(is.data.table(result))
+  expect_true(data.table::is.data.table(result))
   expect_equal(names(result), expectedCols)
 
   # Check that data matches the fall/unintentional criteria
@@ -132,7 +132,7 @@ test_that("chi_chars_injury processes fall injury data correctly", {
   expect_gt(max(as.numeric(result$chi_age)), 50) # is for all ages, so should definitely have some > 50 yrs old
 
   # Check if have consistent number of rows per age
-  expect_equal(uniqueN(result[, .N, chi_age]$N), 1)
+  expect_equal(data.table::uniqueN(result[, .N, chi_age]$N), 1)
 })
 
 # xxxTest function handles age filtering correctly ----
@@ -146,14 +146,14 @@ test_that("chi_chars_injury handles age filtering correctly", {
   )
 
   # Check if result has expected structure
-  expect_true(is.data.table(result))
+  expect_true(data.table::is.data.table(result))
   expect_equal(names(result), expectedCols)
 
   # Check correct age range
   expect_true(all(result$chi_age %in% 0:17))
 
   # Check if have the same number of observations for each age
-  expect_equal(uniqueN(result[, .N, chi_age]$N), 1)
+  expect_equal(data.table::uniqueN(result[, .N, chi_age]$N), 1)
 })
 
 # Test function handles different injury types correctly ----
@@ -167,7 +167,7 @@ test_that("chi_chars_injury handles different injury types correctly", {
   )
 
   # Check if result has expected structure
-  expect_true(is.data.table(result))
+  expect_true(data.table::is.data.table(result))
   expect_equal(names(result), expectedCols)
 
   # Check that we have counts > 0
@@ -198,8 +198,8 @@ test_that("chi_chars_injury handles 'def' parameter correctly", {
   )
 
   # Both should have valid structure
-  expect_true(is.data.table(narrow_result))
-  expect_true(is.data.table(broad_result))
+  expect_true(data.table::is.data.table(narrow_result))
+  expect_true(data.table::is.data.table(broad_result))
 
   # Results can be the same in our test data, but function should run without error
   expect_true(TRUE)
@@ -219,14 +219,14 @@ test_that("chi_chars_injury handles WA state filtering correctly", {
   )
 
   # Check if result has expected structure
-  expect_true(is.data.table(result))
+  expect_true(data.table::is.data.table(result))
   expect_equal(names(result), expectedCols)
 
   # Check that all rows are for WA state
   expect_true(all(result$tab == "_wastate"))
 
   # Check if have the same number of observations for each age
-  expect_equal(uniqueN(result[, .N, chi_age]$N), 1)
+  expect_equal(data.table::uniqueN(result[, .N, chi_age]$N), 1)
 })
 
 # Test processing multiple instructions ----
@@ -243,25 +243,25 @@ test_that("chi_chars_injury processes multiple instructions correctly", {
   )
 
   # Check if result has expected structure with multiple rows
-  expect_true(is.data.table(result))
+  expect_true(data.table::is.data.table(result))
   expect_equal(names(result), expectedCols)
   expect_true(nrow(result) > 0)
 
   # confirm we processed the all of the instruction sets
-  expect_equal(uniqueN(result[, .(indicator_key, tab, cat1_varname, cat2_varname)]),
+  expect_equal(data.table::uniqueN(result[, .(indicator_key, tab, cat1_varname, cat2_varname)]),
                nrow(multiple_instructions))
 
   # Check if have the same number of observations for each age
-  expect_equal(uniqueN(result[, .N, chi_age]$N), 1)
+  expect_equal(data.table::uniqueN(result[, .N, chi_age]$N), 1)
 })
 
 # Test what happens when instructions filter out all rows----
 test_that("When some instructions filter out all rows, expect it to work but returning warnings", {
   warnings <- capture_warnings({
-    result <- rbindlist(lapply(c("hos1901000_v1", "hos1901000_v2"), function(indicator) {
+    result <- data.table::rbindlist(lapply(c("hos1901000_v1", "hos1901000_v2"), function(indicator) {
       chi_chars_injury(
         ph.indicator = indicator,
-        ph.data = copy(mock_chars)[, chi_geo_kc := NA], # Corrupt the data
+        ph.data = data.table::copy(mock_chars)[, chi_geo_kc := NA], # Corrupt the data
         ph.instructions = mock_instructions[indicator_key %in% c("hos1901000_v1", "hos1901000_v2")],
         chars.defs = mock_chars_def)
     }), fill = TRUE)
@@ -285,7 +285,7 @@ test_that("When some instructions filter out all rows, expect it to work but ret
 # Test year restriction for injury data (only 2012+) ----
 test_that("chi_chars_injury correctly handles pre-2012 years", {
   # Create instructions with pre-2012 years
-  early_instructions <- copy(mock_instructions[1])
+  early_instructions <- data.table::copy(mock_instructions[1])
   early_instructions[, `:=`(start = 2010, end = 2015)]
 
   # Run the function with pre-2012 years
@@ -297,7 +297,7 @@ test_that("chi_chars_injury correctly handles pre-2012 years", {
   )
 
   # Check the results
-  expect_true(is.data.table(result))
+  expect_true(data.table::is.data.table(result))
   expect_true(nrow(result) > 0)
 
   # The year range in the result should be 2012-2015, not 2010-2015
@@ -307,7 +307,7 @@ test_that("chi_chars_injury correctly handles pre-2012 years", {
 # Test poisoning mechanism handling with drug & non-drug ----
 test_that("chi_chars_injury correctly handles poisoning with ICD-10", {
   # Create mock data with both poisoning_drug and poisoning_nondrug
-  poisoning_test_chars <- copy(mock_chars)
+  poisoning_test_chars <- data.table::copy(mock_chars)
 
   # Add some specific poisoning_drug and poisoning_nondrug cases
   poisoning_test_chars[201:225, `:=`(
@@ -333,7 +333,7 @@ test_that("chi_chars_injury correctly handles poisoning with ICD-10", {
   )
 
   # Check the results
-  expect_true(is.data.table(result))
+  expect_true(data.table::is.data.table(result))
   expect_true(nrow(result) > 0)
 
   # The result should include data from the poisoning mechanism
