@@ -4,7 +4,6 @@
 #' which contains variable definitions and other CHI-related settings.
 #'
 #' @return Returns a list containing the parsed YAML configuration
-#' @importFrom yaml read_yaml
 #' @export
 #'
 #' @examples

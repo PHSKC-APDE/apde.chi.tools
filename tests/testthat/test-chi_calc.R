@@ -35,12 +35,12 @@ test_that("chi_calc produces consistent results whether running sequentially or 
   }
 
   # Run with PARALLEL (Multisession)
-  plan(multisession, workers = 2)
+  future::plan(future::multisession, workers = 2)
   run_core_test("multisession (2 workers)")
 
   # Run with SEQUENTIAL
   # This switches the plan and acts as our "cleanup" step
-  plan(sequential)
+  future::plan(future::sequential)
   run_core_test("sequential")
 })
 

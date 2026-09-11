@@ -94,6 +94,7 @@ utils::globalVariables(c(
   "run_datex",
   "s2t_fraction",
   "se",
+  "set",
   "source_id",
   "span",
   "start",
