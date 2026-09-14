@@ -14,6 +14,7 @@ export(chi_get_cols)
 export(chi_get_proper_pop)
 export(chi_get_yaml)
 export(chi_qa_tro)
+export(chi_standard_varnames)
 export(chi_suppress_results)
 export(chi_update_sql)
 import(data.table)
@@ -22,61 +23,74 @@ import(future)
 import(future.apply)
 import(progressr)
 import(rads)
-importFrom(DBI,Id)
-importFrom(DBI,dbConnect)
-importFrom(DBI,dbDisconnect)
-importFrom(DBI,dbExistsTable)
-importFrom(DBI,dbGetQuery)
-importFrom(DBI,dbWriteTable)
-importFrom(data.table,"%between%")
-importFrom(data.table,":=")
-importFrom(data.table,':=')
-importFrom(data.table,.GRP)
-importFrom(data.table,.SD)
-importFrom(data.table,CJ)
-importFrom(data.table,`:=`)
-importFrom(data.table,alloc.col)
-importFrom(data.table,as.data.table)
-importFrom(data.table,between)
-importFrom(data.table,copy)
-importFrom(data.table,data.table)
-importFrom(data.table,fcase)
-importFrom(data.table,fifelse)
-importFrom(data.table,fsetdiff)
-importFrom(data.table,is.data.table)
-importFrom(data.table,rbindlist)
-importFrom(data.table,set)
-importFrom(data.table,setDT)
-importFrom(data.table,setcolorder)
-importFrom(data.table,setkey)
-importFrom(data.table,setnames)
-importFrom(data.table,setorder)
-importFrom(data.table,setorderv)
-importFrom(data.table,tstrsplit)
-importFrom(data.table,uniqueN)
+importFrom(DBI,
+  Id,
+  dbConnect,
+  dbDisconnect,
+  dbExistsTable,
+  dbGetQuery,
+  dbWriteTable
+)
+importFrom(data.table,
+  "%between%",
+  .GRP,
+  .SD,
+  CJ,
+  alloc.col,
+  as.data.table,
+  between,
+  copy,
+  data.table,
+  fcase,
+  fifelse,
+  fsetdiff,
+  is.data.table,
+  rbindlist,
+  set,
+  setDT,
+  setcolorder,
+  setkey,
+  setnames,
+  setorder,
+  setorderv,
+  tstrsplit,
+  uniqueN
+)
 importFrom(future,plan)
 importFrom(future.apply,future_lapply)
-importFrom(glue,glue)
-importFrom(glue,glue_sql)
+importFrom(glue,
+  glue,
+  glue_sql
+)
 importFrom(odbc,odbc)
-importFrom(progressr,handler_progress)
-importFrom(progressr,handlers)
-importFrom(progressr,progressor)
-importFrom(progressr,with_progress)
-importFrom(qs2,qs_read)
-importFrom(qs2,qs_save)
-importFrom(rads,calc)
-importFrom(rads,lossless_convert)
-importFrom(rads,round2)
-importFrom(rads,string_clean)
-importFrom(rads,substrRight)
-importFrom(rads,suppress)
-importFrom(rads,tsql_validate_field_types)
-importFrom(stats,na.omit)
-importFrom(stats,qnorm)
+importFrom(progressr,
+  handler_progress,
+  handlers,
+  progressor,
+  with_progress
+)
+importFrom(qs2,
+  qs_read,
+  qs_save
+)
+importFrom(rads,
+  calc,
+  lossless_convert,
+  round2,
+  string_clean,
+  substrRight
+)
+importFrom(stats,
+  na.omit,
+  qnorm
+)
 importFrom(tidyr,crossing)
 importFrom(tools,toTitleCase)
-importFrom(utils,capture.output)
-importFrom(utils,tail)
-importFrom(yaml,read_yaml)
-importFrom(yaml,yaml.load)
+importFrom(utils,
+  capture.output,
+  tail
+)
+importFrom(yaml,
+  read_yaml,
+  yaml.load
+)

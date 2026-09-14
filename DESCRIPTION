@@ -1,7 +1,7 @@
 Package: apde.chi.tools
 Type: Package
 Title: Simplify Community Health Indicators Analytics Pipeline for Public Health Seattle & King County's Assessment Policy Development and Evaluation Unit
-Version: 2026.0.6
+Version: 2026.1.0
 Authors@R: person(
   "Ronald","Buie", 
   email = "rbuie@kingcounty.gov", 
@@ -17,27 +17,28 @@ URL: https://github.com/PHSKC-APDE/apde.chi.tools
 BugReports: https://github.com/PHSKC-APDE/apde.chi.tools/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
 Imports:
     apde.data,
+    apde.etl (>= 2.4.0),
     data.table (>= 1.14.2),
     DBI (>= 1.1.0),
     dtsurvey (>= 0.0.2.0),
-    future, 
+    future,
     future.apply,
     glue (>= 1.6.1),
     odbc (>= 1.2.2),
     progressr,
     qs2,
-    rads (>= 1.5.3), 
+    rads (>= 2.0.0),
     rads.data,
     stats,
     tidyr,
     yaml (>= 2.2.1)
 Remotes:
     github::PHSKC-APDE/apde.data,
-    github::PHSKC-APDE/rads, 
-    github::PHSKC-APDE/dtsurvey 
+    github::PHSKC-APDE/apde.etl,
+    github::PHSKC-APDE/rads,
+    github::PHSKC-APDE/dtsurvey
 Suggests: 
     devtools, 
     httr,
@@ -54,4 +55,4 @@ Depends:
     R (>= 4.4)
 Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
+Config/roxygen2/version: 8.1.0

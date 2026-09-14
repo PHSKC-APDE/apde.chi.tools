@@ -69,8 +69,8 @@
 #'
 #' \code{\link{chi_generate_metadata}} for creating metadata from results
 #'
-#' @importFrom data.table setDT copy setnames := setorder set .SD data.table setcolorder
-#' @importFrom rads calc suppress round2
+#' @importFrom data.table setDT copy setnames setorder set .SD data.table setcolorder
+#' @importFrom rads calc round2
 #' @importFrom future.apply future_lapply
 #' @importFrom stats na.omit qnorm
 #' @import progressr
@@ -194,7 +194,7 @@ chi_calc <- function(ph.data = NULL,
     # Only validate CHI variables
       unique_byvars <- unique(na.omit(c(ph.instructions$cat1_varname, ph.instructions$cat2_varname)))
       unique_byvars <- gsub('race3_hispanic', 'race3', unique_byvars) # needed because of of annoyance of race3 defined by two distinct variables
-      stdbyvars <- chi_standard_varnames[varname %in% unique_byvars]
+      stdbyvars <- apde.etl::chi_standard_varnames[varname %in% unique_byvars]
       stdbyvars <- stdbyvars[!varname %in% non_chi_byvars][, list(varname, group, keepme, reference = 1)]
       stdbyvars[group %in% c("Hispanic", 'Non-Hispanic') & varname == 'race3', varname := 'race3_hispanic'] # necessary because race3 & Hispanic must be two distinct variables in raw data
 

@@ -16,7 +16,7 @@
 #'
 #' \code{\link{chi_qa_tro}} for validating metadata
 #'
-#' @importFrom data.table setDT copy :=
+#' @importFrom data.table setDT copy
 #' @importFrom rads substrRight
 #' @importFrom utils tail
 #' @export
@@ -68,7 +68,7 @@ chi_generate_metadata <- function(meta.old = NULL,
       # Sort and keep only most recent 10 years if there are more than 10
       years_vector <- sort(unique(years_vector))
       if (length(years_vector) > 10) {
-        years_vector <- tail(years_vector, 10)
+        years_vector <- utils::tail(years_vector, 10)
       }
 
       # Convert back to space-separated string

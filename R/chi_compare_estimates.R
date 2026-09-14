@@ -48,7 +48,7 @@
 #'   \item Diagnostic information (bounds, numerators, denominators, standard errors)
 #' }
 #'
-#' @importFrom data.table data.table setnames ":=" setDT copy
+#' @importFrom data.table data.table setnames setDT copy
 #' @export
 #'
 chi_compare_estimates <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = NULL, META = NULL){

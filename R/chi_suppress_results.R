@@ -57,7 +57,7 @@
 #'
 #' @keywords suppression
 #'
-#' @importFrom data.table ':=' data.table is.data.table setDT fsetdiff setorder setorderv copy
+#' @importFrom data.table data.table is.data.table setDT fsetdiff setorder setorderv copy
 #'
 #' @examples
 #' \dontrun{

@@ -4,6 +4,7 @@
     chi_year = sample(2012:2022, nrow(mock_chars), replace = TRUE),
     chi_age = sample(0:99, nrow(mock_chars), replace = TRUE),
     wastate = "Washington State",
+    chi_geo_kc = "King County",
     race3_hispanic = sample(c("Hispanic", "Non-Hispanic"), nrow(mock_chars), replace = TRUE),
     chi_geo_region = sample(c("Seattle", "South", "East", "North"), nrow(mock_chars), replace = TRUE),
     chi_sex = sample(c("Female", "Male"), nrow(mock_chars), replace = TRUE)

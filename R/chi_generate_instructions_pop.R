@@ -39,7 +39,7 @@
 #'
 #' \code{\link{chi_get_proper_pop}} which uses the output of this function
 #'
-#' @importFrom data.table copy `:=` setorder tstrsplit
+#' @importFrom data.table copy setorder tstrsplit
 #' @importFrom tools toTitleCase
 #' @export
 #'

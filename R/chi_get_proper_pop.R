@@ -65,7 +65,7 @@
 #' \code{\link{chi_generate_instructions_pop}} which generates the instructions used as input
 #' for this function
 #'
-#' @importFrom data.table alloc.col copy rbindlist set setkey uniqueN `:=`
+#' @importFrom data.table alloc.col copy rbindlist set setkey uniqueN
 #' @importFrom qs2 qs_read qs_save
 #' @importFrom future plan
 #' @importFrom future.apply future_lapply

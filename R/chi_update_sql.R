@@ -49,7 +49,6 @@
 #' @importFrom odbc odbc
 #' @importFrom glue glue_sql
 #' @importFrom yaml yaml.load
-#' @importFrom rads tsql_validate_field_types
 #'
 #' @export
 #'
@@ -64,13 +63,13 @@ chi_update_sql <- function(CHIestimates = NULL,
   if(is.null(CHIestimates)){stop("\n\U0001f47f The results table to push to SQL (CHIestimates) is missing ")}
   if( inherits(CHIestimates, "data.frame") == FALSE){stop("\n\U0001f47f CHIestimates must be a data.frame or a data.table.")}
   if( inherits(CHIestimates, "data.table") == FALSE){setDT(CHIestimates)}
-  rads::tsql_validate_field_types(ph.data = CHIestimates, field_types = unlist(chi_get_yaml()$vars))
+  apde.etl::tsql_validate_field_types(ph.data = CHIestimates, field_types = unlist(chi_get_yaml()$vars))
 
   # check CHImetadata argument----
   if(is.null(CHImetadata)){stop("\n\U0001f47f The metadata table to push to SQL (CHImetadata) is missing ")}
   if( inherits(CHImetadata, "data.frame") == FALSE){stop("\n\U0001f47f CHImetadata must be a data.frame or a data.table.")}
   if( inherits(CHImetadata, "data.table") == FALSE){setDT(CHImetadata)}
-  rads::tsql_validate_field_types(ph.data = CHImetadata, field_types = unlist(chi_get_yaml()$metadata))
+  apde.etl::tsql_validate_field_types(ph.data = CHImetadata, field_types = unlist(chi_get_yaml()$metadata))
 
   # check table_name ----
   if(is.null(table_name)){stop("\n\U0001f47f The table_name argument is missing ")}
