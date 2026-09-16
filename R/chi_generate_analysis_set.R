@@ -50,10 +50,6 @@
 #' bypassing the database connection. The data must comply with the latest CHI
 #' standard, which can be assessed/tested with the \code{\link{chi_qa_tro}} function.
 #'
-#' @importFrom data.table setDT setorderv copy .SD fifelse fsetdiff .GRP
-#' @importFrom DBI dbConnect dbDisconnect dbExistsTable dbGetQuery
-#' @importFrom odbc odbc
-#'
 #' @export
 #'
 #' @seealso
@@ -152,16 +148,16 @@ chi_generate_analysis_set <- function(data_source = NULL,
       # i.e., `race3` & `race3_hispanic`
       race3_remix1 <- CHIestimates[cat1 == 'Race/ethnicity' & cat1_varname == 'race3']
       CHIestimates <- rbind(
-        fsetdiff(CHIestimates, race3_remix1),
-        copy(race3_remix1)[cat1 == 'Race/ethnicity', cat1 := 'Race'],
-        copy(race3_remix1)[cat1 == 'Race/ethnicity', cat1 := 'Ethnicity']
+        data.table::fsetdiff(CHIestimates, race3_remix1),
+        data.table::copy(race3_remix1)[cat1 == 'Race/ethnicity', cat1 := 'Race'],
+        data.table::copy(race3_remix1)[cat1 == 'Race/ethnicity', cat1 := 'Ethnicity']
       )
 
       race3_remix2 <- CHIestimates[cat2 == 'Race/ethnicity' & cat2_varname == 'race3']
       CHIestimates <- rbind(
-        fsetdiff(CHIestimates, race3_remix2),
-        copy(race3_remix2)[cat2 == 'Race/ethnicity', cat2 := 'Race'],
-        copy(race3_remix2)[cat2 == 'Race/ethnicity', cat2 := 'Ethnicity']
+        data.table::fsetdiff(CHIestimates, race3_remix2),
+        data.table::copy(race3_remix2)[cat2 == 'Race/ethnicity', cat2 := 'Race'],
+        data.table::copy(race3_remix2)[cat2 == 'Race/ethnicity', cat2 := 'Ethnicity']
       )
 
       CHIestimates[cat1_varname == 'race4', cat1 := gsub('Race$', 'Race/ethnicity', cat1)]
@@ -171,30 +167,30 @@ chi_generate_analysis_set <- function(data_source = NULL,
   # Table of categories and tabs per indicator ----
     # For cat1 combinations
       tab_patterns <- CHIestimates[, list(
-        `_kingcounty` = fifelse(any(tab == "_kingcounty"), "x", ""),
-        `_wastate` = fifelse(any(tab == "_wastate"), "x", ""),
-        demgroups = fifelse(any(tab == "demgroups"), "x", ""),
-        crosstabs = fifelse(any(tab == "crosstabs"), "x", ""),
-        trends = fifelse(any(tab == "trends"), "x", "")
+        `_kingcounty` = data.table::fifelse(any(tab == "_kingcounty"), "x", ""),
+        `_wastate` = data.table::fifelse(any(tab == "_wastate"), "x", ""),
+        demgroups = data.table::fifelse(any(tab == "demgroups"), "x", ""),
+        crosstabs = data.table::fifelse(any(tab == "crosstabs"), "x", ""),
+        trends = data.table::fifelse(any(tab == "trends"), "x", "")
       ), by = list(indicator_key, cat1, cat1_varname)]
 
     # For cat2 combinations
       tab_patterns2 <- CHIestimates[!is.na(cat2), list(
-        `_kingcounty` = fifelse(any(tab == "_kingcounty"), "x", ""),
-        `_wastate` = fifelse(any(tab == "_wastate"), "x", ""),
-        demgroups = fifelse(any(tab == "demgroups"), "x", ""),
-        crosstabs = fifelse(any(tab == "crosstabs"), "x", ""),
-        trends = fifelse(any(tab == "trends"), "x", "")
+        `_kingcounty` = data.table::fifelse(any(tab == "_kingcounty"), "x", ""),
+        `_wastate` = data.table::fifelse(any(tab == "_wastate"), "x", ""),
+        demgroups = data.table::fifelse(any(tab == "demgroups"), "x", ""),
+        crosstabs = data.table::fifelse(any(tab == "crosstabs"), "x", ""),
+        trends = data.table::fifelse(any(tab == "trends"), "x", "")
       ), by = list(indicator_key, cat1 = cat2, cat1_varname = cat2_varname)]
 
     # Combine the patterns
       all_patterns <- merge(tab_patterns, tab_patterns2, by = c('indicator_key', 'cat1', 'cat1_varname'), all = T)
       all_patterns <- all_patterns[, list(indicator_key, cat1, cat1_varname,
-                                       `_kingcounty` = fifelse(`_kingcounty.x` == 'x' | `_kingcounty.y` == 'x', 'x', NA_character_),
-                                       `_wastate` = fifelse(`_wastate.x` == 'x' | `_wastate.y` == 'x', 'x', NA_character_),
-                                       `demgroups` = fifelse(`demgroups.x` == 'x' | `demgroups.y` == 'x', 'x', NA_character_),
-                                       `crosstabs` = fifelse(`crosstabs.x` == 'x' | `crosstabs.y` == 'x', 'x', NA_character_),
-                                       `trends` = fifelse(`trends.x` == 'x' | `trends.y` == 'x', 'x', NA_character_) )]
+                                       `_kingcounty` = data.table::fifelse(`_kingcounty.x` == 'x' | `_kingcounty.y` == 'x', 'x', NA_character_),
+                                       `_wastate` = data.table::fifelse(`_wastate.x` == 'x' | `_wastate.y` == 'x', 'x', NA_character_),
+                                       `demgroups` = data.table::fifelse(`demgroups.x` == 'x' | `demgroups.y` == 'x', 'x', NA_character_),
+                                       `crosstabs` = data.table::fifelse(`crosstabs.x` == 'x' | `crosstabs.y` == 'x', 'x', NA_character_),
+                                       `trends` = data.table::fifelse(`trends.x` == 'x' | `trends.y` == 'x', 'x', NA_character_) )]
 
     # Tidy
       all_patterns <- all_patterns[!(cat1 == 'Overall' & cat1_varname == 'overall')]
@@ -203,7 +199,7 @@ chi_generate_analysis_set <- function(data_source = NULL,
     # Function to convert a data.table's rows into a string
       rows_to_string <- function(mydt) {
         # Sort the data.table by all columns except 'indicator_key' to ensure consistent ordering
-        dt_sorted <- setorderv(copy(mydt),
+        dt_sorted <- data.table::setorderv(data.table::copy(mydt),
                                cols = setdiff(names(mydt), "indicator_key"))
 
         # Convert each row (excluding 'indicator_key') into a string, concatenating columns with "|||"

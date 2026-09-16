@@ -67,13 +67,11 @@ King County boundary
 For better performance, we recommended using futures for parallel processing. Here is one suggested set up:
 
 \preformatted{
-library(future)
-
 options(future.globals.maxSize = 3000 * 1024^2)  # this sets a 3GB limit per future
 
 num.cores <- future::availableCores() - 1 # use one less than the available cores
 
-plan(multisession(workers = num.cores[1])) # set up a multisession plan
+future::plan(future::multisession(workers = num.cores[1])) # set up a multisession plan
 }
 }
 \seealso{
