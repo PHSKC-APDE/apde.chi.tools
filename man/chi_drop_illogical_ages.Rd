@@ -53,10 +53,8 @@ combinations while continuing to process other valid age categories normally.
 }
 \examples{
 \dontrun{
-library(data.table)
-
 # Create sample data with age inconsistencies
-test_data <- data.table(
+test_data <- data.table::data.table(
   cat1 = "Gender",
   cat1_group = c("Female", "Male"),
   cat2 = "Age",

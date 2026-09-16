@@ -278,51 +278,51 @@
 #' @noRd
   process_age_patterns <- function(age_var) {
     # Check if this age variable exists in misc_chi_byvars
-    chi_age_groups <- chi_standard_varnames[cat == "Age" & varname == age_var]
+    chi_age_groups <- apde.etl::chi_standard_varnames[cat == "Age" & varname == age_var]
 
     if (nrow(chi_age_groups) == 0) {
-      stop(paste0("\n\U1F6D1 Age variable ", age_var, " not found in chi_standard_varnames[cat == \"Age\"]"))
+      stop(paste0("\n\U1F6D1 Age variable ", age_var, " not found in apde.etl::chi_standard_varnames[cat == \"Age\"]"))
     }
 
     # Create a result table with age ranges
-    age_ranges <- data.table(group_value = character(), min_age = numeric(), max_age = numeric())
+    age_ranges <- data.table::data.table(group_value = character(), min_age = numeric(), max_age = numeric())
 
     # Process each age group
     for (g in unique(chi_age_groups$group)) {
       # Pattern: "<#" (e.g., "<18")
       if (grepl("^<\\d+$", g)) {
         max_age <- as.numeric(gsub("<", "", g)) - 1
-        age_ranges <- rbind(age_ranges, data.table(group_value = g, min_age = 0, max_age = max_age))
+        age_ranges <- rbind(age_ranges, data.table::data.table(group_value = g, min_age = 0, max_age = max_age))
       }
       # Pattern: "#-#" (e.g., "18-24")
       else if (grepl("^\\d+-\\d+$", g)) {
         range_parts <- as.numeric(strsplit(g, "-")[[1]])
         min_age <- range_parts[1]
         max_age <- range_parts[2]
-        age_ranges <- rbind(age_ranges, data.table(group_value = g, min_age = min_age, max_age = max_age))
+        age_ranges <- rbind(age_ranges, data.table::data.table(group_value = g, min_age = min_age, max_age = max_age))
       }
       # Pattern: "#+", (e.g., "75+")
       else if (grepl("^\\d+\\+$", g)) {
         min_age <- as.numeric(gsub("\\+", "", g))
-        age_ranges <- rbind(age_ranges, data.table(group_value = g, min_age = min_age, max_age = Inf))
+        age_ranges <- rbind(age_ranges, data.table::data.table(group_value = g, min_age = min_age, max_age = Inf))
       }
       # Other valid groups like "All", "Adults", "Children", "Seniors"
       else if (g %in% c("All", "Adults", "Children", "Seniors")) {
         if (g == "All") {
-          age_ranges <- rbind(age_ranges, data.table(group_value = g, min_age = 0, max_age = Inf))
+          age_ranges <- rbind(age_ranges, data.table::data.table(group_value = g, min_age = 0, max_age = Inf))
         } else if (g == "Adults") {
-          age_ranges <- rbind(age_ranges, data.table(group_value = g, min_age = 18, max_age = Inf))
+          age_ranges <- rbind(age_ranges, data.table::data.table(group_value = g, min_age = 18, max_age = Inf))
         } else if (g == "Children") {
-          age_ranges <- rbind(age_ranges, data.table(group_value = g, min_age = 0, max_age = 17))
+          age_ranges <- rbind(age_ranges, data.table::data.table(group_value = g, min_age = 0, max_age = 17))
         } else if (g == "Seniors") {
-          age_ranges <- rbind(age_ranges, data.table(group_value = g, min_age = 65, max_age = Inf))
+          age_ranges <- rbind(age_ranges, data.table::data.table(group_value = g, min_age = 65, max_age = Inf))
         }
       }
       # Error for unrecognized patterns
       else {
         stop(paste0("\n\U1F6D1 Age group ", g, " in age_var = ", age_var,
                     " does not follow the expected pattern (<#, #-#, or #+) and cannot be used",
-                    "\n Valid options are found in chi_standard_varnames[cat == \"Age\"]"))
+                    "\n Valid options are found in apde.etl::chi_standard_varnames[cat == \"Age\"]"))
       }
     }
 
@@ -573,7 +573,7 @@
       cat_varname <- population_data[1][[paste0(cat_prefix, "_varname")]]
 
       # Create a data table with all possible ages
-      age_groups <- data.table(chi_age = age_range) # age_range is defined above in create_demographic_shell
+      age_groups <- data.table::data.table(chi_age = age_range) # age_range is defined above in create_demographic_shell
 
       # Get age ranges
       age_ranges <- process_age_patterns(cat_varname)
@@ -635,7 +635,7 @@
                                      allow.cartesian = TRUE)
 
       # Create year and age combos
-      year_age <- data.table(year = as.character(template_row$year),
+      year_age <- data.table::data.table(year = as.character(template_row$year),
                              chi_age = age_range,
                              mykey = 1)
 

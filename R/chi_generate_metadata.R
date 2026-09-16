@@ -16,9 +16,6 @@
 #'
 #' \code{\link{chi_qa_tro}} for validating metadata
 #'
-#' @importFrom data.table setDT copy :=
-#' @importFrom rads substrRight
-#' @importFrom utils tail
 #' @export
 #'
 chi_generate_metadata <- function(meta.old = NULL,
@@ -34,8 +31,8 @@ chi_generate_metadata <- function(meta.old = NULL,
   if (is.null(est.current)) stop("\n\U1F6D1 est.current must be provided")
   if (!is.data.frame(est.current)) stop("\n\U1F6D1 est.current must be a data.frame or data.table")
   # Convert to data.table if needed ----
-  if (!is.data.table(meta.old)) setDT(meta.old)
-  if (!is.data.table(est.current)) setDT(est.current)
+  if (!data.table::is.data.table(meta.old)) data.table::setDT(meta.old)
+  if (!data.table::is.data.table(est.current)) data.table::setDT(est.current)
   # get new metadata ----
   meta.new <- unique(est.current[tab == "metadata",
                                  list(indicator_key,
@@ -68,7 +65,7 @@ chi_generate_metadata <- function(meta.old = NULL,
       # Sort and keep only most recent 10 years if there are more than 10
       years_vector <- sort(unique(years_vector))
       if (length(years_vector) > 10) {
-        years_vector <- tail(years_vector, 10)
+        years_vector <- utils::tail(years_vector, 10)
       }
 
       # Convert back to space-separated string
@@ -115,7 +112,7 @@ chi_generate_metadata <- function(meta.old = NULL,
   }
 
   # order metadata table ----
-  setorder(meta.new, indicator_key)
+  data.table::setorder(meta.new, indicator_key)
   # return table ----
   return(meta.new)
 }

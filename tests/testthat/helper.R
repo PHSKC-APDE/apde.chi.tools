@@ -1,13 +1,11 @@
 # The contents of this file will be run for all testthat tests
 
-library(data.table)
-
 # Setup function for creating test data
 setup_test_data <- function() {
   # Sample analytic data ----
     set.seed(98104)
 
-    test_analytic <- data.table(
+    test_analytic <- data.table::data.table(
       chi_year = rep(2015:2024, each = 100),
       chi_sex = sample(c("Female", "Male"),
                        size = 1000,  # 100 rows * 10 years
@@ -24,10 +22,10 @@ setup_test_data <- function() {
 
     test_analytic[, chi_geo_kc := 'King County']
 
-    setorder(test_analytic, chi_year)
+    data.table::setorder(test_analytic, chi_year)
 
   # Sample analysis set ----
-    test_analysis_set <- data.table(
+    test_analysis_set <- data.table::data.table(
       cat1 = c('Regions', 'Gender'),
       cat1_varname = c('chi_geo_region', 'chi_sex'),
       `_kingcounty` = c('x'),
@@ -55,7 +53,7 @@ setup_test_data <- function() {
       if(dataset == "generic") {
         for(year in years) {
           seed <- seed*year
-          DTIteration <- data.table(
+          DTIteration <- data.table::data.table(
             id = 1:observations,
             chi_geo_kc = sample(c('King County',NA_character_), observations, replace = T),
             race4 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Multiple", NA), observations, replace = T, prob = c(.19,.01,.07,.11,.01,.42,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
@@ -78,7 +76,7 @@ setup_test_data <- function() {
       } else if(dataset == "death") {
         for(year in years) {
           seed <- seed*year
-          DTIteration <- data.table(
+          DTIteration <- data.table::data.table(
             `state_file_number` = NA, # data type not modelled,
             `death_zip_code` = sample(c(NA, "98104", "98034", "98112", "98105", "98030", "98108", "98058", "98004", "98002", "98166", "98075", "98006", "98198", "98372", "98033", "98029", "98031", "98106", "98024", "98055", "98122", "98072", "98023", "98109", "98177", "98195", "98144", "98133", "98134", "98119", "98070", "98107", "98936", "98026", "98020", "98037", "98043", "98021", "98208", "98036", "98363", "98087", "99362", "98807", "98201", "98012", "98942", "98922", "98272", "98926", "98203", "98252", "98848", "99216", "98275", "98271", "98382", "98204", "98816", "98801", "99005", "98405", "98118", "98008", "98115", "98042", "98014", "98146", "98168", "98116", "98032", "98028", "98007", "98057", "98155", "98003", "98188", "98056", "98047", "98052", "98125", "98059", "98178", "98005", "98126", "98101", "98102", "98065", "98103", "98053", "98424", "98117", "98038", "98011", "98148", "98408", "98401", "98199", "98027", "98045", "98121", "98001", "98019", "98409", "98466", "98664", "98074", "98193", "98225", "98040", "98022", "98383", "98360", "98239", "98114", "98092", "98354", "98498", "98513", "98584", "98391", "98051", "98209", "98374", "98136", "98404", "98370", "98957", "98039", "98229", "98569", "98506", "98371", "98221", "98604", "98366", "98499", "98502", "98010", "98367", "98077", "98274", "98531", "98444", "98642", "98467", "98050", "98226", "98422", "98095", "99403", "98493", "98273", "99109", "98158", "99350", "98224", "98332", "89058", "98304", "98528", "99999", "98083", "98406", "98312", "98215", "98682", "98248", "9001", "98233", "98256", "98110", "98164", "98025", "98321", "98940", "98368", "99202", "98223", "98686", "99352", "98390", "98310", "98192", "98373", "98431", "98230", "98329", "98375", "98251", "98035", "98407", "98249", "98270", "99204", "99207", "98387", "98335", "98520", "98532", "98333", "98111", "98260", "98503", "98013", "98465", "98683", "98737", "98258", "98267", "98597", "98068", "99217", "98296", "99205", "98113", "98250", "98257", "98181", "98277", "98847", "98433", "98826", "98418", "98902", "98328", "98579", "98901", "98586", "98320"),
                                       observations , replace = TRUE, prob = c(6.66888962987663e-05, 6.66888962987663e-05, 0.0130043347782594, 0.0298099366455485, 0.0391463821273758, 0.042214071357119, 0.0057352450816939, 0.00786928976325442, 0.00726908969656552, 0.00746915638546182, 0.00146715571857286, 0.0102034011337112, 0.000800266755585195, 6.66888962987663e-05, 0.00140046682227409, 0.00206735578526175, 0.0053351117039013, 0.00106702234078026, 0.0130710236745582, 0.0136045348449483, 0.00153384461487162, 6.66888962987663e-05, 0.00180060020006669, 0.00906968989663221, 0.00486828942980994, 0.0204068022674225, 0.0113371123707903, 0.0101367122374125, 0.00906968989663221, 0.0226742247415805, 0.0382794264754918, 0.000133377792597533, 0.000800266755585195, 0.00113371123707903, 0.00580193397799266, 0.000466822274091364, 0.00753584528176059, 0.0132710903634545, 0.000666888962987663, 0.00446815605201734, 0.000866955651883961, 6.66888962987663e-05, 0.00100033344448149, 0.0148716238746249, 0.00440146715571857, 0.0660220073357786, 0.0112037345781927, 0.0059353117705902, 0.0120040013337779, 0.00706902300766922, 0.00140046682227409, 6.66888962987663e-05, 0.00400133377792598, 0.00426808936312104, 0.00260086695565188, 0.00293431143714572, 0.00106702234078026, 6.66888962987663e-05, 0.000600200066688896, 0.00926975658552851, 6.66888962987663e-05, 0.0178726242080694, 0.00406802267422474, 0.0106702234078026, 0.0441480493497833, 0.00866955651883961, 0.00526842280760253, 0.00666888962987663, 0.00893631210403468, 0.00786928976325442, 0.000266755585195065, 6.66888962987663e-05, 0.0302767589196399, 6.66888962987663e-05, 6.66888962987663e-05, 0.00933644548182728, 0.00806935645215072, 0.00440146715571857, 0.0215405135045015, 0.00526842280760253, 0.005135045015005, 0.0264088029343114, 0.0112704234744915, 0.00780260086695565, 0.0436145381793931, 0.00126708902967656, 0.00380126708902968, 0.0105368456152051, 0.00806935645215072, 0.00413471157052351, 0.0156052017339113, 0.000133377792597533, 6.66888962987663e-05, 0.0198066022007336, 0.0105368456152051, 0.00693564521507169, 0.00706902300766922, 0.000133377792597533, 0.00793597865955318, 6.66888962987663e-05, 6.66888962987663e-05, 0.0208736245415138, 0.016538846282094, 0.00446815605201734, 0.00280093364454818,
@@ -114,7 +112,7 @@ setup_test_data <- function() {
       } else if(dataset == "brfss") {
         for(year in years) {
           seed <- seed*year
-          DTIteration <- data.table(
+          DTIteration <- data.table::data.table(
             chi_year = year,
             age = runif(observations, 18, 99), # continuous with uniform distribution,
             age5_v2 = factor(sample(c('25-44', '45-64', '18-24', '75+', '65-74'), observations, replace = TRUE, prob = c(0.0619025944469731, 0.366257017144591, 0.320285237445001, 0.149294492489759, 0.102260658473676)), levels = c('18-24', '25-44', '45-64', '65-74', '75+'), ordered = FALSE), # as a factor,
@@ -183,7 +181,7 @@ setup_test_data <- function() {
       } else if(dataset == "skeleton") {
         for(year in years) {
           seed <- seed*year
-          DTIteration <- data.table(
+          DTIteration <- data.table::data.table(
             #paste data modelling code here
           )
 
@@ -201,7 +199,7 @@ setup_test_data <- function() {
     test_data_brfss <- generate_test_data("brfss", 10000, 1000, c(2016:2023))
     test_data_death <- generate_test_data("death", 10000, 1000, c(2016:2023))
 
-    test_analysis_set_twosets <- data.table(
+    test_analysis_set_twosets <- data.table::data.table(
       #this should work with the generic data set
       cat1 = c(rep(c('Regions', 'Gender', 'Race/ethnicity'),2), 'Washington State'),
       cat1_varname = c(rep(c('chi_geo_region', 'chi_sex', 'race4'),2), 'wastate'),
@@ -218,7 +216,7 @@ setup_test_data <- function() {
     #not currently exported, may not be needed
     #remove("test_twoset_estimates")
     for(indicator in c("indicator1","indicator2")) {
-      partialDT <- data.table(
+      partialDT <- data.table::data.table(
         indicator = indicator,
         tab = c(rep('demgroups', 4), '_kingcounty'),
         year = c('2023'),
@@ -243,7 +241,7 @@ setup_test_data <- function() {
         test_twoset_estimates <- partialDT
       }
     }
-    partialDT <- data.table(
+    partialDT <- data.table::data.table(
       indicator = "indicator3",
       tab = c(rep('demgroups', 4), '_kingcounty'),
       year = c('2023'),
@@ -272,7 +270,7 @@ setup_test_data <- function() {
 
 
     #twoset metadata should work with with the "generic" dataset
-    test_twoset_metadata <- data.table(
+    test_twoset_metadata <- data.table::data.table(
       indicator_key = c("indicator1", "indicator2","indicator3"),
       result_type = c("proportion"),
       valid_years = c("2020 2021 2022 2022"),
@@ -290,7 +288,7 @@ setup_test_data <- function() {
 
 
   # Sample instructions ----
-    test_instructions <- data.table(
+    test_instructions <- data.table::data.table(
       indicator_key = c("indicator1", "indicator2", "indicator1", "indicator2"),
       tab = c("demgroups", "demgroups", "_kingcounty", "_kingcounty"),
       cat1 = c("Regions", "Gender", "King County", "King County"),
@@ -302,7 +300,7 @@ setup_test_data <- function() {
     )
 
   # Sample estimates ----
-    test_estimates <- data.table(
+    test_estimates <- data.table::data.table(
       indicator_key = c("indicatorX"),
       tab = c(rep('demgroups', 4), '_kingcounty'),
       year = c('2023'),
@@ -328,7 +326,7 @@ setup_test_data <- function() {
     test_estimates[, upper_bound := result + 1.96 * se]
 
 
-    test_estimates_old <- data.table(
+    test_estimates_old <- data.table::data.table(
       indicator_key = c("indicatorX"),
       tab = c(rep('demgroups', 4), '_kingcounty'),
       year = c('2022'),
@@ -354,7 +352,7 @@ setup_test_data <- function() {
     test_estimates_old[, upper_bound := result + 1.96 * se]
 
   # Sample metadata ----
-    test_metadata <- data.table(
+    test_metadata <- data.table::data.table(
       indicator_key = c("indicatorX"),
       result_type = c("proportion"),
       valid_years = c("2020 2021 2022 2022"),
@@ -375,7 +373,7 @@ setup_test_data <- function() {
       # Also have to allow for the option of interactive authentication
       # TODO: Allow hhsaw_key to be a database connection itself
       is.db = function(x){
-        r = try(dbIsValid(hhsaw_key))
+        r = try(DBI::dbIsValid(hhsaw_key))
         if(inherits(r, 'try-error')){
           r = FALSE
         }

@@ -1,16 +1,16 @@
 # Helper function to create test data (not in helper.R because very specific to this function)
 create_test_data <- function() {
-  cat1_age6 <- data.table(cat1 = 'Age', cat1_varname = 'age6',
+  cat1_age6 <- data.table::data.table(cat1 = 'Age', cat1_varname = 'age6',
                           cat1_group = c('<18', '18-24', '25-44', '45-64', '65-74', '75+'),
                           mykey = 1)
-  cat2_sex <- data.table(cat2 = 'Gender', cat2_varname = 'chi_sex',
+  cat2_sex <- data.table::data.table(cat2 = 'Gender', cat2_varname = 'chi_sex',
                          cat2_group = c('Female', 'Male'), mykey = 1)
-  cat1_sex <- setnames(copy(cat2_sex), gsub('cat2', 'cat1', names(cat2_sex)))
-  cat2_yage4 <- data.table(cat2 = 'Age', cat2_varname = 'yage4',
+  cat1_sex <- data.table::setnames(data.table::copy(cat2_sex), gsub('cat2', 'cat1', names(cat2_sex)))
+  cat2_yage4 <- data.table::data.table(cat2 = 'Age', cat2_varname = 'yage4',
                            cat2_group = c('0-4', '10-14', '15-17', '5-9'), mykey = 1)
-  cat1_geo <- data.table(cat1 = 'King County', cat1_varname = 'chi_geo_kc',
+  cat1_geo <- data.table::data.table(cat1 = 'King County', cat1_varname = 'chi_geo_kc',
                          cat1_group = 'King County', mykey = 1)
-  chi_ages <- data.table(chi_age = 0:100, mykey = 1)
+  chi_ages <- data.table::data.table(chi_age = 0:100, mykey = 1)
 
   test.counts <- rbind(
     merge(cat1_age6, cat2_sex, allow.cartesian = TRUE),
@@ -32,7 +32,7 @@ test_that("Input validation works correctly", {
   expect_error(chi_drop_illogical_ages(NULL), "ph.data must be provided")
 
   # Test missing columns
-  incomplete_data <- data.table(cat1 = "Age", cat1_group = "<18")
+  incomplete_data <- data.table::data.table(cat1 = "Age", cat1_group = "<18")
   expect_error(chi_drop_illogical_ages(incomplete_data), "ph.data is missing required columns")
 
   # Test incorrect column classes

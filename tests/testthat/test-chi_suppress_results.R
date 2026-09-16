@@ -1,6 +1,3 @@
-library('data.table')
-library('testthat')
-
 # create test data ----
 set.seed(98104)
 dt <- suppressWarnings(data.table::data.table(chi_year = 2022,
@@ -14,7 +11,7 @@ dt[, se := sqrt(result/100)] # not a real formula!
 dt[, lower_bound := result - (1.96 * se)]
 dt[, upper_bound := result + (1.96 * se)]
 dt[, rse := 100*se / result]
-setorder(dt, indicator, team, color, numerator)
+data.table::setorder(dt, indicator, team, color, numerator)
 dt[, counter := 1:.N, c("indicator", "team", "color")]
 dt <- dt[counter == 1][, counter := NULL]
 
@@ -45,7 +42,7 @@ dt3 <- chi_suppress_results(dt, suppress_range = c(0,10),
                             secondary = TRUE,
                             secondary_ids = c("indicator", "team"))
 #ugly manual method to apply secondary suppression for comparison
-sec.suppress3 <- copy(dt2) # build off results from initial / primary suppression
+sec.suppress3 <- data.table::copy(dt2) # build off results from initial / primary suppression
 sec.suppress3[, max.grp.rows := .N, .(indicator, team)] # num of rows per set of secondary_ids
 sec.suppress3[, group := .GRP, by = .(indicator, team)] # create group id for each set of secondary_ids
 supp.ids <- unique(sec.suppress3[suppression=="^"]$group) # get group ids where there was initial suppression
@@ -54,7 +51,7 @@ sec.suppress3[group %in% supp.ids, suppressed.group := T] # identify groups with
 sec.suppress3[group %in% supp.ids & is.na(suppression), unsuppressed := .N, .(indicator, team)] # rows unsuppressed per group
 suppressWarnings(sec.suppress3[, unsuppressed := max(unsuppressed, na.rm = T), .(indicator, team)]) # fill in NA for rows unsuppressed
 sec.suppress3[is.na(suppression) & unsuppressed == max.grp.rows - 1, secondary.suppression := T] # identify groups that need secondary suppression (groups with exactly one suppressed row)
-setorder(sec.suppress3, group, numerator, na.last = T) # sort from smallest to largest numerator by group
+data.table::setorder(sec.suppress3, group, numerator, na.last = T) # sort from smallest to largest numerator by group
 sec.suppress3[secondary.suppression == T, order := 1:.N, group] # identify 1st row (smallest numerator) of each group needing secondary suppression
 sec.suppress3[order==1, suppression := "^"] # mark the specific rows to have secondary suppression
 sec.suppress3[suppression == "^", c("numerator", "denominator", "result", "se", "lower_bound", "upper_bound", "rse", "caution") := NA]
@@ -69,7 +66,7 @@ test_that('Check that secondary suppression works',{
 })
 
 # test NA handling in numerator and demominator ----
-dt_na <- copy(dt)
+dt_na <- data.table::copy(dt)
 dt_na[1:10, numerator := NA]
 dt_na[11:20, denominator := NA]
 dt_na_result <- chi_suppress_results(dt_na)
@@ -79,13 +76,13 @@ test_that('Check NA handling in numerator and denominator', {
 })
 
 # test missing numerator column ----
-dt_no_num <- copy(dt)[, numerator := NULL]
+dt_no_num <- data.table::copy(dt)[, numerator := NULL]
 test_that('Check error when numerator column is missing', {
   expect_error(chi_suppress_results(dt_no_num), "Required column 'numerator' is missing")
 })
 
 # test secondary suppression group ----
-dt_single <- data.table(
+dt_single <- data.table::data.table(
   chi_year = 2022,
   indicator = c("A", "A", "B"),
   team = c("team1", "team2", "team1"),
@@ -113,8 +110,8 @@ dt4 <- chi_suppress_results(dt, suppress_range = c(0,10),
                             secondary_exclude = !team %in% c('a10', 'a11'))
 
 #ugly manual method to apply secondary suppression for testing
-exclusion4 <- copy(dt2)[team %in% c('a10', 'a11')] # partition off part excluded from secondary suppression
-sec.suppress4 <- copy(dt2)[!team %in% c('a10', 'a11')] # build off results from initial / primary suppression
+exclusion4 <- data.table::copy(dt2)[team %in% c('a10', 'a11')] # partition off part excluded from secondary suppression
+sec.suppress4 <- data.table::copy(dt2)[!team %in% c('a10', 'a11')] # build off results from initial / primary suppression
 sec.suppress4[, max.grp.rows := .N, .(indicator, team)] # num of rows per set of secondary_ids
 sec.suppress4[, group := .GRP, by = .(indicator, team)] # create group id for each set of secondary_ids
 supp.ids <- unique(sec.suppress4[suppression=="^"]$group) # get group ids where there was initial suppression
@@ -123,7 +120,7 @@ sec.suppress4[group %in% supp.ids, suppressed.group := T] # identify groups with
 sec.suppress4[group %in% supp.ids & is.na(suppression), unsuppressed := .N, .(indicator, team)] # rows unsuppressed per group
 suppressWarnings(sec.suppress4[, unsuppressed := max(unsuppressed, na.rm = T), .(indicator, team)]) # fill in NA for rows unsuppressed
 sec.suppress4[is.na(suppression) & unsuppressed == max.grp.rows - 1, secondary.suppression := T] # identify groups that need secondary suppression (groups with exactly one suppressed row)
-setorder(sec.suppress4, group, numerator, na.last = T) # sort from smallest to largest numerator by group
+data.table::setorder(sec.suppress4, group, numerator, na.last = T) # sort from smallest to largest numerator by group
 sec.suppress4[secondary.suppression == T, order := 1:.N, group] # identify 1st row (smallest numerator) of each group needing secondary suppression
 sec.suppress4[order==1, suppression := "^"] # mark the specific rows to have secondary suppression
 sec.suppress4[suppression == "^", c("numerator", "denominator", "result", "se", "lower_bound", "upper_bound", "rse", "caution") := NA]
@@ -151,14 +148,14 @@ test_that('Check that flag_only works',{
 
 # test secondary_exclude when character and unquoted expression ----
 test_that('Check that the same results are returned whether or not quoted',{
-  expect_warning(dt6 <- chi_suppress_results(dt, secondary_exclude = "team %like% '^a|^b|^c|^d'"))
-  dt7 <- chi_suppress_results(dt, secondary_exclude = team %like% '^a|^b|^c|^d')
+  expect_warning(dt6 <- chi_suppress_results(dt, secondary_exclude = "grepl('^a|^b|^c|^d', team)"))
+  dt7 <- chi_suppress_results(dt, secondary_exclude = grepl('^a|^b|^c|^d', team))
   expect_identical(dt6, dt7)
 })
 
 # test custom column names ----
-dt_custom <- copy(dt)
-setnames(dt_custom,
+dt_custom <- data.table::copy(dt)
+data.table::setnames(dt_custom,
          old = c("numerator", "denominator", "result", "rse"),
          new = c("num", "denom", "value", "rel_error"))
 
@@ -178,7 +175,7 @@ test_that('Check that custom column names work correctly', {
 })
 
 # test missing columns handling ----
-dt_missing <- copy(dt)[, rse := NULL]
+dt_missing <- data.table::copy(dt)[, rse := NULL]
 
 test_that("Check that missing rse column is handled properly", {
   warnings <- character()
@@ -210,7 +207,7 @@ test_that('Check handling of non-existent columns in columns_to_suppress', {
 })
 
 # test existing suppression column ----
-dt_exist <- copy(dt)
+dt_exist <- data.table::copy(dt)
 dt_exist[, suppression := "old"]
 
 test_that('Check that existing suppression column is overwritten with warning', {

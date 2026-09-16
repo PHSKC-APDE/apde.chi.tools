@@ -21,7 +21,7 @@ n_samples <- 1000
 half_samples <- n_samples / 2
 
 # Create ICD-9 era data (pre-2016)
-icd9_data <- data.table(
+icd9_data <- data.table::data.table(
   seq_no = 1:half_samples,  # Unique identifier
   chi_year = sample(2013:2015, half_samples, replace = TRUE),
   chi_age = sample(0:99, half_samples, replace = TRUE),
@@ -44,7 +44,7 @@ icd9_data[1:asthma_cases, diag1 := sample(icd9_asthma, asthma_cases, replace = T
 icd9_data[(asthma_cases+1):half_samples, diag1 := sample(icd9_non_asthma, non_asthma_cases, replace = TRUE)]
 
 # Create ICD-10 era data (2016 and after)
-icd10_data <- data.table(
+icd10_data <- data.table::data.table(
   seq_no = (half_samples+1):n_samples,  # Continue sequence numbers
   chi_year = sample(2016:2022, half_samples, replace = TRUE),
   chi_age = sample(0:99, half_samples, replace = TRUE),
@@ -64,10 +64,10 @@ icd10_data[1:asthma_cases, diag1 := sample(icd10_asthma, asthma_cases, replace =
 icd10_data[(asthma_cases+1):half_samples, diag1 := sample(icd10_non_asthma, non_asthma_cases, replace = TRUE)]
 
 # Combine the data
-mock_chars <- rbindlist(list(icd9_data, icd10_data))
+mock_chars <- data.table::rbindlist(list(icd9_data, icd10_data))
 
 # Create mock_instructions ----
-mock_instructions <- data.table(
+mock_instructions <- data.table::data.table(
   indicator_key = rep(c("hos1803000_v1", "hos1803000_v2"), 3),
   tab = rep(c("trends", "_wastate"), each = 3),
   cat1 = rep("Ethnicity", 6),
@@ -79,7 +79,7 @@ mock_instructions <- data.table(
 )
 
 # Create mock_chars_def ----
-mock_chars_def <- data.table(
+mock_chars_def <- data.table::data.table(
   indicator_name = c("Asthma hospitalizations (all ages)", "Asthma hospitalizations (children)"),
   indicator_key = c("hos1803000_v1", "hos1803000_v2"),
   intent = c(NA_character_, NA_character_),
@@ -120,7 +120,7 @@ create_mock_ccs_table <- function(icdcm_version) {
   }
 
   # Create the data table
-  ccs_table <- data.table(
+  ccs_table <- data.table::data.table(
     icdcm_code = icd_codes,
     icdcm = paste0("Description for ", icd_codes),
     superlevel = NA_character_,
@@ -166,7 +166,7 @@ test_that("chi_chars_ccs validates inputs correctly", {
                "not found in ph.instructions")
 
   # Test invalid column in instructions
-  bad_instructions <- copy(mock_instructions)
+  bad_instructions <- data.table::copy(mock_instructions)
   bad_instructions[1, cat1_varname := "not_a_column"]
 
   expect_error(chi_chars_ccs(ph.indicator = "hos1803000_v1",
@@ -190,7 +190,7 @@ test_that("chi_chars_ccs processes ICD-9 data correctly", {
   ))
 
   # Check if result has expected structure
-  expect_true(is.data.table(result))
+  expect_true(data.table::is.data.table(result))
   expect_equal(names(result), expectedCols)
 
   # Check that all data is from ICD-9 era (pre-2016)
@@ -206,7 +206,7 @@ test_that("chi_chars_ccs processes ICD-9 data correctly", {
   expect_true(all(result$indicator_key == "hos1803000_v1"))
 
   # Check if have the same number of observations for each age
-  expect_equal(uniqueN(result[, .N, chi_age]$N), 1)
+  expect_equal(data.table::uniqueN(result[, .N, chi_age]$N), 1)
 })
 
 # Test function handles ICD-10 data correctly ----
@@ -223,7 +223,7 @@ test_that("chi_chars_ccs processes ICD-10 data correctly", {
   )
 
   # Check if result has expected structure
-  expect_true(is.data.table(result))
+  expect_true(data.table::is.data.table(result))
   expect_equal(names(result), expectedCols)
 
   # Check that all data is from ICD-10 era (2016+)
@@ -239,7 +239,7 @@ test_that("chi_chars_ccs processes ICD-10 data correctly", {
   expect_true(all(result$indicator_key == "hos1803000_v2"))
 
   # Check if have the same number of observations for each age
-  expect_equal(uniqueN(result[, .N, chi_age]$N), 1)
+  expect_equal(data.table::uniqueN(result[, .N, chi_age]$N), 1)
 })
 
 # Test function handles mixed ICD-9/ICD-10 data correctly ----
@@ -256,7 +256,7 @@ test_that("chi_chars_ccs processes mixed ICD-9/ICD-10 data correctly", {
   )
 
   # Check if result has expected structure
-  expect_true(is.data.table(result))
+  expect_true(data.table::is.data.table(result))
   expect_equal(names(result), expectedCols)
 
   # Verify that year ranges are formatted correctly
@@ -273,7 +273,7 @@ test_that("chi_chars_ccs processes mixed ICD-9/ICD-10 data correctly", {
                sort(unique(mixed_instructions[, year := paste0(start, '-', end)]$year)))
 
   # Check if have the same number of observations for each age
-  expect_equal(uniqueN(result[, .N, chi_age]$N), 1)
+  expect_equal(data.table::uniqueN(result[, .N, chi_age]$N), 1)
 })
 
 # Test that instructions with different indicator variables work ----
@@ -282,7 +282,7 @@ test_that("chi_chars_ccs handles different indicator variables correctly", {
   cat2_instructions <- mock_instructions[!is.na(cat2_varname)]
 
   # Run function
-  result <- rbindlist(lapply(c("hos1803000_v1", "hos1803000_v2"), function(indicator) {
+  result <- data.table::rbindlist(lapply(c("hos1803000_v1", "hos1803000_v2"), function(indicator) {
     chi_chars_ccs(
       ph.indicator = indicator,
       ph.data = mock_chars,
@@ -291,7 +291,7 @@ test_that("chi_chars_ccs handles different indicator variables correctly", {
   }), fill = TRUE)
 
   # Check if result has expected structure
-  expect_true(is.data.table(result))
+  expect_true(data.table::is.data.table(result))
   expect_equal(names(result), expectedCols)
 
   # Check that both category values are correctly filled
@@ -304,13 +304,13 @@ test_that("chi_chars_ccs handles different indicator variables correctly", {
 
   # Check cat1_group and cat2_group are all there
   expect_equal(
-    setorder(unique(result[, .(cat1_group, cat2_group)]), cat1_group, cat2_group),
-    data.table(cat1_group = rep(c("Hispanic", "Non-Hispanic"), each = 2), cat2_group = rep(c("Female", "Male"), times = 2))
+    data.table::setorder(unique(result[, .(cat1_group, cat2_group)]), cat1_group, cat2_group),
+    data.table::data.table(cat1_group = rep(c("Hispanic", "Non-Hispanic"), each = 2), cat2_group = rep(c("Female", "Male"), times = 2))
   )
 
   # Check if have the same number of observations for each age (within an indicator)
-  expect_equal(uniqueN(result[indicator_key == "hos1803000_v1", .N, chi_age]$N), 1)
-  expect_equal(uniqueN(result[indicator_key == "hos1803000_v2", .N, chi_age]$N), 1)
+  expect_equal(data.table::uniqueN(result[indicator_key == "hos1803000_v1", .N, chi_age]$N), 1)
+  expect_equal(data.table::uniqueN(result[indicator_key == "hos1803000_v2", .N, chi_age]$N), 1)
 })
 
 # Test that WA state filtering works ----
@@ -327,14 +327,14 @@ test_that("chi_chars_ccs handles WA state filtering correctly", {
   )
 
   # Check if result has expected structure
-  expect_true(is.data.table(result))
+  expect_true(data.table::is.data.table(result))
   expect_equal(names(result), expectedCols)
 
   # Check that all rows are for WA state
   expect_true(all(result$tab == "_wastate"))
 
   # Check if have the same number of observations for each age
-  expect_equal(uniqueN(result[, .N, chi_age]$N), 1)
+  expect_equal(data.table::uniqueN(result[, .N, chi_age]$N), 1)
 })
 
 # Test child-specific age filtering ----
@@ -348,23 +348,23 @@ test_that("chi_chars_ccs handles age filtering correctly", {
   )
 
   # Check if result has expected structure
-  expect_true(is.data.table(result))
+  expect_true(data.table::is.data.table(result))
   expect_equal(names(result), expectedCols)
 
   # check correct age range
   expect_true(all(result$chi_age %in% 0:17))
 
   # Check if have the same number of observations for each age
-  expect_equal(uniqueN(result[, .N, chi_age]$N), 1)
+  expect_equal(data.table::uniqueN(result[, .N, chi_age]$N), 1)
 })
 
 # Test what happens when instructions filter out all rows----
 test_that("When some instructions filter out all rows, expect it to work but returning warnings", {
   warnings <- capture_warnings({
-    result <- rbindlist(lapply(c("hos1803000_v1", "hos1803000_v2"), function(indicator) {
+    result <- data.table::rbindlist(lapply(c("hos1803000_v1", "hos1803000_v2"), function(indicator) {
       chi_chars_ccs(
         ph.indicator = indicator,
-        ph.data = copy(mock_chars)[, chi_geo_kc := NA_character_], # changing all to NA should cause warning because can't find KC estimates if all KC are NA
+        ph.data = data.table::copy(mock_chars)[, chi_geo_kc := NA_character_], # changing all to NA should cause warning because can't find KC estimates if all KC are NA
         ph.instructions = mock_instructions,
         chars.defs = mock_chars_def)
     }), fill = TRUE)
@@ -383,7 +383,7 @@ test_that("When some instructions filter out all rows, expect it to work but ret
 
   expect_equal(  # expect three of the instructions 'worked' because _wastate was not corrupted
     3,
-    uniqueN(result[, list(indicator_key, tab, cat1, cat1_varname, cat2, cat2_varname,
+    data.table::uniqueN(result[, list(indicator_key, tab, cat1, cat1_varname, cat2, cat2_varname,
                           start = as.numeric(substr(year, 1, 4)),
                           end = as.numeric(substr(year, nchar(year) - 3, nchar(year))) )])
     )
