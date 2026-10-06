@@ -41,7 +41,7 @@
 #'
 #'   Within a `cat1_varname`, values are generally ordered alphabetically. The
 #'   exceptions are the sorting of numeric bands (e.g., age bins) that are
-#'   sorted numerically and and catch-all buckets (`'Other'`, `'Multiple'`) that
+#'   sorted numerically and catch-all buckets (`'Other'`, `'Multiple'`) that
 #'   are always pushed to the end of their block. For example, when graphing
 #'   race, `'Multiple'` would come *after* `'White'`.
 #'
@@ -66,9 +66,9 @@
 #'   `'race4'` is requested but only `'race3'` is available in `table_name`,
 #'   `'race3'` is used instead.
 #'
-#' @param chi Logical. If `TRUE`, the results table query is limited to the
-#'   to official CHI indicators, i.e. those flagged `chi = 1` in SQL. If `FALSE`
-#'   , every `indicator_key` in the table is plotted.
+#' @param chi Logical. If `TRUE`, the results table query is limited to
+#'   official CHI indicators, i.e. those flagged `chi = 1` in SQL. If `FALSE`,
+#'   every `indicator_key` in the table is plotted.
 #'
 #'   Note! Non-official indicators generally have no entry in
 #'   `[PHExtractStore].[APDE].[indicators_titles]`, so there is no CHI title
@@ -358,7 +358,7 @@ chi_plot_demographics <- function(table_name,
 
     # inches of the image actually available to the bars, i.e. the total width
     # less the y axis labels, margins and other fixed stuffs. Measured off the
-    # genderated plot (on a null device of the output's dimensions) so it stays
+    # generated plot (on a null device of the output's dimensions) so it stays
     # right if the theme changes; falls back to a rough share of `width` if the
     # measurement fails for any reason.
     panel_width_in <- function(plot, width, height) {
@@ -385,10 +385,10 @@ chi_plot_demographics <- function(table_name,
     # Some cat1_group values are numeric bands: ages ('<18', '18-40', '41-60',
     # '61+'), neighborhood poverty ('<10%', '10-19.9%'), etc. Sorting those
     # as text is wrong because '<18' would be last since '<' sort after digits.
-    # Similarly, standar sorting would put '5-9' after '10-14', because 5 > 1.
+    # Similarly, standard sorting would put '5-9' after '10-14', because 5 > 1.
     #
     # When every cat1_group value can be parsed as a band, rank on the band's lower
-    # bound. Then put open ended low bands (e.g., '<18') ahead of a band staring at
+    # bound. Then put open ended low bands (e.g., '<18') ahead of a band starting at
     # the same number. E.g., '<18' comes before '18-25'. Similarly, ensure that
     # open upper bands (e.g., '65+') are placed at the end.
 
@@ -490,7 +490,7 @@ chi_plot_demographics <- function(table_name,
       #      so every row gets NA and move on to key 3.
       #   3. cat1 alphabetically.
       #   4. within a group: use helper function made above so that numeric bands
-      #      are orered by value (ages etc.), catch-all buckets ('Other') are ordered
+      #      are ordered by value (ages etc.), catch-all buckets ('Other') are ordered
       #      last, and plain alphabetical ordering for everything else.
       dt_ik[, band_order := band_rank(cat1_group), by = cat1_varname]
       dt_ik[, catchall_order := as.integer(is_catchall(cat1_group))]
@@ -562,7 +562,30 @@ chi_plot_demographics <- function(table_name,
                       x = NULL,
                       y = NULL,
                       caption = plot_caption) +
-        apde.graphs::apde_theme() +
+        # APDE standard look: theme_minimal() plus the tweaks below. "sans" maps to
+        # Arial on Windows
+        ggplot2::theme_minimal(base_size = 12, base_family = 'sans') +
+        ggplot2::theme(
+          plot.title = ggplot2::element_text(size = ggplot2::rel(1.3), face = 'bold', hjust = 0.5,
+                                             color = 'black', margin = ggplot2::margin(b = 10)),
+          plot.subtitle = ggplot2::element_text(size = ggplot2::rel(1), face = 'plain', hjust = 0.5,
+                                                margin = ggplot2::margin(b = 10)),
+          axis.title = ggplot2::element_text(size = ggplot2::rel(1), face = 'bold',
+                                             margin = ggplot2::margin(t = 10, b = 10)),
+          axis.text = ggplot2::element_text(size = ggplot2::rel(0.8)),
+          panel.grid.major.x = ggplot2::element_blank(),
+          panel.grid.minor = ggplot2::element_blank(),
+          legend.title = ggplot2::element_text(size = ggplot2::rel(1), face = 'bold', color = 'black'),
+          legend.text = ggplot2::element_text(size = ggplot2::rel(0.8)),
+          legend.position = 'right',
+          plot.caption = ggplot2::element_text(size = ggplot2::rel(0.6), hjust = 0,
+                                               margin = ggplot2::margin(t = 10)),
+          plot.margin = ggplot2::margin(t = 1, r = 1, b = 1, l = 1, unit = 'cm'),
+          panel.spacing = grid::unit(0, 'lines'),
+          strip.placement = 'outside',
+          strip.background = ggplot2::element_blank(),
+          strip.text = ggplot2::element_text(face = 'bold', size = ggplot2::rel(1))
+        ) +
         ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(),
                        legend.position = "none",
                        axis.text.x = ggplot2::element_blank(),
@@ -642,39 +665,3 @@ chi_plot_demographics <- function(table_name,
   # - return ----
     invisible(saved_files)
 }
-
-# all indicator_key in BRFSS data
-chi_plot_demographics(table_name = 'brfss',
-                      cat1_varname = c('chi_geo_kc', 'race4', 'chi_geo_region'),
-                      output_dir = file.path('c:/temp/blah'))
-
-# no primary care physician
-chi_plot_demographics(table_name = 'brfss',
-                      indicator_key = 'chi_no_pcp',
-                      cat1_varname = c('chi_geo_kc', 'race4', 'chi_geo_region'),
-                      output_dir = file.path('c:/temp/blah'))
-
-# adult asthma hospitalizations
-chi_plot_demographics(table_name = 'chars',
-                      indicator_key = 'hos1803000_v1',
-                      cat1_varname = c('chi_geo_kc', 'age6', 'race4'),
-                      output_dir = file.path('c:/temp/blah'),
-                      image_type = c('png', 'jpg'))
-
-# dental check up in the last year
-chi_plot_demographics(table_name = 'hys',
-                      indicator_key = 'dental_care_bin',
-                      cat1_varname = c('kingco', 'chi_race_eth9', 'ccreg'),
-                      output_dir = file.path('c:/temp/blah'))
-
-# high school graduation
-chi_plot_demographics(table_name = 'ospi',
-                      indicator_key = 'graduation',
-                      cat1_varname = c('chi_geo_kc', 'race4', 'district'),
-                      output_dir = file.path('c:/temp/blah'))
-
-# lunch cancer
-chi_plot_demographics(table_name = 'wscr',
-                      indicator_key = 'kc_wscr_lung_bronchus',
-                      cat1_varname = c('chi_geo_kc', 'chi_geo_region', 'age5_v1'),
-                      output_dir = file.path('c:/temp/blah'))
