@@ -105,8 +105,9 @@
 #'
 #' @param show_title Logical. If `TRUE`, the plot is titled with the indicator's
 #'   `title` from `[PHExtractStore].[APDE].[indicators_titles]` (falling back to
-#'   the `indicator_key` if that table has no title for it). If `FALSE`, no
-#'   title is drawn and the space it would take is reclaimed by the plot.
+#'   the `indicator_key` if that table has no title for it). If `FALSE`, neither
+#'   the title nor the `subtitle` is drawn and the space they would take is
+#'   reclaimed by the plot.
 #'
 #'   Default `show_title = TRUE`.
 #'
@@ -126,6 +127,23 @@
 #'   bars, and between the bars and the panel edges, is unchanged.
 #'
 #'   Default `trim_margin = TRUE`.
+#'
+#' @param title Character. A custom title for the plot, used instead of the
+#'   indicator's title from `[PHExtractStore].[APDE].[indicators_titles]`. Useful
+#'   for indicators that are not official CHI indicators (and so have no CHI
+#'   title) or when you want to deviate from the CHI title. The same title is used
+#'   for every `indicator_key` plotted in the call, so it is best used with a
+#'   single `indicator_key`. Not drawn when `show_title = FALSE`.
+#'
+#'   Default `title = NULL`, which uses the indicator's CHI title (or the
+#'   `indicator_key` if it has none).
+#'
+#' @param subtitle Character. A subtitle drawn beneath the title. The same
+#'   subtitle is used for every `indicator_key` plotted in the call. Not drawn
+#'   when `show_title = FALSE`.
+#'
+#'   Default `subtitle = NULL`, which writes no subtitle and reserves no space for
+#'   one.
 #'
 #' @examples
 #' \dontrun{
@@ -148,6 +166,14 @@
 #'   output_dir = "c:/temp/chna_2026/birth",
 #'   show_title = FALSE,
 #'   trim_margin = TRUE
+#' )
+#'
+#' # custom title and subtitle in place of the CHI title
+#' chi_plot_demographics(
+#'   table_name = "brfss",
+#'   indicator_key = "chi_no_pcp",
+#'   title = "Adults without a primary care provider",
+#'   subtitle = "King County, 2023"
 #' )
 #'
 #' # smaller, lower resolution image (e.g., for a quick slide or a draft review),
@@ -180,7 +206,9 @@ chi_plot_demographics <- function(table_name,
                                   prod = TRUE,
                                   show_title = TRUE,
                                   show_caption = TRUE,
-                                  trim_margin = TRUE) {
+                                  trim_margin = TRUE,
+                                  title = NULL,
+                                  subtitle = NULL) {
 
   # - set Tableau color scheme ----
     tableau_colors <- c(
@@ -268,6 +296,13 @@ chi_plot_demographics <- function(table_name,
     }
     if (!is.logical(trim_margin) || length(trim_margin) != 1 || is.na(trim_margin)) {
       stop("\n\U1F6D1 `trim_margin` must be a single logical value (TRUE or FALSE).")
+    }
+
+    if (!is.null(title) && (!is.character(title) || length(title) != 1 || is.na(title))) {
+      stop("\n\U1F6D1 `title` must be NULL or a single (length 1), non-NA character string.")
+    }
+    if (!is.null(subtitle) && (!is.character(subtitle) || length(subtitle) != 1 || is.na(subtitle))) {
+      stop("\n\U1F6D1 `subtitle` must be NULL or a single (length 1), non-NA character string.")
     }
 
     if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
@@ -526,11 +561,20 @@ chi_plot_demographics <- function(table_name,
       }
 
       # title: the indicator's CHI title. Falls back to the indicator_key itself when
-      # [APDE].[indicators_titles] has no title for it.
-      plot_title <- unique(dt_ik[['title']])
-      plot_title <- plot_title[!is.na(plot_title) & plot_title != '']
-      plot_title <- if (length(plot_title) > 0) plot_title[1] else ik
-      if (!show_title) plot_title <- NULL
+      # [APDE].[indicators_titles] has no title for it. A user-supplied `title`
+      # replaces it.
+      if (!is.null(title)) {
+        plot_title <- title
+      } else {
+        plot_title <- unique(dt_ik[['title']])
+        plot_title <- plot_title[!is.na(plot_title) & plot_title != '']
+        plot_title <- if (length(plot_title) > 0) plot_title[1] else ik
+      }
+      plot_subtitle <- subtitle
+      if (!show_title) {
+        plot_title <- NULL
+        plot_subtitle <- NULL
+      }
 
       # caption: generic CHI caption
       plot_caption <- paste0(
@@ -563,6 +607,7 @@ chi_plot_demographics <- function(table_name,
         ggplot2::scale_x_discrete(drop = FALSE) +
         ggplot2::scale_fill_manual(values = tableau_colors) +
         ggplot2::labs(title = plot_title,
+                      subtitle = plot_subtitle,
                       x = NULL,
                       y = NULL,
                       caption = plot_caption) +

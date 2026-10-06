@@ -237,6 +237,29 @@ myplot <- chi_plot_demographics(
 knitr::include_graphics(myplot)
 ```
 
+You can also supply your own text with `title` and `subtitle`. A custom `title` replaces the one from `[PHExtractStore].[APDE].[indicators_titles]`, which is handy for unofficial indicators or when you want different wording. A `subtitle` is drawn beneath the title. Both default to `NULL`: the title then comes from the table as usual, and no subtitle is added. The same text is used for every indicator in the call, so these are best paired with a single `indicator_key`. Setting `show_title = FALSE` hides both the title and the subtitle.
+
+```{r}
+#| warning: false
+#| message: false
+myplot <- chi_plot_demographics(
+  table_name = 'brfss',
+  indicator_key = 'chi_no_pcp',
+  cat1_varname = c('chi_geo_kc', 'race4', 'chi_geo_region'),
+  title = 'Adults without a primary care provider',
+  subtitle = 'Most recent year available',
+  output_dir = file.path(img_dir, 'custom_title'),
+  width = 9, height = 6, dpi = 150)
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| out-width: '100%'
+knitr::include_graphics(myplot)
+```
+
 In addition, `width`, `height`, and `dpi` control the canvas itself. The label placement logic measures the panel at run time, so (within reason!) narrowing the image is safe. Changing the height is trickier. A rule of thumb for a full-height graph is `height` of about `0.35 * # of bars + 1.1`.
 
 # Official CHI indicators only (by default)
@@ -254,7 +277,7 @@ chi_plot_demographics(
   output_dir = file.path('c:/temp/blah'))
 ```
 
-Be aware of the tradeoff. Unofficial indicators generally have no row in `[PHExtractStore].[APDE].[indicators_titles]`, so there is no true CHI title to draw on and the graph falls back to using the bare `indicator_key` as its title. If that is not acceptable for your output, set `show_title = FALSE` and add your own heading.
+Be aware of the tradeoff. Unofficial indicators generally have no row in `[PHExtractStore].[APDE].[indicators_titles]`, so there is no true CHI title to draw on and the graph falls back to using the bare `indicator_key` as its title. If that is not acceptable for your output, pass your own `title` (or set `show_title = FALSE` and add your own heading).
 
 # When things go off the rails (common errors)
 
