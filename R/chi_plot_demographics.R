@@ -397,7 +397,8 @@ chi_plot_demographics <- function(table_name,
 
     band_rank <- function(x) {
       named <- !is_catchall(x)             # catch-alls are ranked last regardless
-      nums <- regmatches(x, gregexpr('[0-9]+\\.?[0-9]*', x)) # extract all integer or decimals and return them as a list
+      x_nocomma <- gsub('(?<=[0-9]),(?=[0-9]{3})', '', x, perl = TRUE) # thousands separators, so '50,000' is read as 50000 rather than 50 and 000
+      nums <- regmatches(x_nocomma, gregexpr('[0-9]+\\.?[0-9]*', x_nocomma)) # extract all integer or decimals and return them as a list
       pick <- function(i) suppressWarnings(as.numeric(vapply(
         nums, function(n) if (length(n) >= i) n[i] else NA_character_, character(1)))) # pick the `i`th number from the list
       lower <- pick(1) # 1st number = the band's lower bound, the main sort key
