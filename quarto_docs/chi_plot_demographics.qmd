@@ -1,0 +1,282 @@
+---
+title: "chi_plot_demographics()"
+format:
+  html:
+    embed-resources: true
+  gfm:
+    prefer-html: false
+vignette: >
+  %\VignetteIndexEntry{chi_plot_demographics()}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{knitr}
+editor: source
+---
+
+# Introduction
+
+`chi_plot_demographics()` takes a CHI `*_results` table on SQL and writes one bar chart per `indicator_key` specified by the user. It pulls the estimates, keeps the most recent year, orders the bars, colors them according to the Tableau Style Guide, labels each bar with its value, draws the confidence intervals, and saves the result as a PNG or JPG.
+
+This function exists so that you do not have to rebuild the same `ggplot2` call for every indicator. You point it at a table, tell it which indicator_keys and demographic groups you want, and collect your custom images.
+
+The function has a detailed help file accessible by typing `?chi_plot_demographics`. This vignette showss a few examples of how you can use this function.
+
+***A few quick notes before we begin ...***
+
+- Every graph is written to disk. Nothing is returned to your console except an invisible character vector of the file paths written.
+- The function needs a connection to `PHExtractStore`, so you must be on the King County network or VPN.
+- You will get one image per `indicator_key`. If you do not name any indicators, you get *all* of them, which can be hundreds of files.
+- Images here are deliberately saved with small dimensions (`width = 9, height = 6, dpi = 150`) to keep this repository light. For a real CHNA report, you probably want to use the defaults.
+
+# Set up the environment
+
+```{r}
+#| warning: false
+#| message: false
+rm(list=ls())
+library(apde.chi.tools)
+library(knitr)
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+# Images are written next to this document so that the links keep working once
+# the vignette is rendered to GitHub flavored markdown. Clearing the folder
+# first keeps stale, date-stamped files from piling up on re-render.
+img_dir <- 'chi_plot_demographics_images'
+unlink(img_dir, recursive = TRUE)
+dir.create(img_dir, showWarnings = FALSE)
+```
+
+# The simplest useful call
+
+Give the function a table, an indicator, and a few cat1_varname values. Tell it where to put the file.
+
+```{r}
+#| warning: false
+#| message: false
+myplot <- chi_plot_demographics(
+  table_name = 'brfss',
+  indicator_key = 'chi_no_pcp',
+  cat1_varname = c('race4', 'chi_geo_region', 'chi_geo_kc'),
+  output_dir = img_dir,
+  width = 9, 
+  height = 6, 
+  dpi = 150)
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| out-width: '100%'
+knitr::include_graphics(myplot)
+```
+
+Notice a few things the function did without being asked:
+
+- The correct **title** was pulled automatically from `[PHExtractStore].[APDE].[indicators_titles]`, based on the `indicator_key`.
+- **King County is the top bar**, even though we did not list it first. 
+
+When relevant, the function will also automatically do the following: 
+- **Labels sit inside the bars in white**, except where a bar is too short to hold its label, in which case the label moves to the right of the confidence interval and turns black. 
+- **Suppressed estimates** get a `^` where the bar would have started, and statistically unreliable ones get a `!` appended to the value. This is explained in the caption.
+
+# Plotting every indicator in a table
+
+Leaving `indicator_key = NULL` (its default) plots every indicator available in the table. This is the normal way to produce a full set of CHNA graphics:
+
+```{r}
+#| eval: false
+# DON'T RUN (unless you have a few minutes)
+# This writes one image per indicator in BRFSS
+chi_plot_demographics(
+  table_name = 'brfss',
+  cat1_varname = c('chi_geo_kc', 'race4', 'chi_geo_region'),
+  output_dir = file.path('c:/temp/blah'))
+```
+
+We haven't actually run it here because the resulting graphics would overwhelm this vignette. If you did run it, you'd find one file per indicator, named `<table_name>_<indicator_key>_<Sys.Date()>.<image_type>`.
+
+# Choosing the groups, and their order
+
+`cat1_varname` has two roles. It tells the function which demographics to use **and** it sets the order the blocks appear in (top to bottom). King County is the exception, and is always pinned to the top if it is requested.
+
+Here is an asthma hospitalization rate broken out by age and race:
+
+```{r}
+#| warning: false
+#| message: false
+myplot <- chi_plot_demographics(
+  table_name = 'chars',
+  indicator_key = 'hos1803000_v1',  # asthma hospitalization
+  cat1_varname = c('chi_geo_kc', 'age6', 'race4'),
+  output_dir = img_dir,
+  width = 9, height = 6, dpi = 150)
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| out-width: '100%'
+knitr::include_graphics(myplot)
+```
+
+Two things to note here.
+
+First, **the age groups are in numeric order**, not alphabetical. The function detects groups whose values are all numeric bands (e.g., ages or incomes) and sorts them by their lower bound. 
+
+Second, **these are rates, not proportions**, and the labels reflect that. The function reads `result_type` from the indicator's metadata. Proportions are then shown as percents, and everything else is shown as a plain number with one decimal place and a comma between thousands.
+
+To rearrange the blocks, rearrange `cat1_varname`. Putting `race4` before `age6` swaps those two sections of the graph:
+
+```{r}
+#| warning: false
+#| message: false
+myplot <- chi_plot_demographics(
+  table_name = 'chars',
+  indicator_key = 'hos1803000_v1',
+  cat1_varname = c('chi_geo_kc', 'race4', 'age6'),
+  output_dir = file.path(img_dir, 'reordered'),
+  width = 9, height = 6, dpi = 150)
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| out-width: '100%'
+knitr::include_graphics(myplot)
+```
+
+Within each block, categories are generally alphabetical. The exceptions are the sorting of numeric bands (described above) and catch-all buckets (`'Other'`, `'Multiple'`) that are pushed to the end of their block rather than sorting alphabetically into the middle of the real categories. For example, when graphing race, `'Multiple'` would come *after* `'White'`.
+
+Setting `cat1_varname = NULL` plots every demographic available in the table. The function warns when you do this, because it is rarely what what we want for CHI or CHNA graphics. Because the user did not provide an order, the blocks are sorted alphabetically by `cat1`.
+
+# Tables use different `cat1_varname` conventions
+
+Not every source table names its demographics the same way. For example, HYS uses `kingco`, `chi_race_eth9`, and `ccreg` whereas BRFSS uses `chi_geo_kc`, `race4`, and `chi_geo_region`:
+
+```{r}
+#| warning: false
+#| message: false
+myplot <- chi_plot_demographics(
+  table_name = 'hys',
+  indicator_key = 'dental_care_bin',
+  cat1_varname = c('kingco', 'chi_race_eth9', 'ccreg'),
+  output_dir = img_dir,
+  width = 9, height = 6, dpi = 150)
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| out-width: '100%'
+knitr::include_graphics(myplot)
+```
+
+King County still floats to the top here, because the function recognizes both `chi_geo_kc` and the older HYS variant `kingco` as naming the county.
+
+If you request a `cat1_varname` the table does not have, the function stops and lists what it was asked for versus what is available. The one exception is that a request for `race4` will automatically be replaced with `race3` if `race3` is available and `race4` is not. 
+
+# Tailoring the graphic for a report
+
+By default each graph contains its own title and the caption explaining the `^` and `!` symbols. In the event that you don't want to display these, you can use the following three arguments:
+
+- `show_title = FALSE` reclaims the space where the title would have been. 
+- `show_caption = FALSE` reclaims the space where the caption would have been. 
+- `trim_margin = TRUE`, which is on by default, reduces the white border around the whole plot.
+
+```{r}
+#| warning: false
+#| message: false
+myplot <- chi_plot_demographics(
+  table_name = 'wscr',
+  indicator_key = 'kc_wscr_lung_bronchus',
+  cat1_varname = c('chi_geo_kc', 'chi_geo_region', 'age5_v1'),
+  output_dir = img_dir,
+  show_title = FALSE,     # use the figure title
+  show_caption = FALSE,   # use the figure caption/footnotes
+  trim_margin = TRUE,     # the default; crops out the surrounding whitespace
+  width = 9, height = 6, dpi = 150)
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| out-width: '100%'
+knitr::include_graphics(myplot)
+```
+
+In addition, `width`, `height`, and `dpi` control the canvas itself. The label placement logic measures the panel at run time, so (within reason!) narrowing the image is safe. Changing the height is trickier. A rule of thumb for a full-height graph is `height` of about `0.35 * # of bars + 1.1`.
+
+# Official CHI indicators only (by default)
+
+By default the function restricts itself to official CHI indicators, i.e., those flagged `chi = 1` in the `*_results` table. Passing `chi = FALSE` will process every indicator in the table:
+
+```{r}
+#| eval: false
+# DON'T RUN (unless you have a few minutes)
+# includes indicators that are not official CHI measures
+chi_plot_demographics(
+  table_name = 'brfss',
+  indicator_key = 'chi_no_pcp',
+  chi = FALSE,
+  output_dir = file.path('c:/temp/blah'))
+```
+
+Be aware of the tradeoff. Unofficial indicators generally have no row in `[PHExtractStore].[APDE].[indicators_titles]`, so there is no true CHI title to draw on and the graph falls back to using the bare `indicator_key` as its title. If that is not acceptable for your output, set `show_title = FALSE` and add your own heading.
+
+# When things go off the rails (common errors)
+
+**"cat1 value(s) ... do not match the standard Tableau Style Guide categories."** The function assigns colors according to `cat1` value, using `apde.etl::chi_standard_varnames` as reference table to crosswalk `cat1_varname` to `cat1`. If the function does not recognize the `cat1` value it means there was a typo in `*_results` table (unlikely) or the `chi_standard_varnames` (even less likely) or that the function needs to add a new category to the `tableau_colors` vector. If this is the case, submit a GitHub issue (or make a branch, add the new value to the `tableau_colors` vector, test your fix, and submit a pull request).
+
+**"indicator_key ... has more than one estimate for the same cat1_group."** Each `cat1_group` can only be drawn once and therefore should only appear once in the data. The function already deals with two cases of duplication for you. When `cat1 = 'King County'` for both the `_kingcounty` and `demgroups` tabs, only one is kept. Also, when there is a one-year and a five-year estimate that end in the same year, the five-year estimate 'wins'. So, if you still have duplicates, there is likely a problem with the SQL `*_results` table. 
+
+**A group you expected is missing.** The most recent year is chosen once per indicator and applied to every row, so all bars on a graph come from the same year. If one demographic has not been refreshed and is still from a previous year, its rows are dropped rather than plotted alongside newer estimates.
+
+# Conclusion
+
+`chi_plot_demographics()` is meant to save you from carpal tunnel syndrome that may result from endless clicking on Tableau and cropping of resulting images. If you think you need something the arguments do not cover, please read the help file first. If you still think a feature is missing, please leave a GitHub issue.
+
+# Sample code to batch produce graphics
+
+```{r}
+#| eval: false
+# DON'T RUN (unless you have a few minutes)
+chi_plot_demographics(table_name = 'acs',
+                       cat1_varname = c('chi_geo_kc', 'chi_geo_region', 'race4'))
+
+chi_plot_demographics(table_name = 'birth',
+                       cat1_varname = c('chi_geo_kc', 'chi_geo_region', 'race4'))
+
+chi_plot_demographics(table_name = 'brfss',
+                       cat1_varname = c('chi_geo_kc', 'chi_geo_region', 'race4'))
+
+chi_plot_demographics(table_name = 'chars',
+                       cat1_varname = c('chi_geo_kc', 'age6', 'race4'))
+
+chi_plot_demographics(table_name = 'death',
+                       cat1_varname = c('chi_geo_kc', 'chi_geo_region', 'race4'))
+
+chi_plot_demographics(table_name = 'hys',
+                       cat1_varname = c('kingco', 'chi_race_eth9', 'ccreg'),
+                       output_dir = file.path('c:/temp/blah'))
+
+chi_plot_demographics(table_name = 'ospi',
+                       cat1_varname = c('chi_geo_kc', 'district', 'race4'))
+
+chi_plot_demographics(table_name = 'rhino',
+                       cat1_varname = c('chi_geo_kc', 'chi_geo_region', 'race4'))
+
+chi_plot_demographics(table_name = 'wscr',
+                       cat1_varname = c('chi_geo_kc', 'chi_geo_region', 'age5_v1'))
+
+```
+
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (apde.chi.tools v', packageVersion('apde.chi.tools'), ')')`*

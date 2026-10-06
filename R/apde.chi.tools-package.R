@@ -12,6 +12,6 @@
 "_PACKAGE"
 
 ## usethis namespace: start
-#' @importFrom data.table %between% := .GRP .I .N .SD
+#' @importFrom data.table %between% %notin% := .GRP .I .N .SD
 ## usethis namespace: end
 NULL
