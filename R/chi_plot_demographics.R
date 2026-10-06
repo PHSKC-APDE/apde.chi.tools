@@ -94,7 +94,7 @@
 #' @param height Numeric. Image height in inches.
 #'
 #'   Default `height = NULL`, which sets the height of each image to 0.5 inches
-#'   per bar (`0.5 * number of bars`, but never less than 2.5 inches), so the
+#'   per bar (`0.5 * number of bars`, but never less than 1.5 inches), so the
 #'   bars stay a similar thickness whether an indicator has few bars or many.
 #'   Bars include any suppressed
 #'   `cat1_group`, which keeps its slot on the graph. Because the number of bars
@@ -217,46 +217,22 @@ chi_plot_demographics <- function(table_name,
                                   title = NULL,
                                   subtitle = NULL) {
 
-  # - set Tableau color scheme ----
-    tableau_colors <- c(
-      "King County"            = "#79706E",
-      "Age"                    = "#F16913",
-      "Big cities"             = "#28A9C5",
-      "Birthing person's age"  = "#F16913",
-      "Birthing person's detailed race/ethnicity"  = "#30BCAD",
-      "Birthing person's education" = "#D4A6C8",
-      "Birthing person's ethnicity" = "#30BCAD",
-      "Birthing person's race" = "#027B8E",
-      "Children in household"  = "#993366",
-      "Cities/neighborhoods"   = "#28A9C5",
-      "Detailed Asian race/ethnicity" = "#30BCAD",
-      "Disability"             = "#55AD56",
-      "Education"              = "#D4A6C8",
-      "Employment"             = "#D4A6C8",
-      "English learner"        = "#8C2D04",
-      "Ethnicity"              = "#30BCAD",
-      "Foster care"            = "#F498B6",
-      "Free lunch"             = "#77559E",
-      "Gender"                 = "#F8B620",
-      "Grade"                  = "#F16913",
-      "Grade level"            = "#F16913",
-      "Homeless"               = "#993366",
-      "Household income"       = "#7A0177",
-      "Migrant"                = "#30BCAD",
-      "Military Service"       = "#A27099",
-      "Nativity"               = "#95CECF",
-      "Neighborhood poverty"   = "#7A0177",
-      "NonSeattle"             = "#2C7BB6",
-      "Poverty"                = "#77559E",
-      "Race"                   = "#027B8E",
-      "Race/ethnicity"         = "#027B8E",
-      "Regions"                = "#2C7BB6",
-      "School district"        = "#2C7BB6",
-      "Sexual orientation"     = "#FFDA66",
-      "Special education"      = "#55AD56",
-      "Transgender"            = "#17BECF",
-      "Zip code"               = "#28A9C5"
-    )
+  # - read Tableau color scheme ----
+    # one row per `cat1` (Tableau Style Guide category) with its hex color; to add a
+    # category, add a row to this file
+    tableau_file <- system.file('ref', 'tableau_colors.csv', package = 'apde.chi.tools')
+    if (tableau_file == '') {
+      stop("\n\U1F6D1 Could not find `ref/tableau_colors.csv` in the apde.chi.tools package. ",
+           "Try reinstalling the package.")
+    }
+    tableau_dt <- data.table::fread(tableau_file, colClasses = 'character', encoding = 'UTF-8')
+    if (!identical(names(tableau_dt), c('cat1', 'hex')) || anyNA(tableau_dt[['cat1']]) ||
+        anyDuplicated(tableau_dt[['cat1']]) > 0 ||
+        !all(grepl('^#[0-9A-Fa-f]{6}$', tableau_dt[['hex']]))) {
+      stop("\n\U1F6D1 `ref/tableau_colors.csv` must have exactly two columns, `cat1` and `hex`, ",
+           "with no missing or duplicated `cat1` values and every `hex` formatted like '#79706E'.")
+    }
+    tableau_colors <- stats::setNames(tableau_dt[['hex']], tableau_dt[['cat1']]) # convert the table a named vector
 
   # - validate arguments ----
     if (missing(table_name) || !is.character(table_name) || length(table_name) != 1 || is.na(table_name)) {
@@ -603,7 +579,7 @@ chi_plot_demographics <- function(table_name,
         stop("\n\U1F6D1 `cat1` value(s) in [PHExtractStore].[APDE].[", table_name, "] do not match ",
              "the standard Tableau Style Guide categories. Unrecognized cat1: ",
              paste0(setdiff(cat1_values, names(tableau_colors)), collapse = ', '),
-             '\nYou will likely have to update `tableau_colors` at the top of `chi_plot_demographics()`.')
+             '\nYou will likely have to add the new category to `inst/ref/tableau_colors.csv`.')
       }
 
       # title: the indicator's CHI title. Falls back to the indicator_key itself when
@@ -708,8 +684,8 @@ chi_plot_demographics <- function(table_name,
       # where they are legible against the panel background.
       # image height: the user's `height`, or 0.5 inches per bar (n_groups counts every
       # bar slot, including suppressed groups) when it was left NULL, but never less than
-      # 2.5 inches, which leaves room for the title and caption when there are only a few bars
-      plot_height <- if (is.null(height)) max(2.5, 0.5 * n_groups) else height
+      # 1.5 inches, which leaves room for the title and caption when there are only a few bars
+      plot_height <- if (is.null(height)) max(1.5, 0.5 * n_groups) else height
 
       panel_in <- panel_width_in(base_plot, width, plot_height)
       dt_ik[, label_w_in := text_width_in(label, bar_label_size)]
