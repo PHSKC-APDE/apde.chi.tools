@@ -35,7 +35,7 @@
 #'   c('chi_geo_kc', 'race4', 'chi_geo_region')` puts King County at the top,
 #'   then the race groups, then the regions. The one exception is King County,
 #'   which is always the top bar whenever it is requested. Both `'chi_geo_kc'`
-#'   and the older variant `'kingco'` are recognized as naming the county. When
+#'   and `'kingco'` are recognized as naming the county. When
 #'   `cat1_varname = NULL` there is no user-supplied order to follow, so the
 #'   groups fall back to alphabetical by `cat1` (still with King County on top).
 #'
@@ -89,11 +89,11 @@
 #' @param width Numeric. Image width in inches. Must be at least 4; narrower
 #'   images leave too little room for the y axis labels, bars and caption.
 #'
-#'   Default `width = 11`.
+#'   Default `width = 4`.
 #'
 #' @param height Numeric. Image height in inches.
 #'
-#'   Default `height = 8.5`.
+#'   Default `height = 6`.
 #'
 #' @param dpi Numeric. Resolution in dots per inch.
 #'
@@ -177,7 +177,7 @@
 #'   subtitle = "King County, 2023"
 #' )
 #'
-#' # smaller, lower resolution image (e.g., for a quick slide or a draft review),
+#' # lower resolution image (e.g., for a quick slide or a draft review),
 #' # pulled from the CHI development/WIP server rather than production. No
 #' # caption, because the '^' and '!' footnotes appear elsewhere on the slide
 #' chi_plot_demographics(
@@ -491,7 +491,7 @@ chi_plot_demographics <- function(table_name,
     # land between 'NHPI' and 'White'. Kept separate from band_rank() so it applies to
     # band and non-band groups alike.
     is_catchall <- function(x) {
-      grepl('^\\s*(other|unknown|multiple)\\b', x, ignore.case = TRUE)
+      grepl('^\\s*(other|another|unknown|multiple)\\b', x, ignore.case = TRUE)
     }
 
   # - build & save one plot per indicator ----

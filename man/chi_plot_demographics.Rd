@@ -11,13 +11,15 @@ chi_plot_demographics(
   chi = TRUE,
   output_dir = "c:/temp/chi_graphics",
   image_type = c("png", "jpg"),
-  width = 11,
-  height = 8.5,
+  width = 4,
+  height = 6,
   dpi = 600,
   prod = TRUE,
   show_title = TRUE,
   show_caption = TRUE,
-  trim_margin = TRUE
+  trim_margin = TRUE,
+  title = NULL,
+  subtitle = NULL
 )
 }
 \arguments{
@@ -39,9 +41,9 @@ Default \code{cat1_varname = c('chi_geo_kc', 'chi_geo_region', 'race4')}. If
 \code{'race4'} is requested but only \code{'race3'} is available in \code{table_name},
 \code{'race3'} is used instead.}
 
-\item{chi}{Logical. If \code{TRUE}, the results table query is limited to the
-to official CHI indicators, i.e. those flagged \code{chi = 1} in SQL. If \code{FALSE}
-, every \code{indicator_key} in the table is plotted.
+\item{chi}{Logical. If \code{TRUE}, the results table query is limited to
+official CHI indicators, i.e. those flagged \code{chi = 1} in SQL. If \code{FALSE},
+every \code{indicator_key} in the table is plotted.
 
 Note! Non-official indicators generally have no entry in
 \verb{[PHExtractStore].[APDE].[indicators_titles]}, so there is no CHI title
@@ -59,13 +61,14 @@ Default \code{output_dir = "c:/temp/chi_graphics"}.}
 
 Default \code{image_type = "png"}.}
 
-\item{width}{Numeric. Image width in inches.
+\item{width}{Numeric. Image width in inches. Must be at least 4; narrower
+images leave too little room for the y axis labels, bars and caption.
 
-Default \code{width = 11}.}
+Default \code{width = 4}.}
 
 \item{height}{Numeric. Image height in inches.
 
-Default \code{height = 8.5}.}
+Default \code{height = 6}.}
 
 \item{dpi}{Numeric. Resolution in dots per inch.
 
@@ -78,8 +81,9 @@ Default \code{prod = TRUE}.}
 
 \item{show_title}{Logical. If \code{TRUE}, the plot is titled with the indicator's
 \code{title} from \verb{[PHExtractStore].[APDE].[indicators_titles]} (falling back to
-the \code{indicator_key} if that table has no title for it). If \code{FALSE}, no
-title is drawn and the space it would take is reclaimed by the plot.
+the \code{indicator_key} if that table has no title for it). If \code{FALSE}, neither
+the title nor the \code{subtitle} is drawn and the space they would take is
+reclaimed by the plot.
 
 Default \code{show_title = TRUE}.}
 
@@ -99,6 +103,23 @@ This only removes the margin \emph{around} the plot. The spacing between the
 bars, and between the bars and the panel edges, is unchanged.
 
 Default \code{trim_margin = TRUE}.}
+
+\item{title}{Character. A custom title for the plot, used instead of the
+indicator's title from \verb{[PHExtractStore].[APDE].[indicators_titles]}. Useful
+for indicators that are not official CHI indicators (and so have no CHI
+title) or when you want to deviate from the CHI title. The same title is used
+for every \code{indicator_key} plotted in the call, so it should be used with a
+single \code{indicator_key}. Not drawn when \code{show_title = FALSE}.
+
+Default \code{title = NULL}, which uses the indicator's CHI title (or the
+\code{indicator_key} if it has none).}
+
+\item{subtitle}{Character. A subtitle drawn beneath the title. The same
+subtitle is used for every \code{indicator_key} plotted in the call. Not drawn
+when \code{show_title = FALSE}.
+
+Default \code{subtitle = NULL}, which writes no subtitle and reserves no space for
+one.}
 }
 \value{
 Invisibly returns a character vector of the file paths written, one per
@@ -139,15 +160,13 @@ indicator and the problematic groups.
 the order the \code{cat1_varname} argument lists them}. So \code{cat1_varname = c('chi_geo_kc', 'race4', 'chi_geo_region')} puts King County at the top,
 then the race groups, then the regions. The one exception is King County,
 which is always the top bar whenever it is requested. Both \code{'chi_geo_kc'}
-and the older variant \code{'kingco'} are recognized as naming the county.
-
-With \code{cat1_varname = NULL} there is no user-supplied order to follow, so
-the groups fall back to alphabetical by \code{cat1} (still with King County on
-top).
+and \code{'kingco'} are recognized as naming the county. When
+\code{cat1_varname = NULL} there is no user-supplied order to follow, so the
+groups fall back to alphabetical by \code{cat1} (still with King County on top).
 
 Within a \code{cat1_varname}, values are generally ordered alphabetically. The
 exceptions are the sorting of numeric bands (e.g., age bins) that are
-sorted numerically and and catch-all buckets (\code{'Other'}, \code{'Multiple'}) that
+sorted numerically and catch-all buckets (\code{'Other'}, \code{'Multiple'}) that
 are always pushed to the end of their block. For example, when graphing
 race, \code{'Multiple'} would come \emph{after} \code{'White'}.
 
@@ -177,7 +196,15 @@ chi_plot_demographics(
   trim_margin = TRUE
 )
 
-# smaller, lower resolution image (e.g., for a quick slide or a draft review),
+# custom title and subtitle in place of the CHI title
+chi_plot_demographics(
+  table_name = "brfss",
+  indicator_key = "chi_no_pcp",
+  title = "Adults without a primary care provider",
+  subtitle = "King County, 2023"
+)
+
+# lower resolution image (e.g., for a quick slide or a draft review),
 # pulled from the CHI development/WIP server rather than production. No
 # caption, because the '^' and '!' footnotes appear elsewhere on the slide
 chi_plot_demographics(
