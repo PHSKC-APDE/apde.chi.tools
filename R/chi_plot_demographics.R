@@ -387,7 +387,8 @@ chi_plot_demographics <- function(table_name,
 
     # font size of the value drawn on each bar, set equal to the y axis labels. geom_text()
     # sizes are in mm rather than points, so divide by ggplot2::.pt (points per mm)
-    bar_label_size <- axis_text_y_pt / ggplot2::.pt
+    bar_label_scalar <- 1.2 # how much bigger bar labels should be than axis labels
+    bar_label_size <- bar_label_scalar * axis_text_y_pt / ggplot2::.pt
 
     # width, in inches, that each label will occupy when drawn
     # geom_text()'s `size` is in mm, while grid wants points ... therefore we need conversion
