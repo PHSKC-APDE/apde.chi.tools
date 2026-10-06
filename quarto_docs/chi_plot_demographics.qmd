@@ -260,7 +260,7 @@ myplot <- chi_plot_demographics(
 knitr::include_graphics(myplot)
 ```
 
-In addition, `width`, `height`, and `dpi` control the canvas itself. The label placement logic measures the panel at run time, so (within reason!) narrowing the image is safe. Changing the height is trickier. A rule of thumb for a full-height graph is `height` of about `0.35 * # of bars + 1.1`.
+In addition, `width`, `height`, and `dpi` control the canvas itself. The function will not accept a `width` below 4 inches. Changing the height is trickier. A rule of thumb for a full-height graph is `height` of about `0.35 * # of bars + 1.1`.
 
 # Official CHI indicators only (by default)
 

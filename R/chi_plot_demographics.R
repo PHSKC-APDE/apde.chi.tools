@@ -86,7 +86,8 @@
 #'
 #'   Default `image_type = "png"`.
 #'
-#' @param width Numeric. Image width in inches.
+#' @param width Numeric. Image width in inches. Must be at least 4; narrower
+#'   images leave too little room for the y axis labels, bars and caption.
 #'
 #'   Default `width = 11`.
 #'
@@ -273,8 +274,9 @@ chi_plot_demographics <- function(table_name,
 
     image_type <- match.arg(image_type)
 
-    if (!is.numeric(width) || length(width) != 1 || is.na(width) || width <= 0) {
-      stop("\n\U1F6D1 `width` must be a single positive number.")
+    if (!is.numeric(width) || length(width) != 1 || is.na(width) || width < 4) {
+      stop("\n\U1F6D1 `width` must be a single number of at least 4 (inches). ",
+           "Narrower images do not leave enough room for the y axis labels, bars and caption.")
     }
     if (!is.numeric(height) || length(height) != 1 || is.na(height) || height <= 0) {
       stop("\n\U1F6D1 `height` must be a single positive number.")
@@ -376,8 +378,16 @@ chi_plot_demographics <- function(table_name,
     # complicated! But critical so that all bar labels are visible, even when small in value
     # used AI to come up with this solution
 
-    # font size (ggplot2 'size', i.e. mm) used for the value drawn on each bar
-    bar_label_size <- 12 * 0.8 * 1.1 / ggplot2::.pt
+    # theme base font size, in points. Title, subtitle and caption are multiples of this.
+    theme_base_size <- 12
+
+    # font size of the y axis labels, in points: the base size x 0.8 (the theme_minimal-style
+    # scaling of axis text) x 1.1. Change the 1.1 to make the y axis labels bigger or smaller.
+    axis_text_y_pt <- theme_base_size * 0.8 * 1.1
+
+    # font size of the value drawn on each bar, set equal to the y axis labels. geom_text()
+    # sizes are in mm rather than points, so divide by ggplot2::.pt (points per mm)
+    bar_label_size <- axis_text_y_pt / ggplot2::.pt
 
     # width, in inches, that each label will occupy when drawn
     # geom_text()'s `size` is in mm, while grid wants points ... therefore we need conversion
@@ -612,7 +622,7 @@ chi_plot_demographics <- function(table_name,
       if (show_caption) {
         margin_in <- if (trim_margin) 5 / 72.27 else 1 / 2.54 # must match plot.margin below
         plot_caption <- wrap_to_width(plot_caption, (width - 2 * margin_in) * 0.97, # 3% safety for font differences
-                                      fontsize = 12 * 0.6) # apde theme base_size 12 x rel(0.6)
+                                      fontsize = theme_base_size * 0.6) # matches plot.caption's rel(0.6)
       } else {
         plot_caption <- NULL
       }
@@ -646,44 +656,27 @@ chi_plot_demographics <- function(table_name,
                       x = NULL,
                       y = NULL,
                       caption = plot_caption) +
-        # APDE standard look: theme_minimal() plus the tweaks below. "sans" maps to
-        # Arial on Windows
-        ggplot2::theme_minimal(base_size = 12, base_family = 'sans') +
+        # APDE look: theme_minimal() plus the tweaks below. "sans" maps to Arial on Windows
+        ggplot2::theme_minimal(base_size = theme_base_size, base_family = 'sans') +
         ggplot2::theme(
           plot.title = ggplot2::element_text(size = ggplot2::rel(1.3), face = 'bold', hjust = 0.5,
                                              color = 'black', margin = ggplot2::margin(b = 10)),
           plot.subtitle = ggplot2::element_text(size = ggplot2::rel(1), face = 'plain', hjust = 0.5,
                                                 margin = ggplot2::margin(b = 10)),
-          axis.title = ggplot2::element_text(size = ggplot2::rel(1), face = 'bold',
-                                             margin = ggplot2::margin(t = 10, b = 10)),
-          axis.text = ggplot2::element_text(size = ggplot2::rel(0.8)),
-          panel.grid.major.x = ggplot2::element_blank(),
-          panel.grid.minor = ggplot2::element_blank(),
-          legend.title = ggplot2::element_text(size = ggplot2::rel(1), face = 'bold', color = 'black'),
-          legend.text = ggplot2::element_text(size = ggplot2::rel(0.8)),
-          legend.position = 'right',
           plot.caption = ggplot2::element_text(size = ggplot2::rel(0.6), hjust = 0,
-                                               margin = ggplot2::margin(t = 10)),
-          plot.margin = ggplot2::margin(t = 1, r = 1, b = 1, l = 1, unit = 'cm'),
-          panel.spacing = grid::unit(0, 'lines'),
-          strip.placement = 'outside',
-          strip.background = ggplot2::element_blank(),
-          strip.text = ggplot2::element_text(face = 'bold', size = ggplot2::rel(1))
-        ) +
-        ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(),
-                       legend.position = "none",
-                       axis.text.x = ggplot2::element_blank(),
-                       axis.ticks.x = ggplot2::element_blank(),
-                       axis.text.y = ggplot2::element_text(size = ggplot2::rel(1.1)),
-                       plot.caption = ggplot2::element_text(margin = ggplot2::margin(t = 2, unit = 'pt')), # increase to push caption further from bars
-                       plot.caption.position = 'plot' # start at the left edge of the image rather than the panel
-                      )
-
-      # trimmed margins were decided via repeated testing
-      if (trim_margin) {
-        base_plot <- base_plot +
-          ggplot2::theme(plot.margin = ggplot2::margin(t = 5, r = 5, b= 5, l = 5, unit = 'pt'))
-      }
+                                               margin = ggplot2::margin(t = 2, unit = 'pt')), # increase to push caption further from bars
+          plot.caption.position = 'plot', # start at the left edge of the image rather than the panel
+          # trimmed margins were decided via repeated testing
+          plot.margin = if (trim_margin) ggplot2::margin(t = 5, r = 5, b = 5, l = 5, unit = 'pt')
+                        else ggplot2::margin(t = 1, r = 1, b = 1, l = 1, unit = 'cm'),
+          axis.text.y = ggplot2::element_text(size = axis_text_y_pt),
+          axis.text.x = ggplot2::element_blank(),
+          axis.ticks.x = ggplot2::element_blank(),
+          panel.grid.major.x = ggplot2::element_blank(),
+          panel.grid.major.y = ggplot2::element_blank(),
+          panel.grid.minor = ggplot2::element_blank(),
+          legend.position = 'none'
+        )
 
       # ensure upper_bound point is never truncated by adding 5% buffer
       y_axis_values <- c(dt_ik[['result']], dt_ik[['upper_bound']])
@@ -721,9 +714,9 @@ chi_plot_demographics <- function(table_name,
       # group separators run from the right edge of the panel left across the y axis
       # labels. annotation_custom() is used because, unlike geom_segment(), it is not
       # censored by the y scale limits when it starts left of zero. The overhang is
-      # the widest cat1_group label (drawn at the axis font size, 20 pt, which
-      # text_width_in() wants in mm) plus a small allowance for the axis text margin,
-      # converted from inches to y axis units.
+      # the widest cat1_group label (drawn at the axis font size, which is the same as
+      # bar_label_size, in the mm that text_width_in() wants) plus a small allowance for
+      # the axis text margin, converted from inches to y axis units.
       if (length(group_boundaries) > 0) {
         axis_label_w_in <- max(text_width_in(levels(dt_ik[['cat1_group']]), bar_label_size), na.rm = TRUE)
         sep_start <- -(axis_label_w_in + 0.03) / panel_in * y_max
