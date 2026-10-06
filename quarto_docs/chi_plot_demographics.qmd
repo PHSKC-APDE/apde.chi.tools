@@ -26,7 +26,7 @@ The function has a detailed help file accessible by typing `?chi_plot_demographi
 - Every graph is written to disk. Nothing is returned to your console except an invisible character vector of the file paths written.
 - The function needs a connection to `PHExtractStore`, so you must be on the King County network or VPN.
 - You will get one image per `indicator_key`. If you do not name any indicators, you get *all* of them, which can be hundreds of files.
-- Images here are deliberately saved with small dimensions (`width = 9, height = 6, dpi = 150`) to keep this repository light. For a real CHNA report, you probably want to use the defaults.
+- Images here are deliberately saved with small dimensions (`width = 9, dpi = 150`, and in most examples `height = 6`) to keep this repository light. For a real CHNA report, you probably want to use the defaults.
 
 # Set up the environment
 
@@ -105,7 +105,7 @@ We haven't actually run it here because the resulting graphics would overwhelm t
 
 `cat1_varname` has two roles. It tells the function which demographics to use **and** it sets the order the blocks appear in (top to bottom). King County is the exception, and is always pinned to the top if it is requested.
 
-Here is an asthma hospitalization rate broken out by age and race:
+Here is an asthma hospitalization rate broken out by age and race. Note that we did not set `height`. By default the function calculates it from the number of bars in the graph (0.5 inches per bar, with a minimum of 2.5 inches), so the bars look right whether there are a few or many:
 
 ```{r}
 #| warning: false
@@ -115,7 +115,7 @@ myplot <- chi_plot_demographics(
   indicator_key = 'hos1803000_v1',  # asthma hospitalization
   cat1_varname = c('chi_geo_kc', 'age6', 'race4'),
   output_dir = img_dir,
-  width = 9, height = 6, dpi = 150)
+  width = 9, dpi = 150)
 ```
 
 ```{r}
@@ -142,7 +142,7 @@ myplot <- chi_plot_demographics(
   indicator_key = 'hos1803000_v1',
   cat1_varname = c('chi_geo_kc', 'race4', 'age6'),
   output_dir = file.path(img_dir, 'reordered'),
-  width = 9, height = 6, dpi = 150)
+  width = 9, dpi = 150)
 ```
 
 ```{r}
@@ -260,7 +260,7 @@ myplot <- chi_plot_demographics(
 knitr::include_graphics(myplot)
 ```
 
-In addition, `width`, `height`, and `dpi` control the canvas itself. The function will not accept a `width` below 4 inches. Changing the height is trickier. A rule of thumb for a full-height graph is `height` of about `0.35 * # of bars + 1.1`.
+In addition, `width`, `height`, and `dpi` control the canvas itself. The function will not accept a `width` below 4 inches. By default (`height = NULL`) the height of each image is calculated from its number of bars, at 0.5 inches per bar (never less than 2.5 inches), so bars stay a similar thickness whether an indicator has a few bars or many. If you supply a `height`, that fixed height is used for every image.
 
 # Official CHI indicators only (by default)
 

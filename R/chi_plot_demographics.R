@@ -93,7 +93,13 @@
 #'
 #' @param height Numeric. Image height in inches.
 #'
-#'   Default `height = 6`.
+#'   Default `height = NULL`, which sets the height of each image to 0.5 inches
+#'   per bar (`0.5 * number of bars`, but never less than 2.5 inches), so the
+#'   bars stay a similar thickness whether an indicator has few bars or many.
+#'   Bars include any suppressed
+#'   `cat1_group`, which keeps its slot on the graph. Because the number of bars
+#'   can differ by `indicator_key`, images from the same call may have different
+#'   heights. Supply a number to use the same fixed height for every image.
 #'
 #' @param dpi Numeric. Resolution in dots per inch.
 #'
@@ -202,7 +208,7 @@ chi_plot_demographics <- function(table_name,
                                   output_dir = 'c:/temp/chi_graphics',
                                   image_type = c('png', 'jpg'),
                                   width = 4,
-                                  height = 6,
+                                  height = NULL,
                                   dpi = 600,
                                   prod = TRUE,
                                   show_title = TRUE,
@@ -278,8 +284,8 @@ chi_plot_demographics <- function(table_name,
       stop("\n\U1F6D1 `width` must be a single number of at least 4 (inches). ",
            "Narrower images do not leave enough room for the y axis labels, bars and caption.")
     }
-    if (!is.numeric(height) || length(height) != 1 || is.na(height) || height <= 0) {
-      stop("\n\U1F6D1 `height` must be a single positive number.")
+    if (!is.null(height) && (!is.numeric(height) || length(height) != 1 || is.na(height) || height <= 0)) {
+      stop("\n\U1F6D1 `height` must be NULL or a single positive number.")
     }
     if (!is.numeric(dpi) || length(dpi) != 1 || is.na(dpi) || dpi <= 0) {
       stop("\n\U1F6D1 `dpi` must be a single positive number.")
@@ -700,7 +706,12 @@ chi_plot_demographics <- function(table_name,
       # against the label's drawn width. Labels that fit stay white and centered
       # inside the bar; the rest are drawn in black just past the end of the bar,
       # where they are legible against the panel background.
-      panel_in <- panel_width_in(base_plot, width, height)
+      # image height: the user's `height`, or 0.5 inches per bar (n_groups counts every
+      # bar slot, including suppressed groups) when it was left NULL, but never less than
+      # 2.5 inches, which leaves room for the title and caption when there are only a few bars
+      plot_height <- if (is.null(height)) max(2.5, 0.5 * n_groups) else height
+
+      panel_in <- panel_width_in(base_plot, width, plot_height)
       dt_ik[, label_w_in := text_width_in(label, bar_label_size)]
 
       # outside labels need to start after the CI so doesn't sit on the error bar
@@ -762,7 +773,7 @@ chi_plot_demographics <- function(table_name,
       filename <- paste0(table_name, "_", safe_ik, "_", Sys.Date(), ".", image_type)
       filepath <- file.path(output_dir, filename)
 
-      ggplot2::ggsave(filepath, myplot, width = width, height = height, dpi = dpi, units = "in")
+      ggplot2::ggsave(filepath, myplot, width = width, height = plot_height, dpi = dpi, units = "in")
       saved_files <- c(saved_files, filepath)
     }
 
