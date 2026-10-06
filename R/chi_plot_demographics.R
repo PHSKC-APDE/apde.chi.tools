@@ -467,16 +467,19 @@ chi_plot_demographics <- function(table_name,
              "table directly to figure out which estimate is correct.")
       }
 
-      # bar labels: proportions are displayed as percents ('17.5%'), everything
-      # else (e.g. rates) as a plain number with exactly one decimal place, so
-      # that whole numbers keep their trailing zero ('17.0' rather than '17'), with
-      # a comma between thousands ('1,234.5').
+      # bar labels: proportions are displayed as percents ('17.5%'), dollars as
+      # whole dollars with a comma between thousands ('$123,456'), and everything
+      # else (e.g. rates, counts) as a plain number with exactly one decimal place,
+      # so that whole numbers keep their trailing zero ('17.0' rather than '17'),
+      # with a comma between thousands ('1,234.5').
       # Rows with no result (e.g. suppressed) get no label; the suppression symbol
       # for those rows is drawn on its own below.
       dt_ik[, label := NA_character_]
       dt_ik[!is.na(result) & result_type %in% 'proportion',
             label := sprintf("%.1f%%", rads::round2(result * 100, 1))]
-      dt_ik[!is.na(result) & !result_type %in% 'proportion',
+      dt_ik[!is.na(result) & result_type %in% 'dollars',
+            label := paste0('$', formatC(rads::round2(result, 0), format = 'f', digits = 0, big.mark = ','))]
+      dt_ik[!is.na(result) & !result_type %in% c('proportion', 'dollars'),
             label := formatC(result, format = 'f', digits = 1, big.mark = ',')]
       dt_ik[!is.na(label) & !is.na(suppression) & suppression != '', label := paste0(label, suppression)]
       dt_ik[!is.na(label) & !is.na(caution) & caution != '', label := paste0(label, caution)]

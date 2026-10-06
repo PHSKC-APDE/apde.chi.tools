@@ -130,7 +130,7 @@ Two things to note here.
 
 First, **the age groups are in numeric order**, not alphabetical. The function detects groups whose values are all numeric bands (e.g., ages or incomes) and sorts them by their lower bound. 
 
-Second, **these are rates, not proportions**, and the labels reflect that. The function reads `result_type` from the indicator's metadata. Proportions are then shown as percents, and everything else is shown as a plain number with one decimal place and a comma between thousands.
+Second, **these are rates, not proportions**, and the labels reflect that. The function reads `result_type` from the indicator's metadata. Proportions are then shown as percents (e.g., `17.5%`), dollars are shown as whole dollars with a comma between thousands (e.g., `$123,456`), and everything else (e.g., rates and counts) is shown as a plain number with one decimal place and a comma between thousands.
 
 To rearrange the blocks, rearrange `cat1_varname`. Putting `race4` before `age6` swaps those two sections of the graph:
 
@@ -183,6 +183,29 @@ knitr::include_graphics(myplot)
 King County still floats to the top here, because the function recognizes both `chi_geo_kc` and the older HYS variant `kingco` as naming the county.
 
 If you request a `cat1_varname` the table does not have, the function stops and lists what it was asked for versus what is available. The one exception is that a request for `race4` will automatically be replaced with `race3` if `race3` is available and `race4` is not. 
+
+# Dollars
+
+Indicators whose `result_type` is dollars, such as median household income, are labeled in whole dollars. Income bands (e.g., `<$50,000`, `$50,000-$99,999`, `$100,000+`) are also sorted numerically rather than alphabetically.
+
+```{r}
+#| warning: false
+#| message: false
+myplot <- chi_plot_demographics(
+  table_name = 'acs',
+  indicator_key = 'medinc',
+  cat1_varname = c('chi_geo_kc', 'agemedinc', 'race4'),
+  output_dir = img_dir,
+  width = 9, height = 6, dpi = 150)
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| out-width: '100%'
+knitr::include_graphics(myplot)
+```
 
 # Tailoring the graphic for a report
 
