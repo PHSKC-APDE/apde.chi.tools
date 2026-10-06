@@ -381,6 +381,32 @@ chi_plot_demographics <- function(table_name,
 
     # width, in inches, that each label will occupy when drawn
     # geom_text()'s `size` is in mm, while grid wants points ... therefore we need conversion
+    # greedy word wrap: breaks each line of `text` (existing '\n' are kept) so that none
+    # is wider than `max_in` inches when drawn at `fontsize` points. A single word wider
+    # than `max_in` is left on its own line.
+    wrap_to_width <- function(text, max_in, fontsize) {
+      width_of <- function(s) grid::convertWidth(
+        grid::grobWidth(grid::textGrob(s, gp = grid::gpar(fontsize = fontsize))),
+        "in", valueOnly = TRUE)
+      wrap_line <- function(line) {
+        words <- strsplit(line, ' ', fixed = TRUE)[[1]]
+        out <- character(0)
+        current <- ''
+        for (w in words) {
+          candidate <- if (nzchar(current)) paste(current, w) else w
+          if (nzchar(current) && width_of(candidate) > max_in) {
+            out <- c(out, current)
+            current <- w
+          } else {
+            current <- candidate
+          }
+        }
+        paste(c(out, current), collapse = '\n')
+      }
+      paste(vapply(strsplit(text, '\n', fixed = TRUE)[[1]], wrap_line, character(1), USE.NAMES = FALSE),
+            collapse = '\n')
+    }
+
     text_width_in <- function(labels, size) {
       fontsize <- size * (72.27 / 25.4)
       vapply(labels, function(lab) {
@@ -577,10 +603,19 @@ chi_plot_demographics <- function(table_name,
       }
 
       # caption: generic CHI caption
+      # The caption is drawn from the left edge of the image (see plot.caption.position
+      # below) and is word-wrapped to the width available between the plot margins, so
+      # it is never cut off on a narrow image.
       plot_caption <- paste0(
         '^ = Data suppressed if too few cases to protect confidentiality and/or report reliable rates\n',
         '! = Interpret with caution; sample size is small so estimate is imprecise')
-      if (!show_caption) plot_caption <- NULL
+      if (show_caption) {
+        margin_in <- if (trim_margin) 5 / 72.27 else 1 / 2.54 # must match plot.margin below
+        plot_caption <- wrap_to_width(plot_caption, (width - 2 * margin_in) * 0.97, # 3% safety for font differences
+                                      fontsize = 12 * 0.6) # apde theme base_size 12 x rel(0.6)
+      } else {
+        plot_caption <- NULL
+      }
 
       # everything except the value axis and the bar labels, both of which depend
       # on how much room the labels need (see below). Layer order still puts the
@@ -640,7 +675,8 @@ chi_plot_demographics <- function(table_name,
                        axis.text.x = ggplot2::element_blank(),
                        axis.ticks.x = ggplot2::element_blank(),
                        axis.text.y = ggplot2::element_text(size = 20),
-                       plot.caption = ggplot2::element_text(margin = ggplot2::margin(t = 2, unit = 'pt')) # increase to push caption further from bars
+                       plot.caption = ggplot2::element_text(margin = ggplot2::margin(t = 2, unit = 'pt')), # increase to push caption further from bars
+                       plot.caption.position = 'plot' # start at the left edge of the image rather than the panel
                       )
 
       # trimmed margins were decided via repeated testing
