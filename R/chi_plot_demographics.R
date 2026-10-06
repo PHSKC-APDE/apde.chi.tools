@@ -548,7 +548,7 @@ chi_plot_demographics <- function(table_name,
       # suppressed groups keep their slot on the axis regardless.
       base_plot <- ggplot2::ggplot(dt_ik, ggplot2::aes(x = cat1_group, y = result, fill = cat1)) +
         ggplot2::geom_bar(data = dt_ik[!is.na(result)], stat = "identity") +
-        ggplot2::coord_flip() +
+        ggplot2::coord_flip(clip = 'off') + # clip off so the group separators can reach out over the y axis labels
         ggplot2::geom_point(data = dt_ik[!is.na(lower_bound)],
                             ggplot2::aes(y = lower_bound), shape = 16, size = 1, show.legend = FALSE) +
         ggplot2::geom_point(data = dt_ik[!is.na(upper_bound)],
@@ -598,10 +598,6 @@ chi_plot_demographics <- function(table_name,
                        plot.caption = ggplot2::element_text(margin = ggplot2::margin(t = 2, unit = 'pt')) # increase to push caption further from bars
                       )
 
-      if (length(group_boundaries) > 0) {
-        base_plot <- base_plot + ggplot2::geom_vline(xintercept = group_boundaries, color = "black", linewidth = 1)
-      }
-
       # trimmed margins were decided via repeated testing
       if (trim_margin) {
         base_plot <- base_plot +
@@ -639,6 +635,24 @@ chi_plot_demographics <- function(table_name,
         y_needed <- max(outside[['label_anchor']] / room, na.rm = TRUE) # the neediest label sets the axis
         if (!is.finite(y_needed) || y_needed <= y_max * 1.001) break # no real growth → settled
         y_max <- y_needed # grow the axis, then re-test every label next pass
+      }
+
+      # group separators run from the right edge of the panel left across the y axis
+      # labels. annotation_custom() is used because, unlike geom_segment(), it is not
+      # censored by the y scale limits when it starts left of zero. The overhang is
+      # the widest cat1_group label (drawn at the axis font size, 20 pt, which
+      # text_width_in() wants in mm) plus a small allowance for the axis text margin,
+      # converted from inches to y axis units.
+      if (length(group_boundaries) > 0) {
+        axis_label_w_in <- max(text_width_in(levels(dt_ik[['cat1_group']]), 20 * 25.4 / 72.27), na.rm = TRUE)
+        sep_start <- -(axis_label_w_in + 0.03) / panel_in * y_max
+        separators <- lapply(group_boundaries, function(b) {
+          ggplot2::annotation_custom(
+            grid::segmentsGrob(x0 = 0, x1 = 1, y0 = 0.5, y1 = 0.5,
+                               gp = grid::gpar(col = 'black', lwd = 1 * ggplot2::.pt)),
+            xmin = b, xmax = b, ymin = sep_start, ymax = y_max)
+        })
+        base_plot <- base_plot + separators
       }
 
       myplot <- base_plot +
