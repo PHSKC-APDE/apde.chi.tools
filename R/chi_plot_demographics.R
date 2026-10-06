@@ -132,7 +132,7 @@
 #'   indicator's title from `[PHExtractStore].[APDE].[indicators_titles]`. Useful
 #'   for indicators that are not official CHI indicators (and so have no CHI
 #'   title) or when you want to deviate from the CHI title. The same title is used
-#'   for every `indicator_key` plotted in the call, so it is best used with a
+#'   for every `indicator_key` plotted in the call, so it should be used with a
 #'   single `indicator_key`. Not drawn when `show_title = FALSE`.
 #'
 #'   Default `title = NULL`, which uses the indicator's CHI title (or the

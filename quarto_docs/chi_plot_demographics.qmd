@@ -223,8 +223,8 @@ myplot <- chi_plot_demographics(
   indicator_key = 'kc_wscr_lung_bronchus',
   cat1_varname = c('chi_geo_kc', 'chi_geo_region', 'age5_v1'),
   output_dir = img_dir,
-  show_title = FALSE,     # use the figure title
-  show_caption = FALSE,   # use the figure caption/footnotes
+  show_title = FALSE,     # hide the figure title
+  show_caption = FALSE,   # hide the figure caption/footnotes
   trim_margin = TRUE,     # the default; crops out the surrounding whitespace
   width = 9, height = 6, dpi = 150)
 ```
@@ -237,7 +237,7 @@ myplot <- chi_plot_demographics(
 knitr::include_graphics(myplot)
 ```
 
-You can also supply your own text with `title` and `subtitle`. A custom `title` replaces the one from `[PHExtractStore].[APDE].[indicators_titles]`, which is handy for unofficial indicators or when you want different wording. A `subtitle` is drawn beneath the title. Both default to `NULL`: the title then comes from the table as usual, and no subtitle is added. The same text is used for every indicator in the call, so these are best paired with a single `indicator_key`. Setting `show_title = FALSE` hides both the title and the subtitle.
+You can also provide your own custom `title` and `subtitle`. A custom `title` replaces the one from `[PHExtractStore].[APDE].[indicators_titles]`, which is handy for unofficial indicators or when you want different wording. A `subtitle` is drawn beneath the title. The same text is used for every indicator in the call, so these should be used with a single `indicator_key`. Setting `show_title = FALSE` hides both the title and the subtitle.
 
 ```{r}
 #| warning: false
