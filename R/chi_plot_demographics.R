@@ -200,8 +200,8 @@ chi_plot_demographics <- function(table_name,
                                   chi = TRUE,
                                   output_dir = 'c:/temp/chi_graphics',
                                   image_type = c('png', 'jpg'),
-                                  width = 11,
-                                  height = 8.5,
+                                  width = 4,
+                                  height = 6,
                                   dpi = 600,
                                   prod = TRUE,
                                   show_title = TRUE,
@@ -377,7 +377,7 @@ chi_plot_demographics <- function(table_name,
     # used AI to come up with this solution
 
     # font size (ggplot2 'size', i.e. mm) used for the value drawn on each bar
-    bar_label_size <- 7
+    bar_label_size <- 12 * 0.8 * 1.1 / ggplot2::.pt
 
     # width, in inches, that each label will occupy when drawn
     # geom_text()'s `size` is in mm, while grid wants points ... therefore we need conversion
@@ -674,7 +674,7 @@ chi_plot_demographics <- function(table_name,
                        legend.position = "none",
                        axis.text.x = ggplot2::element_blank(),
                        axis.ticks.x = ggplot2::element_blank(),
-                       axis.text.y = ggplot2::element_text(size = 20),
+                       axis.text.y = ggplot2::element_text(size = ggplot2::rel(1.1)),
                        plot.caption = ggplot2::element_text(margin = ggplot2::margin(t = 2, unit = 'pt')), # increase to push caption further from bars
                        plot.caption.position = 'plot' # start at the left edge of the image rather than the panel
                       )
@@ -725,7 +725,7 @@ chi_plot_demographics <- function(table_name,
       # text_width_in() wants in mm) plus a small allowance for the axis text margin,
       # converted from inches to y axis units.
       if (length(group_boundaries) > 0) {
-        axis_label_w_in <- max(text_width_in(levels(dt_ik[['cat1_group']]), 20 * 25.4 / 72.27), na.rm = TRUE)
+        axis_label_w_in <- max(text_width_in(levels(dt_ik[['cat1_group']]), bar_label_size), na.rm = TRUE)
         sep_start <- -(axis_label_w_in + 0.03) / panel_in * y_max
         separators <- lapply(group_boundaries, function(b) {
           ggplot2::annotation_custom(
