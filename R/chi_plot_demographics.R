@@ -660,8 +660,9 @@ chi_plot_demographics <- function(table_name,
         # APDE look: theme_minimal() plus the tweaks below. "sans" maps to Arial on Windows
         ggplot2::theme_minimal(base_size = theme_base_size, base_family = 'sans') +
         ggplot2::theme(
-          plot.title = ggplot2::element_text(size = ggplot2::rel(1.3), face = 'bold', hjust = 0.5,
+          plot.title = ggplot2::element_text(size = ggplot2::rel(1.2), face = 'bold', hjust = 0.5,
                                              color = 'black', margin = ggplot2::margin(b = 10)),
+          plot.title.position = 'plot', # start at the left edge of the image rather than the panel
           plot.subtitle = ggplot2::element_text(size = ggplot2::rel(1), face = 'plain', hjust = 0.5,
                                                 margin = ggplot2::margin(b = 10)),
           plot.caption = ggplot2::element_text(size = ggplot2::rel(0.6), hjust = 0,
