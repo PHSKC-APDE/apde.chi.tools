@@ -19,7 +19,7 @@ editor: source
 
 This function exists so that you do not have to rebuild the same `ggplot2` call for every indicator. You point it at a table, tell it which indicator_keys and demographic groups you want, and collect your custom images.
 
-The function has a detailed help file accessible by typing `?chi_plot_demographics`. This vignette showss a few examples of how you can use this function.
+The function has a detailed help file accessible by typing `?chi_plot_demographics`. This vignette shows a few examples of how you can use this function.
 
 ***A few quick notes before we begin ...***
 
@@ -80,7 +80,8 @@ Notice a few things the function did without being asked:
 - The correct **title** was pulled automatically from `[PHExtractStore].[APDE].[indicators_titles]`, based on the `indicator_key`.
 - **King County is the top bar**, even though we did not list it first. 
 
-When relevant, the function will also automatically do the following: 
+When relevant, the function will also automatically do the following:
+
 - **Labels sit inside the bars in white**, except where a bar is too short to hold its label, in which case the label moves to the right of the confidence interval and turns black. 
 - **Suppressed estimates** get a `^` where the bar would have started, and statistically unreliable ones get a `!` appended to the value. This is explained in the caption.
 
@@ -154,7 +155,7 @@ knitr::include_graphics(myplot)
 
 Within each block, categories are generally alphabetical. The exceptions are the sorting of numeric bands (described above) and catch-all buckets (`'Other'`, `'Multiple'`) that are pushed to the end of their block rather than sorting alphabetically into the middle of the real categories. For example, when graphing race, `'Multiple'` would come *after* `'White'`.
 
-Setting `cat1_varname = NULL` plots every demographic available in the table. The function warns when you do this, because it is rarely what what we want for CHI or CHNA graphics. Because the user did not provide an order, the blocks are sorted alphabetically by `cat1`.
+Setting `cat1_varname = NULL` plots every demographic available in the table. The function warns when you do this, because it is rarely what we want for CHI or CHNA graphics. Because the user did not provide an order, the blocks are sorted alphabetically by `cat1`.
 
 # Tables use different `cat1_varname` conventions
 
@@ -234,7 +235,7 @@ Be aware of the tradeoff. Unofficial indicators generally have no row in `[PHExt
 
 # When things go off the rails (common errors)
 
-**"cat1 value(s) ... do not match the standard Tableau Style Guide categories."** The function assigns colors according to `cat1` value, using `apde.etl::chi_standard_varnames` as reference table to crosswalk `cat1_varname` to `cat1`. If the function does not recognize the `cat1` value it means there was a typo in `*_results` table (unlikely) or the `chi_standard_varnames` (even less likely) or that the function needs to add a new category to the `tableau_colors` vector. If this is the case, submit a GitHub issue (or make a branch, add the new value to the `tableau_colors` vector, test your fix, and submit a pull request).
+**"cat1 value(s) ... do not match the standard Tableau Style Guide categories."** The function assigns colors according to `cat1` value, using `apde.etl::chi_standard_varnames` as a reference table to crosswalk `cat1_varname` to `cat1`. If the function does not recognize the `cat1` value it means there was a typo in `*_results` table (unlikely) or the `chi_standard_varnames` (even less likely) or that the function needs to add a new category to the `tableau_colors` vector. If this is the case, submit a GitHub issue (or make a branch, add the new value to the `tableau_colors` vector, test your fix, and submit a pull request).
 
 **"indicator_key ... has more than one estimate for the same cat1_group."** Each `cat1_group` can only be drawn once and therefore should only appear once in the data. The function already deals with two cases of duplication for you. When `cat1 = 'King County'` for both the `_kingcounty` and `demgroups` tabs, only one is kept. Also, when there is a one-year and a five-year estimate that end in the same year, the five-year estimate 'wins'. So, if you still have duplicates, there is likely a problem with the SQL `*_results` table. 
 
