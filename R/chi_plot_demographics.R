@@ -381,6 +381,9 @@ chi_plot_demographics <- function(table_name,
     # theme base font size, in points. Title, subtitle and caption are multiples of this.
     theme_base_size <- 12
 
+    # title font size as a multiple of the base size (also used to wrap the title)
+    title_rel <- 1.2
+
     # font size of the y axis labels, in points: the base size x 0.8 (the theme_minimal-style
     # scaling of axis text) x 1.1. Change the 1.1 to make the y axis labels bigger or smaller.
     axis_text_y_pt <- theme_base_size * 0.8 * 1.1
@@ -390,14 +393,12 @@ chi_plot_demographics <- function(table_name,
     bar_label_scalar <- 1.2 # how much bigger bar labels should be than axis labels
     bar_label_size <- bar_label_scalar * axis_text_y_pt / ggplot2::.pt
 
-    # width, in inches, that each label will occupy when drawn
-    # geom_text()'s `size` is in mm, while grid wants points ... therefore we need conversion
     # greedy word wrap: breaks each line of `text` (existing '\n' are kept) so that none
-    # is wider than `max_in` inches when drawn at `fontsize` points. A single word wider
-    # than `max_in` is left on its own line.
-    wrap_to_width <- function(text, max_in, fontsize) {
+    # is wider than `max_in` inches when drawn at `fontsize` points (in `fontface`, e.g.
+    # 'bold'). A single word wider than `max_in` is left on its own line.
+    wrap_to_width <- function(text, max_in, fontsize, fontface = 'plain') {
       width_of <- function(s) grid::convertWidth(
-        grid::grobWidth(grid::textGrob(s, gp = grid::gpar(fontsize = fontsize))),
+        grid::grobWidth(grid::textGrob(s, gp = grid::gpar(fontsize = fontsize, fontface = fontface))),
         "in", valueOnly = TRUE)
       wrap_line <- function(line) {
         words <- strsplit(line, ' ', fixed = TRUE)[[1]]
@@ -418,6 +419,8 @@ chi_plot_demographics <- function(table_name,
             collapse = '\n')
     }
 
+    # width, in inches, that each label will occupy when drawn
+    # geom_text()'s `size` is in mm, while grid wants points ... therefore we need conversion
     text_width_in <- function(labels, size) {
       fontsize <- size * (72.27 / 25.4)
       vapply(labels, function(lab) {
@@ -613,16 +616,23 @@ chi_plot_demographics <- function(table_name,
         plot_subtitle <- NULL
       }
 
+      # The title and caption are laid out across the whole image (see plot.title.position
+      # and plot.caption.position below) and are word-wrapped to the width available
+      # between the plot margins, so neither is cut off on a narrow image. The subtitle is
+      # not wrapped: its wording is up to the user.
+      text_max_in <- (width - 2 * if (trim_margin) 5 / 72.27 else 1 / 2.54) * 0.97 # margins must match plot.margin below; 3% safety for font differences
+
+      if (!is.null(plot_title)) {
+        plot_title <- wrap_to_width(plot_title, text_max_in,
+                                    fontsize = theme_base_size * title_rel, fontface = 'bold')
+      }
+
       # caption: generic CHI caption
-      # The caption is drawn from the left edge of the image (see plot.caption.position
-      # below) and is word-wrapped to the width available between the plot margins, so
-      # it is never cut off on a narrow image.
       plot_caption <- paste0(
         '^ = Data suppressed if too few cases to protect confidentiality and/or report reliable rates\n',
         '! = Interpret with caution; sample size is small so estimate is imprecise')
       if (show_caption) {
-        margin_in <- if (trim_margin) 5 / 72.27 else 1 / 2.54 # must match plot.margin below
-        plot_caption <- wrap_to_width(plot_caption, (width - 2 * margin_in) * 0.97, # 3% safety for font differences
+        plot_caption <- wrap_to_width(plot_caption, text_max_in,
                                       fontsize = theme_base_size * 0.6) # matches plot.caption's rel(0.6)
       } else {
         plot_caption <- NULL
@@ -660,7 +670,7 @@ chi_plot_demographics <- function(table_name,
         # APDE look: theme_minimal() plus the tweaks below. "sans" maps to Arial on Windows
         ggplot2::theme_minimal(base_size = theme_base_size, base_family = 'sans') +
         ggplot2::theme(
-          plot.title = ggplot2::element_text(size = ggplot2::rel(1.2), face = 'bold', hjust = 0.5,
+          plot.title = ggplot2::element_text(size = ggplot2::rel(title_rel), face = 'bold', hjust = 0.5,
                                              color = 'black', margin = ggplot2::margin(b = 10)),
           plot.title.position = 'plot', # start at the left edge of the image rather than the panel
           plot.subtitle = ggplot2::element_text(size = ggplot2::rel(1), face = 'plain', hjust = 0.5,
