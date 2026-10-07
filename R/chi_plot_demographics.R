@@ -242,20 +242,8 @@ chi_plot_demographics <- function(table_name,
 
   # - read Tableau color scheme ----
     # one row per `cat1` (Tableau Style Guide category) with its hex color; to add a
-    # category, add a row to this file
-    tableau_file <- system.file('ref', 'tableau_colors.csv', package = 'apde.chi.tools')
-    if (tableau_file == '') {
-      stop("\n\U1F6D1 Could not find `ref/tableau_colors.csv` in the apde.chi.tools package. ",
-           "Try reinstalling the package.")
-    }
-    tableau_dt <- data.table::fread(tableau_file, colClasses = 'character', encoding = 'UTF-8')
-    if (!identical(names(tableau_dt), c('cat1', 'hex')) || anyNA(tableau_dt[['cat1']]) ||
-        anyDuplicated(tableau_dt[['cat1']]) > 0 ||
-        !all(grepl('^#[0-9A-Fa-f]{6}$', tableau_dt[['hex']]))) {
-      stop("\n\U1F6D1 `ref/tableau_colors.csv` must have exactly two columns, `cat1` and `hex`, ",
-           "with no missing or duplicated `cat1` values and every `hex` formatted like '#79706E'.")
-    }
-    tableau_colors <- stats::setNames(tableau_dt[['hex']], tableau_dt[['cat1']]) # convert the table a named vector
+    # category, add a row to inst/ref/tableau_colors.csv
+    tableau_colors <- chi_plot_read_colors()
 
   # - validate arguments ----
     if (missing(table_name) || !is.character(table_name) || length(table_name) != 1 || is.na(table_name)) {
@@ -376,23 +364,11 @@ chi_plot_demographics <- function(table_name,
     #   - 'race3' requested: used as is, never swapped.
     #   - both requested: already stopped with an error when the arguments were validated.
     cv_requested <- cat1_varname
-    race3_substituted <- character(0)
+    race <- chi_plot_resolve_race(CHIestimates, cv_requested)
+    CHIestimates <- race$data
+    race3_substituted <- race$substituted
 
-    if (is.null(cv_requested)) {
-      ik_with_race4 <- unique(CHIestimates[['indicator_key']][CHIestimates[['cat1_varname']] == 'race4'])
-      CHIestimates <- CHIestimates[!(CHIestimates[['cat1_varname']] == 'race3' &
-                                       CHIestimates[['indicator_key']] %in% ik_with_race4)]
-    } else {
-      if ('race4' %in% cv_requested) {
-        ik_with_race4 <- unique(CHIestimates[['indicator_key']][CHIestimates[['cat1_varname']] == 'race4'])
-        ik_with_race3 <- unique(CHIestimates[['indicator_key']][CHIestimates[['cat1_varname']] == 'race3'])
-        race3_substituted <- setdiff(ik_with_race3, ik_with_race4)
-        if (length(race3_substituted) > 0) {
-          CHIestimates[CHIestimates[['cat1_varname']] == 'race3' &
-                         CHIestimates[['indicator_key']] %in% race3_substituted,
-                       cat1_varname := 'race4']
-        }
-      }
+    if (!is.null(cv_requested)) {
       available_cv <- unique(CHIestimates[['cat1_varname']])
       if (!all(cv_requested %in% available_cv)) {
         stop("\n\U1F6D1 `cat1_varname` value(s) not available in [PHExtractStore].[APDE].[", table_name, "]: ",
@@ -417,7 +393,7 @@ chi_plot_demographics <- function(table_name,
            "Check `indicator_key` and `cat1_varname`.")
     }
 
-  # - bar label helpers ----
+  # - sizes and spacing ----
     # complicated! But critical so that all bar labels are visible, even when small in value
     # used AI to come up with this solution
 
@@ -436,85 +412,6 @@ chi_plot_demographics <- function(table_name,
     bar_label_scalar <- 1.2 # how much bigger bar labels should be than axis labels
     bar_label_size <- bar_label_scalar * axis_text_y_pt / ggplot2::.pt
 
-    # greedy word wrap: breaks each line of `text` (existing '\n' are kept) so that none
-    # is wider than `max_in` inches when drawn at `fontsize` points (in `fontface`, e.g.
-    # 'bold'). A single word wider than `max_in` is left on its own line.
-    wrap_to_width <- function(text, max_in, fontsize, fontface = 'plain') {
-      width_of <- function(s) grid::convertWidth(
-        grid::grobWidth(grid::textGrob(s, gp = grid::gpar(fontsize = fontsize, fontface = fontface))),
-        "in", valueOnly = TRUE)
-      wrap_line <- function(line) {
-        words <- strsplit(line, ' ', fixed = TRUE)[[1]]
-        out <- character(0)
-        current <- ''
-        for (w in words) {
-          candidate <- if (nzchar(current)) paste(current, w) else w
-          if (nzchar(current) && width_of(candidate) > max_in) {
-            out <- c(out, current)
-            current <- w
-          } else {
-            current <- candidate
-          }
-        }
-        paste(c(out, current), collapse = '\n')
-      }
-      paste(vapply(strsplit(text, '\n', fixed = TRUE)[[1]], wrap_line, character(1), USE.NAMES = FALSE),
-            collapse = '\n')
-    }
-
-    # width, in inches, that each label will occupy when drawn
-    # geom_text()'s `size` is in mm, while grid wants points ... therefore we need conversion
-    text_width_in <- function(labels, size) {
-      fontsize <- size * (72.27 / 25.4)
-      vapply(labels, function(lab) {
-        if (is.na(lab)) return(NA_real_)
-        grid::convertWidth(
-          grid::grobWidth(grid::textGrob(lab, gp = grid::gpar(fontsize = fontsize))),
-          "in", valueOnly = TRUE)
-      }, numeric(1), USE.NAMES = FALSE)
-    }
-
-    # inches of the image actually available to the bars, i.e. the total width
-    # less the y axis labels, margins and other fixed stuffs. Measured off the
-    # generated plot (on a null device of the output's dimensions) so it stays
-    # right if the theme changes; falls back to a rough share of `width` if the
-    # measurement fails for any reason.
-    panel_width_in <- function(plot, width, height) {
-      fallback <- width * 0.7
-      opened <- tryCatch({grDevices::pdf(NULL, width = width, height = height); TRUE},
-                         error = function(e) FALSE)
-      if (!opened) return(fallback)
-      on.exit(grDevices::dev.off(), add = TRUE)
-      # the panel is the one column measured in 'null' units, which converts to
-      # zero inches, so whatever the absolute columns don't use is the panel
-      # suppressWarnings(): this build is only a measurement, so it should not
-      # repeat the warnings the real render will provide anyway
-      measured <- tryCatch(suppressWarnings({
-        gt <- ggplot2::ggplotGrob(plot)
-        width - sum(grid::convertWidth(gt$widths, "in", valueOnly = TRUE))
-      }), error = function(e) NA_real_)
-      if (!is.finite(measured) || measured <= 0) fallback else measured
-    }
-
-    # inches of the image height used by everything that is NOT the bars, i.e. the plot
-    # margins and the title, subtitle and caption (only those actually drawn, at however
-    # many lines they wrap to). Measured the same way as panel_width_in(): the panel is
-    # the one row measured in 'null' units, which converts to zero inches, so the sum of
-    # the absolute rows is everything else. The height of the measuring device does not
-    # matter. Falls back to a rough 1 inch if the measurement fails for any reason.
-    non_panel_height_in <- function(plot, width) {
-      fallback <- 1
-      opened <- tryCatch({grDevices::pdf(NULL, width = width, height = 6); TRUE},
-                         error = function(e) FALSE)
-      if (!opened) return(fallback)
-      on.exit(grDevices::dev.off(), add = TRUE)
-      measured <- tryCatch(suppressWarnings({
-        gt <- ggplot2::ggplotGrob(plot)
-        sum(grid::convertHeight(gt$heights, "in", valueOnly = TRUE))
-      }), error = function(e) NA_real_)
-      if (!is.finite(measured) || measured <= 0) fallback else measured
-    }
-
     # vertical space given to each bar, in inches, when `height` is not supplied. This
     # is NOT calculated: it was selected for aesthetics, by looking at graphs with 1 to
     # 21 bars. Make it bigger for taller, airier bars; smaller for more compact ones.
@@ -527,74 +424,16 @@ chi_plot_demographics <- function(table_name,
     # gap left between the end of a bar and a label placed outside it
     label_gap_in <- 0.08
 
-  # - cat1_group ordering helpers ----
-    # Some cat1_group values are numeric bands: ages ('<18', '18-40', '41-60',
-    # '61+'), neighborhood poverty ('<10%', '10-19.9%'), etc. Sorting those
-    # as text is wrong because '<18' would be last since '<' sort after digits.
-    # Similarly, standard sorting would put '5-9' after '10-14', because 5 > 1.
-    #
-    # When every cat1_group value can be parsed as a band, rank on the band's lower
-    # bound. Then put open ended low bands (e.g., '<18') ahead of a band starting at
-    # the same number. E.g., '<18' comes before '18-25'. Similarly, ensure that
-    # open upper bands (e.g., '65+') are placed at the end.
-
-    # Anything that isn't a band (e.g., region or race names) gets all zeros,
-    # are then sorted alphabetically as a tie breaker.
-
-    band_rank <- function(x) {
-      named <- !is_catchall(x)             # catch-alls are ranked last regardless
-      x_nocomma <- gsub('(?<=[0-9]),(?=[0-9]{3})', '', x, perl = TRUE) # thousands separators, so '50,000' is read as 50000 rather than 50 and 000
-      nums <- regmatches(x_nocomma, gregexpr('[0-9]+\\.?[0-9]*', x_nocomma)) # extract all integer or decimals and return them as a list
-      pick <- function(i) suppressWarnings(as.numeric(vapply(
-        nums, function(n) if (length(n) >= i) n[i] else NA_character_, character(1)))) # pick the `i`th number from the list
-      lower <- pick(1) # 1st number = the band's lower bound, the main sort key
-      if (anyNA(lower[named])) return(rep(0, length(x))) # invalid named ranges → rank 0
-      upper <- pick(2)
-      upper[is.na(upper)] <- Inf # '65+' and bare numbers are open above
-      lower[!named] <- Inf # Inf on both bounds parks catch-alls after every real band
-      upper[!named] <- Inf
-      open_below <- grepl('^\\s*(<|under\\b|less than)', x, ignore.case = TRUE) # starts below its number
-      order(order(lower, !open_below, upper)) # not a typo! order() twice = ranks, aligned to input rows
-    }
-
-    # catch-all buckets ('Other', 'Other race', 'Unknown') belong after the named
-    # categories no matter how they sort alphabetically. Otherwise, 'Other' would
-    # land between 'NHPI' and 'White'. Kept separate from band_rank() so it applies to
-    # band and non-band groups alike.
-    is_catchall <- function(x) {
-      grepl('^\\s*(other|another|unknown|multiple)\\b', x, ignore.case = TRUE)
-    }
-
   # - build & save one plot per indicator ----
     saved_files <- character(0)
 
     for (ik in ik_requested) {
 
       dt_ik <- CHIestimates[indicator_key == ik]
-      # most recent estimate only. One year is chosen for the whole indicator, so
-      # every bar on a graph is from the same year regardless of tab or cat1.
-      # `year` is a character column and can be a single year ('2023') or a
-      # multi-year range ('2020-2024'), so compare on the rightmost 4 characters
-      # (the ending year) converted to integer, rather than on `year` itself.
-      dt_ik[, year_end := as.integer(rads::substrRight(year, 1, 4))]
-      if (any(!is.na(dt_ik[['year_end']]))) {
-        dt_ik <- dt_ik[year_end == max(year_end, na.rm = TRUE)]
-      }
-      # a single indicator can report both a 1-year and a multi-year estimate that
-      # end in the same year (e.g. '2020' and '2016-2020'), which could leave two
-      # estimates per cat1_group and mess up the graphs. Break the tie
-      # on the number of years covered and keep the widest, i.e. prefer the 5-year
-      # range, which is the more stable estimate.
-      if (length(unique(dt_ik[['year']])) > 1) {
-        # anything that isn't a plain 'NNNN-NNNN' range counts as a single year,
-        # which also keeps an unexpected format from throwing a coercion warning
-        dt_ik[, year_span := 1L]
-        dt_ik[grepl('^[0-9]{4}-[0-9]{4}$', year),
-              year_span := as.integer(substr(year, 6, 9)) - as.integer(substr(year, 1, 4)) + 1L]
-        dt_ik <- dt_ik[year_span == max(year_span, na.rm = TRUE)]
-        dt_ik[, year_span := NULL]
-      }
-      dt_ik[, year_end := NULL]
+      # most recent estimate only. One year is chosen for the whole indicator, so every
+      # bar on a graph is from the same year regardless of tab or cat1. See
+      # chi_plot_latest_year().
+      dt_ik <- chi_plot_latest_year(dt_ik)
 
       if (nrow(dt_ik) == 0) next
 
@@ -613,43 +452,15 @@ chi_plot_demographics <- function(table_name,
              "table directly to figure out which estimate is correct.")
       }
 
-      # bar labels: proportions are displayed as percents ('17.5%'), dollars as
-      # whole dollars with a comma between thousands ('$123,456'), and everything
-      # else (e.g. rates, counts) as a plain number with exactly one decimal place,
-      # so that whole numbers keep their trailing zero ('17.0' rather than '17'),
-      # with a comma between thousands ('1,234.5').
-      # Rows with no result (e.g. suppressed) get no label; the suppression symbol
-      # for those rows is drawn on its own below.
-      dt_ik[, label := NA_character_]
-      dt_ik[!is.na(result) & result_type %in% 'proportion',
-            label := sprintf("%.1f%%", rads::round2(result * 100, 1))]
-      dt_ik[!is.na(result) & result_type %in% 'dollars',
-            label := paste0('$', formatC(rads::round2(result, 0), format = 'f', digits = 0, big.mark = ','))]
-      dt_ik[!is.na(result) & !result_type %in% c('proportion', 'dollars'),
-            label := formatC(result, format = 'f', digits = 1, big.mark = ',')]
-      dt_ik[!is.na(label) & !is.na(suppression) & suppression != '', label := paste0(label, suppression)]
-      dt_ik[!is.na(label) & !is.na(caution) & caution != '', label := paste0(label, caution)]
+      # bar labels (percent, dollars, or a plain number depending on result_type). Rows
+      # with no result (e.g. suppressed) get no label; the suppression symbol for those
+      # rows is drawn on its own below. See chi_plot_bar_labels().
+      dt_ik[, label := chi_plot_bar_labels(result, result_type, suppression, caution)]
 
-      # order cat1_group top-to-bottom, on four keys in this priority order:
-      #
-      #   1. King County first. FALSE sorts before TRUE, hence the negated test; if
-      #      chi_geo_kc was not requested the term is constant across all rows and
-      #      changes nothing.
-      #   2. the user's submitted cat1_varname order, so groups appear in the sequence
-      #      they were asked for. With cat1_varname = NULL there is no such order,
-      #      so every row gets NA and move on to key 3.
-      #   3. cat1 alphabetically.
-      #   4. within a group: use helper function made above so that numeric bands
-      #      are ordered by value (ages etc.), catch-all buckets ('Other') are ordered
-      #      last, and plain alphabetical ordering for everything else.
-      dt_ik[, band_order := band_rank(cat1_group), by = cat1_varname]
-      dt_ik[, catchall_order := as.integer(is_catchall(cat1_group))]
-      dt_ik[, group_priority := if (is.null(cv_requested)) NA_integer_
-                                else match(cat1_varname, cv_requested)]
-
-      # 'kingco' is the older HYS spelling of 'chi_geo_kc'; both name the county
-      group_order <- dt_ik[order(cat1_varname %notin% c('chi_geo_kc', 'kingco'), group_priority, cat1,
-                                 catchall_order, band_order, cat1_group)]
+      # order cat1_group top-to-bottom: King County first, then the user's cat1_varname
+      # order, then cat1, then (within a cat1_varname) catch-alls last, numeric bands by
+      # value, and everything else alphabetically. See chi_plot_order_groups().
+      group_order <- chi_plot_order_groups(dt_ik, cv_requested)
       top_to_bottom <- group_order[['cat1_group']]
       # coord_flip() puts the LAST factor level at the top of the graph, so the
       # levels vector must be the reverse of what we want from top to bottom
@@ -694,7 +505,7 @@ chi_plot_demographics <- function(table_name,
       text_max_in <- (width - 2 * if (trim_margin) 5 / 72.27 else 1 / 2.54) * 0.97 # margins must match plot.margin below; 3% safety for font differences
 
       if (!is.null(plot_title)) {
-        plot_title <- wrap_to_width(plot_title, text_max_in,
+        plot_title <- chi_plot_wrap_text(plot_title, text_max_in,
                                     fontsize = theme_base_size * title_rel, fontface = 'bold')
       }
 
@@ -703,7 +514,7 @@ chi_plot_demographics <- function(table_name,
         '^ = Data suppressed if too few cases to protect confidentiality and/or report reliable rates\n',
         '! = Interpret with caution; sample size is small so estimate is imprecise')
       if (show_caption) {
-        plot_caption <- wrap_to_width(plot_caption, text_max_in,
+        plot_caption <- chi_plot_wrap_text(plot_caption, text_max_in,
                                       fontsize = theme_base_size * 0.6) # matches plot.caption's rel(0.6)
       } else {
         plot_caption <- NULL
@@ -774,7 +585,7 @@ chi_plot_demographics <- function(table_name,
       #   height = measured non-bar space + bar_spacing_in * (n_groups + axis_padding_slots)
       # When the user supplies `height`, the non-bar space is unchanged and the bars share
       # whatever is left, i.e. each bar's spacing = (height - non-bar space) / (n_groups + 1.2)
-      non_panel_in <- non_panel_height_in(base_plot, width)
+      non_panel_in <- chi_plot_non_panel_height_in(base_plot, width)
       if (is.null(height)) {
         plot_height <- non_panel_in + bar_spacing_in * (n_groups + axis_padding_slots)
       } else {
@@ -789,8 +600,8 @@ chi_plot_demographics <- function(table_name,
       # against the label's drawn width. Labels that fit stay white and centered
       # inside the bar; the rest are drawn in black just past the end of the bar,
       # where they are legible against the panel background.
-      panel_in <- panel_width_in(base_plot, width, plot_height)
-      dt_ik[, label_w_in := text_width_in(label, bar_label_size)]
+      panel_in <- chi_plot_panel_width_in(base_plot, width, plot_height)
+      dt_ik[, label_w_in := chi_plot_text_width_in(label, bar_label_size)]
 
       # outside labels need to start after the CI so doesn't sit on the error bar
       dt_ik[, label_anchor := pmax(result, upper_bound, na.rm = TRUE)] # check across result & upper_bound in case upper_bound is missing
@@ -816,10 +627,10 @@ chi_plot_demographics <- function(table_name,
       # labels. annotation_custom() is used because, unlike geom_segment(), it is not
       # censored by the y scale limits when it starts left of zero. The overhang is
       # the widest cat1_group label (drawn at the axis font size, which is the same as
-      # bar_label_size, in the mm that text_width_in() wants) plus a small allowance for
+      # bar_label_size, in the mm that chi_plot_text_width_in() wants) plus a small allowance for
       # the axis text margin, converted from inches to y axis units.
       if (length(group_boundaries) > 0) {
-        axis_label_w_in <- max(text_width_in(levels(dt_ik[['cat1_group']]), bar_label_size), na.rm = TRUE)
+        axis_label_w_in <- max(chi_plot_text_width_in(levels(dt_ik[['cat1_group']]), bar_label_size), na.rm = TRUE)
         sep_start <- -(axis_label_w_in + 0.03) / panel_in * y_max
         separators <- lapply(group_boundaries, function(b) {
           ggplot2::annotation_custom(

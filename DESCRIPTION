@@ -44,13 +44,15 @@ Suggests:
     httr,
     keyring,
     knitr,
+    png,
     progress,
     rmarkdown,
     markdown,
     quarto,
     testthat (>= 3.0.0),
     srvyr,
-    survey (>= 4.0)
+    survey (>= 4.0),
+    withr
 Depends: 
     R (>= 4.4)
 Config/testthat/edition: 3
