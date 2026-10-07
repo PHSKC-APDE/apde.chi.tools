@@ -122,14 +122,11 @@ chi_plot_latest_year <- function(dt) {
 #' Formats estimates as bar labels. Proportions are shown as percents ('17.5%'),
 #' dollars as whole dollars with a comma between thousands ('$123,456'), and all
 #' other types (e.g., rates, counts) as a number with exactly one decimal place and a
-#' comma between thousands ('1,234.5'). The suppression and caution symbols are then
-#' appended.
+#' comma between thousands ('1,234.5'). The caution symbol is then appended.
 #'
 #' @param result Numeric vector of estimates.
 #' @param result_type Character vector, the same length as `result`, of result types
 #' (e.g., 'proportion', 'dollars', 'count').
-#' @param suppression Character vector, the same length as `result`, with the
-#' suppression symbol (e.g., '^') or `NA` / `''`.
 #' @param caution Character vector, the same length as `result`, with the caution
 #' symbol (e.g., '!') or `NA` / `''`.
 #'
@@ -140,11 +137,10 @@ chi_plot_latest_year <- function(dt) {
 #' apde.chi.tools:::chi_plot_bar_labels(
 #'   result = c(0.175, 123456.4, 17),
 #'   result_type = c('proportion', 'dollars', 'count'),
-#'   suppression = c(NA, NA, NA),
 #'   caution = c('!', NA, NA))
 #'
 #' @keywords internal
-chi_plot_bar_labels <- function(result, result_type, suppression, caution) {
+chi_plot_bar_labels <- function(result, result_type, caution) {
   label <- rep(NA_character_, length(result))
 
   has_result <- !is.na(result)
@@ -157,9 +153,8 @@ chi_plot_bar_labels <- function(result, result_type, suppression, caution) {
                                           format = 'f', digits = 0, big.mark = ','))
   label[is_other] <- formatC(result[is_other], format = 'f', digits = 1, big.mark = ',')
 
-  add_suppression <- !is.na(label) & !is.na(suppression) & suppression != ''
-  label[add_suppression] <- paste0(label[add_suppression], suppression[add_suppression])
-
+  # no suppression symbol here: a suppressed estimate has no result (NULL in SQL, NA in R),
+  # so it has no label to append to. Its '^' is drawn separately by chi_plot_demographics().
   add_caution <- !is.na(label) & !is.na(caution) & caution != ''
   label[add_caution] <- paste0(label[add_caution], caution[add_caution])
 

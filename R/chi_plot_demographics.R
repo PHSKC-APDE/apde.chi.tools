@@ -455,7 +455,7 @@ chi_plot_demographics <- function(table_name,
       # bar labels (percent, dollars, or a plain number depending on result_type). Rows
       # with no result (e.g. suppressed) get no label; the suppression symbol for those
       # rows is drawn on its own below. See chi_plot_bar_labels().
-      dt_ik[, label := chi_plot_bar_labels(result, result_type, suppression, caution)]
+      dt_ik[, label := chi_plot_bar_labels(result, result_type, caution)]
 
       # order cat1_group top-to-bottom: King County first, then the user's cat1_varname
       # order, then cat1, then (within a cat1_varname) catch-alls last, numeric bands by

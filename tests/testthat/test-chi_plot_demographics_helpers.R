@@ -79,31 +79,31 @@
     expect_equal(
       chi_plot_bar_labels(result = c(0.175, 0.05, 123456.4, 1234.5, 17),
                           result_type = c("proportion", "proportion", "dollars", "count", "rate"),
-                          suppression = rep(NA_character_, 5),
                           caution = rep(NA_character_, 5)),
       c("17.5%", "5.0%", "$123,456", "1,234.5", "17.0"))
   })
 
-  test_that("chi_plot_bar_labels() appends suppression and caution symbols", {
+  test_that("chi_plot_bar_labels() appends the caution symbol", {
     expect_equal(
-      chi_plot_bar_labels(result = c(0.1, 0.2, 0.3, 0.4),
+      chi_plot_bar_labels(result = c(0.1, 0.2, 0.3),
                           result_type = "proportion",
-                          suppression = c("^", NA, "", NA),
-                          caution = c(NA, "!", "", "!")),
-      c("10.0%^", "20.0%!", "30.0%", "40.0%!"))
+                          caution = c(NA, "!", "")),
+      c("10.0%", "20.0%!", "30.0%"))
   })
 
-  test_that("chi_plot_bar_labels() leaves rows with no result unlabeled", {
+  # a suppressed estimate has a NULL result in SQL (NA in R), so it has no label here;
+  # its suppression symbol is drawn separately by chi_plot_demographics()
+  test_that("chi_plot_bar_labels() leaves suppressed rows (no result) unlabeled", {
     expect_equal(
       chi_plot_bar_labels(result = c(NA, 0.5), result_type = c("proportion", "proportion"),
-                          suppression = c("^", NA), caution = c(NA, NA)),
+                          caution = c(NA, NA)),
       c(NA, "50.0%"))
   })
 
   test_that("chi_plot_bar_labels() treats anything but proportion and dollars as a plain number", {
     expect_equal(
       chi_plot_bar_labels(result = c(5, 5), result_type = c("count", NA),
-                          suppression = c(NA, NA), caution = c(NA, NA)),
+                          caution = c(NA, NA)),
       c("5.0", "5.0"))
   })
 
