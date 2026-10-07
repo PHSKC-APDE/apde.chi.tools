@@ -12,7 +12,7 @@ chi_plot_demographics(
   output_dir = "c:/temp/chi_graphics",
   image_type = c("png", "jpg"),
   width = 4,
-  height = 6,
+  height = NULL,
   dpi = 600,
   prod = TRUE,
   show_title = TRUE,
@@ -37,9 +37,21 @@ in \code{table_name}.}
 Passing \code{NULL} plots every \code{cat1_varname} available in \code{table_name} and
 issues a warning, since this is typically not what is used for CHNA.
 
-Default \code{cat1_varname = c('chi_geo_kc', 'chi_geo_region', 'race4')}. If
-\code{'race4'} is requested but only \code{'race3'} is available in \code{table_name},
-\code{'race3'} is used instead.}
+Default \code{cat1_varname = c('chi_geo_kc', 'race4', 'chi_geo_region')}.
+
+\code{'race3'} and \code{'race4'} are two different ways of categorizing race, with
+overlapping groups, and some indicators have both. They are handled for each
+\code{indicator_key} as follows:
+\itemize{
+\item \code{cat1_varname = NULL}: \code{'race4'} is plotted and \code{'race3'} is not, for
+indicators that have both.
+\item \code{'race4'} requested, but an indicator only has \code{'race3'}: \code{'race3'} is
+used for that indicator, in the position given to \code{'race4'}, and a warning
+lists the affected \code{indicator_key} values.
+\item \code{'race3'} requested: \code{'race3'} is used, never swapped.
+\item Both requested: the function stops with an error, since graphing both
+would draw duplicate bars.
+}}
 
 \item{chi}{Logical. If \code{TRUE}, the results table query is limited to
 official CHI indicators, i.e. those flagged \code{chi = 1} in SQL. If \code{FALSE},
@@ -68,7 +80,28 @@ Default \code{width = 4}.}
 
 \item{height}{Numeric. Image height in inches.
 
-Default \code{height = 6}.}
+Default \code{height = NULL}, which calculates the height of each image so that
+every bar gets the same vertical space (0.4 inches, a value chosen for
+appearance) whether an indicator has few bars or many. The height is the sum
+of:
+\itemize{
+\item 0.4 inches for each bar. Bars include any suppressed \code{cat1_group}, which
+keeps its slot on the graph.
+\item 1.2 bars' worth of padding that ggplot2 adds above the first and below the
+last bar (0.6 of a bar at each end).
+\item The space for everything that is not a bar, which is measured from the plot
+rather than assumed: the margins, plus whichever of the title, subtitle and
+caption are drawn, including any extra lines when they wrap.
+}
+
+So the height is \verb{0.4 * (number of bars + 1.2)} plus that measured space.
+Because the number of bars can differ by \code{indicator_key}, images from the
+same call may have different heights.
+
+Supply a number to use the same fixed height for every image. The measured
+non-bar space is unchanged, so the bars share whatever height is left over
+and are thicker in a taller image and thinner in a shorter one. The function
+stops with an error if \code{height} is too small to leave any room for bars.}
 
 \item{dpi}{Numeric. Resolution in dots per inch.
 
