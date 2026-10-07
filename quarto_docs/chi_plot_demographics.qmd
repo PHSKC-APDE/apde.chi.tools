@@ -312,8 +312,7 @@ chi_plot_demographics(table_name = 'death',
                        cat1_varname = c('chi_geo_kc', 'chi_geo_region', 'race4'))
 
 chi_plot_demographics(table_name = 'hys',
-                       cat1_varname = c('kingco', 'chi_race_eth9', 'ccreg'),
-                       output_dir = file.path('c:/temp/blah'))
+                       cat1_varname = c('kingco', 'chi_race_eth9', 'ccreg'))
 
 chi_plot_demographics(table_name = 'ospi',
                        cat1_varname = c('chi_geo_kc', 'district', 'race4'))
