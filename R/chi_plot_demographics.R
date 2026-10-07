@@ -62,9 +62,19 @@
 #'   Passing `NULL` plots every `cat1_varname` available in `table_name` and
 #'   issues a warning, since this is typically not what is used for CHNA.
 #'
-#'   Default `cat1_varname = c('chi_geo_kc', 'chi_geo_region', 'race4')`. If
-#'   `'race4'` is requested but only `'race3'` is available in `table_name`,
-#'   `'race3'` is used instead.
+#'   Default `cat1_varname = c('chi_geo_kc', 'race4', 'chi_geo_region')`.
+#'
+#'   `'race3'` and `'race4'` are two different ways of categorizing race, with
+#'   overlapping groups, and some indicators have both. They are handled for each
+#'   `indicator_key` as follows:
+#'   - `cat1_varname = NULL`: `'race4'` is plotted and `'race3'` is not, for
+#'   indicators that have both.
+#'   - `'race4'` requested, but an indicator only has `'race3'`: `'race3'` is
+#'   used for that indicator, in the position given to `'race4'`, and a warning
+#'   lists the affected `indicator_key` values.
+#'   - `'race3'` requested: `'race3'` is used, never swapped.
+#'   - Both requested: the function stops with an error, since graphing both
+#'   would draw duplicate bars.
 #'
 #' @param chi Logical. If `TRUE`, the results table query is limited to
 #'   official CHI indicators, i.e. those flagged `chi = 1` in SQL. If `FALSE`,
@@ -263,6 +273,12 @@ chi_plot_demographics <- function(table_name,
       stop("\n\U1F6D1 `cat1_varname` must be NULL or a character vector with no missing values.")
     }
 
+    if (all(c('race3', 'race4') %in% cat1_varname)) {
+      stop("\n\U1F6D1 `cat1_varname` contains both 'race3' and 'race4'. These are two different ways of ",
+           "categorizing race, with overlapping groups (e.g., both have 'Black'), so graphing them together ",
+           "would draw duplicate bars. Please request only one of them.")
+    }
+
     if (!is.character(output_dir) || length(output_dir) != 1 || is.na(output_dir)) {
       stop("\n\U1F6D1 `output_dir` must be a single (length 1), non-NA character string.")
     }
@@ -350,18 +366,50 @@ chi_plot_demographics <- function(table_name,
     }
 
     ## - cat1_varname ----
-    # fall back from race4 to race3 if need be
+    # 'race3' and 'race4' are two ways of categorizing race, and some indicators have both.
+    # They share cat1_group values (e.g., 'Black'), so graphing both would draw duplicate
+    # bars. Race is handled one indicator_key at a time:
+    #   - cat1_varname = NULL: keep race4 and drop race3 for indicators that have both.
+    #   - 'race4' requested but an indicator only has race3: use race3 for that indicator,
+    #     and warn about it. The race3 rows are relabeled 'race4' so that they take the
+    #     place in the graph that the user gave to race4.
+    #   - 'race3' requested: used as is, never swapped.
+    #   - both requested: already stopped with an error when the arguments were validated.
     cv_requested <- cat1_varname
-    if (!is.null(cv_requested)) {
-      available_cv <- unique(CHIestimates[['cat1_varname']])
-      if ('race4' %in% cv_requested & 'race4' %notin% available_cv & 'race3' %in% available_cv) {
-        cv_requested <- gsub('race4', 'race3', cv_requested)
+    race3_substituted <- character(0)
+
+    if (is.null(cv_requested)) {
+      ik_with_race4 <- unique(CHIestimates[['indicator_key']][CHIestimates[['cat1_varname']] == 'race4'])
+      CHIestimates <- CHIestimates[!(CHIestimates[['cat1_varname']] == 'race3' &
+                                       CHIestimates[['indicator_key']] %in% ik_with_race4)]
+    } else {
+      if ('race4' %in% cv_requested) {
+        ik_with_race4 <- unique(CHIestimates[['indicator_key']][CHIestimates[['cat1_varname']] == 'race4'])
+        ik_with_race3 <- unique(CHIestimates[['indicator_key']][CHIestimates[['cat1_varname']] == 'race3'])
+        race3_substituted <- setdiff(ik_with_race3, ik_with_race4)
+        if (length(race3_substituted) > 0) {
+          CHIestimates[CHIestimates[['cat1_varname']] == 'race3' &
+                         CHIestimates[['indicator_key']] %in% race3_substituted,
+                       cat1_varname := 'race4']
+        }
       }
+      available_cv <- unique(CHIestimates[['cat1_varname']])
       if (!all(cv_requested %in% available_cv)) {
         stop("\n\U1F6D1 `cat1_varname` value(s) not available in [PHExtractStore].[APDE].[", table_name, "]: ",
              paste0(setdiff(cv_requested, available_cv), collapse = ', '))
       }
       CHIestimates <- CHIestimates[cat1_varname %in% cv_requested]
+    }
+
+    if (length(race3_substituted) > 0) {
+      shown <- race3_substituted[seq_len(min(10, length(race3_substituted)))]
+      warning("\n\U26A0\UFE0F \U26A0\UFE0F \U26A0\UFE0F `cat1_varname` asked for 'race4', but 'race4' is not available ",
+              "in [PHExtractStore].[APDE].[", table_name, "_results] for ", length(race3_substituted),
+              " indicator_key(s). 'race3' was used for them instead:\n",
+              paste0(shown, collapse = ', '),
+              if (length(race3_substituted) > length(shown)) paste0(', ... (', length(race3_substituted) - length(shown), ' more)') else '',
+              "\nThe race3 and race4 categories differ, so confirm that race3 is acceptable for these graphs.",
+              call. = FALSE, immediate. = TRUE)
     }
 
     if (nrow(CHIestimates) == 0) {

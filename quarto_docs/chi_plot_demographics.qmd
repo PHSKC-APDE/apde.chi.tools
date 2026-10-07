@@ -182,7 +182,9 @@ knitr::include_graphics(myplot)
 
 King County still floats to the top here, because the function recognizes both `chi_geo_kc` and the older HYS variant `kingco` as naming the county.
 
-If you request a `cat1_varname` the table does not have, the function stops and lists what it was asked for versus what is available. The one exception is that a request for `race4` will automatically be replaced with `race3` if `race3` is available and `race4` is not. 
+If you request a `cat1_varname` the table does not have, the function stops and lists what it was asked for versus what is available. The one exception is that a request for `race4` will be replaced with `race3` for any indicator that has `race3` but not `race4`. This is never silent: the function issues a warning that lists the affected indicators, so you can confirm that `race3` is acceptable.
+
+`race3` and `race4` are two different ways of categorizing race, and some indicators have both. When `cat1_varname = NULL` and an indicator has both, only `race4` is plotted. If you name both in `cat1_varname`, the function stops with an error, because the two share group names (e.g., `Black`) and would draw duplicate bars.
 
 # Dollars
 
