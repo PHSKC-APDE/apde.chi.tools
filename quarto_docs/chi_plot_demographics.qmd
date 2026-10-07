@@ -105,7 +105,7 @@ We haven't actually run it here because the resulting graphics would overwhelm t
 
 `cat1_varname` has two roles. It tells the function which demographics to use **and** it sets the order the blocks appear in (top to bottom). King County is the exception, and is always pinned to the top if it is requested.
 
-Here is an asthma hospitalization rate broken out by age and race. Note that we did not set `height`. By default the function calculates it from the number of bars in the graph (0.5 inches per bar, with a minimum of 2 inches), so the bars look right whether there are a few or many:
+Here is an asthma hospitalization rate broken out by age and race. Note that we did not set `height`. By default the function calculates it automatically from the number of bars in the graph, so the bars look right whether there are a few or many:
 
 ```{r}
 #| warning: false
@@ -260,7 +260,7 @@ myplot <- chi_plot_demographics(
 knitr::include_graphics(myplot)
 ```
 
-In addition, `width`, `height`, and `dpi` control the canvas itself. The function will not accept a `width` below 4 inches. By default (`height = NULL`) the height of each image is calculated from its number of bars, at 0.5 inches per bar (never less than 2 inches), so bars stay a similar thickness whether an indicator has a few bars or many. If you supply a `height`, that fixed height is used for every image.
+In addition, `width`, `height`, and `dpi` control the canvas itself. The function will not accept a `width` below 4 inches. By default (`height = NULL`) the height of each image is calculated automatically from its number of bars, so bars stay a similar thickness whether an indicator has a few bars or many. If you supply a `height`, that fixed height is used for every image.
 
 # Official CHI indicators only (by default)
 
