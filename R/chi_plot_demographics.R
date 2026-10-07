@@ -94,7 +94,7 @@
 #' @param height Numeric. Image height in inches.
 #'
 #'   Default `height = NULL`, which sets the height of each image to 0.5 inches
-#'   per bar (`0.5 * number of bars`, but never less than 1.5 inches), so the
+#'   per bar (`0.5 * number of bars`, but never less than 2 inches), so the
 #'   bars stay a similar thickness whether an indicator has few bars or many.
 #'   Bars include any suppressed
 #'   `cat1_group`, which keeps its slot on the graph. Because the number of bars
@@ -684,8 +684,8 @@ chi_plot_demographics <- function(table_name,
       # where they are legible against the panel background.
       # image height: the user's `height`, or 0.5 inches per bar (n_groups counts every
       # bar slot, including suppressed groups) when it was left NULL, but never less than
-      # 1.5 inches, which leaves room for the title and caption when there are only a few bars
-      plot_height <- if (is.null(height)) max(1.5, 0.5 * n_groups) else height
+      # 2 inches, which leaves room for the title and caption when there are only a few bars
+      plot_height <- if (is.null(height)) max(2, 0.5 * n_groups) else height
 
       panel_in <- panel_width_in(base_plot, width, plot_height)
       dt_ik[, label_w_in := text_width_in(label, bar_label_size)]
