@@ -93,14 +93,26 @@
 #'
 #' @param height Numeric. Image height in inches.
 #'
-#'   Default `height = NULL`, which sets the height of each image to 0.5 inches
-#'   per bar plus 1 inch for the margins and title / caption
-#'   (`0.5 * number of bars + 1`, but never less than 2 inches), so the
-#'   bars stay a similar thickness whether an indicator has few bars or many.
-#'   Bars include any suppressed
-#'   `cat1_group`, which keeps its slot on the graph. Because the number of bars
-#'   can differ by `indicator_key`, images from the same call may have different
-#'   heights. Supply a number to use the same fixed height for every image.
+#'   Default `height = NULL`, which calculates the height of each image so that
+#'   every bar gets the same vertical space (0.4 inches, a value chosen for
+#'   appearance) whether an indicator has few bars or many. The height is the sum
+#'   of:
+#'   * 0.4 inches for each bar. Bars include any suppressed `cat1_group`, which
+#'   keeps its slot on the graph.
+#'   * 1.2 bars' worth of padding that ggplot2 adds above the first and below the
+#'   last bar (0.6 of a bar at each end).
+#'   * The space for everything that is not a bar, which is measured from the plot
+#'   rather than assumed: the margins, plus whichever of the title, subtitle and
+#'   caption are drawn, including any extra lines when they wrap.
+#'
+#'   So the height is `0.4 * (number of bars + 1.2)` plus that measured space.
+#'   Because the number of bars can differ by `indicator_key`, images from the
+#'   same call may have different heights.
+#'
+#'   Supply a number to use the same fixed height for every image. The measured
+#'   non-bar space is unchanged, so the bars share whatever height is left over
+#'   and are thicker in a taller image and thinner in a shorter one. The function
+#'   stops with an error if `height` is too small to leave any room for bars.
 #'
 #' @param dpi Numeric. Resolution in dots per inch.
 #'
@@ -436,6 +448,34 @@ chi_plot_demographics <- function(table_name,
       if (!is.finite(measured) || measured <= 0) fallback else measured
     }
 
+    # inches of the image height used by everything that is NOT the bars, i.e. the plot
+    # margins and the title, subtitle and caption (only those actually drawn, at however
+    # many lines they wrap to). Measured the same way as panel_width_in(): the panel is
+    # the one row measured in 'null' units, which converts to zero inches, so the sum of
+    # the absolute rows is everything else. The height of the measuring device does not
+    # matter. Falls back to a rough 1 inch if the measurement fails for any reason.
+    non_panel_height_in <- function(plot, width) {
+      fallback <- 1
+      opened <- tryCatch({grDevices::pdf(NULL, width = width, height = 6); TRUE},
+                         error = function(e) FALSE)
+      if (!opened) return(fallback)
+      on.exit(grDevices::dev.off(), add = TRUE)
+      measured <- tryCatch(suppressWarnings({
+        gt <- ggplot2::ggplotGrob(plot)
+        sum(grid::convertHeight(gt$heights, "in", valueOnly = TRUE))
+      }), error = function(e) NA_real_)
+      if (!is.finite(measured) || measured <= 0) fallback else measured
+    }
+
+    # vertical space given to each bar, in inches, when `height` is not supplied. This
+    # is NOT calculated: it was selected for aesthetics, by looking at graphs with 1 to
+    # 21 bars. Make it bigger for taller, airier bars; smaller for more compact ones.
+    bar_spacing_in <- 0.4
+
+    # ggplot2 pads a discrete axis by 0.6 of a bar slot above the first bar and 0.6 below
+    # the last (its default), so the bars' area is 1.2 slots taller than the bars alone
+    axis_padding_slots <- 1.2
+
     # gap left between the end of a bar and a label placed outside it
     label_gap_in <- 0.08
 
@@ -679,16 +719,28 @@ chi_plot_demographics <- function(table_name,
       y_max <- if (length(y_axis_values) > 0) max(y_axis_values) * 1.05 else 1
       if (!is.finite(y_max) || y_max <= 0) y_max <- 1
 
+      # image height. Everything that is not the bars (margins, title, subtitle, caption) is
+      # measured off the plot. When `height` was left NULL, the bars then get a fixed
+      # `bar_spacing_in` each (n_groups counts every bar slot, including suppressed groups)
+      # plus the axis padding:
+      #   height = measured non-bar space + bar_spacing_in * (n_groups + axis_padding_slots)
+      # When the user supplies `height`, the non-bar space is unchanged and the bars share
+      # whatever is left, i.e. each bar's spacing = (height - non-bar space) / (n_groups + 1.2)
+      non_panel_in <- non_panel_height_in(base_plot, width)
+      if (is.null(height)) {
+        plot_height <- non_panel_in + bar_spacing_in * (n_groups + axis_padding_slots)
+      } else {
+        plot_height <- height
+        if (plot_height <= non_panel_in) {
+          stop("\n\U1F6D1 `height` (", plot_height, " inches) is too small: the margins, title and ",
+               "caption alone need about ", round(non_panel_in, 1), " inches, leaving no room for the bars.")
+        }
+      }
+
       # a short bar can't fit its own label, so compare the bar's drawn length
       # against the label's drawn width. Labels that fit stay white and centered
       # inside the bar; the rest are drawn in black just past the end of the bar,
       # where they are legible against the panel background.
-      # image height: the user's `height`, or when it was left NULL, 0.5 inches per bar
-      # (n_groups counts every bar slot, including suppressed groups) plus 1 inch of fixed
-      # buffer for the margins and the title / subtitle / caption (whether or not shown),
-      # but never less than 2 inches. The numbers were chosen by trial and error.
-      plot_height <- if (is.null(height)) max(2, 0.5 * n_groups + 1) else height
-
       panel_in <- panel_width_in(base_plot, width, plot_height)
       dt_ik[, label_w_in := text_width_in(label, bar_label_size)]
 
