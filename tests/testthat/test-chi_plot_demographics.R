@@ -62,7 +62,8 @@ test_that("chi_plot_demographics() writes one png per indicator and returns the 
 
   expect_length(files, 1)
   expect_true(file.exists(files))
-  expect_equal(dirname(files), out_dir)
+  # normalizePath() so that slash direction and short Windows folder names do not matter
+  expect_equal(normalizePath(dirname(files), winslash = "/"), normalizePath(out_dir, winslash = "/"))
   expect_equal(basename(files), paste0("brfss_chi_no_pcp_", Sys.Date(), ".png"))
 })
 
