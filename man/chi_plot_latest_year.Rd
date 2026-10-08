@@ -16,6 +16,8 @@ had none.
 \description{
 Reduces the estimates for one \code{indicator_key} to a single time period, so that
 all bars on a graph come from the same year.
+
+Used internally by \code{\link[=chi_plot_demographics]{chi_plot_demographics()}}.
 }
 \details{
 \code{year} is a character column that can be a single year (e.g., '2023') or a

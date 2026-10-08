@@ -28,6 +28,8 @@ no such order, so this key is skipped.
 \code{\link[=chi_plot_is_catchall]{chi_plot_is_catchall()}}), numeric bands by value (see \code{\link[=chi_plot_band_rank]{chi_plot_band_rank()}}),
 and plain alphabetical order for everything else.
 }
+
+Used internally by \code{\link[=chi_plot_demographics]{chi_plot_demographics()}}.
 }
 \details{
 'kingco' is the older HYS spelling of 'chi_geo_kc', and both are treated as King

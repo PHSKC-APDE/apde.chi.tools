@@ -19,6 +19,8 @@ fails for any reason.
 Inches of the image height used by everything that is not the bars, i.e., the plot
 margins and whichever of the title, subtitle, and caption are drawn (at however many
 lines they wrap to).
+
+Used internally by \code{\link[=chi_plot_demographics]{chi_plot_demographics()}}.
 }
 \details{
 Measured the same way as \code{\link[=chi_plot_panel_width_in]{chi_plot_panel_width_in()}}: the panel is the one row

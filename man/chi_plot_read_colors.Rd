@@ -13,5 +13,7 @@ values.
 \description{
 Reads \code{inst/ref/tableau_colors.csv}, which holds one hex color for each \code{cat1}
 (Tableau Style Guide category), and checks that the file is valid.
+
+Used internally by \code{\link[=chi_plot_demographics]{chi_plot_demographics()}}.
 }
 \keyword{internal}

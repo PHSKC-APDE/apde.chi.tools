@@ -22,5 +22,7 @@ A single character string with \verb{\\\\n} where lines should break.
 Greedy word wrap. Breaks each line of \code{text} (existing line breaks are kept) so
 that none is wider than \code{max_in} inches when drawn. A single word wider than
 \code{max_in} is left on its own line.
+
+Used internally by \code{\link[=chi_plot_demographics]{chi_plot_demographics()}}.
 }
 \keyword{internal}

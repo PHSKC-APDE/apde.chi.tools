@@ -22,6 +22,8 @@ was used in place of a requested \code{race4}.
 \code{race3} and \code{race4} are two ways of categorizing race, and some indicators have
 both. They share \code{cat1_group} values (e.g., 'Black'), so plotting both would draw
 duplicate bars. This function decides, one \code{indicator_key} at a time, which to keep.
+
+Used internally by \code{\link[=chi_plot_demographics]{chi_plot_demographics()}}.
 }
 \details{
 \itemize{

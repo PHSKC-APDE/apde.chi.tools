@@ -21,6 +21,8 @@ fails for any reason.
 Inches of the image actually available to the bars, i.e., the total width less the
 y axis labels, margins, and other fixed elements. It is measured off the plot (on a
 null device of the output's dimensions) so it stays right if the theme changes.
+
+Used internally by \code{\link[=chi_plot_demographics]{chi_plot_demographics()}}.
 }
 \details{
 The panel is the one column measured in 'null' units, which converts to zero

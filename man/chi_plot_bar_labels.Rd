@@ -24,6 +24,8 @@ Formats estimates as bar labels. Proportions are shown as percents ('17.5\%'),
 dollars as whole dollars with a comma between thousands ('$123,456'), and all
 other types (e.g., rates, counts) as a number with exactly one decimal place and a
 comma between thousands ('1,234.5'). The caution symbol is then appended.
+
+Used internally by \code{\link[=chi_plot_demographics]{chi_plot_demographics()}}.
 }
 \examples{
 apde.chi.tools:::chi_plot_bar_labels(

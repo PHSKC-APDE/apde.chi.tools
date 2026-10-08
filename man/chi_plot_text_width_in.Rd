@@ -18,5 +18,7 @@ A numeric vector the same length as \code{labels}, in inches.
 Measures how many inches wide each label will be when drawn by
 \code{\link[ggplot2:geom_text]{ggplot2::geom_text()}} at a given size. \code{geom_text()} sizes are in mm whereas grid
 wants points, so this converts between the two.
+
+Used internally by \code{\link[=chi_plot_demographics]{chi_plot_demographics()}}.
 }
 \keyword{internal}

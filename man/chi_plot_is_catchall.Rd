@@ -16,6 +16,8 @@ A logical vector the same length as \code{x}.
 Catch-all buckets (e.g., 'Other', 'Other race', 'Another race', 'Unknown',
 'Multiple') belong after the named categories no matter how they sort
 alphabetically. Otherwise, 'Other' would land between 'NHPI' and 'White'.
+
+Used internally by \code{\link[=chi_plot_demographics]{chi_plot_demographics()}}.
 }
 \examples{
 apde.chi.tools:::chi_plot_is_catchall(c('Other', 'Multiple race', 'White', 'Otherwise'))

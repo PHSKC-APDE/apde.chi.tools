@@ -18,6 +18,8 @@ Some \code{cat1_group} values are numeric bands: ages ('<18', '18-40', '61+'),
 neighborhood poverty ('<10\%', '10-19.9\%'), incomes ('<$50,000',
 '$50,000-$99,999'), etc. Sorting those as text is wrong because, for example,
 '5-9' would come after '10-14'. This function ranks them by value instead.
+
+Used internally by \code{\link[=chi_plot_demographics]{chi_plot_demographics()}}.
 }
 \details{
 Bands are ranked on their lower bound. Open-ended low bands (e.g., '<18') are

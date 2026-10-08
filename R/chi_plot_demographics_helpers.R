@@ -7,6 +7,8 @@
 #' Reads `inst/ref/tableau_colors.csv`, which holds one hex color for each `cat1`
 #' (Tableau Style Guide category), and checks that the file is valid.
 #'
+#' Used internally by [chi_plot_demographics()].
+#'
 #' @return A named character vector of hex colors, where the names are `cat1`
 #' values.
 #'
@@ -37,6 +39,8 @@ chi_plot_read_colors <- function() {
 #' `race3` and `race4` are two ways of categorizing race, and some indicators have
 #' both. They share `cat1_group` values (e.g., 'Black'), so plotting both would draw
 #' duplicate bars. This function decides, one `indicator_key` at a time, which to keep.
+#'
+#' Used internally by [chi_plot_demographics()].
 #'
 #' @details
 #' * `cat1_varname = NULL`: `race4` is kept and `race3` is dropped for indicators
@@ -82,6 +86,8 @@ chi_plot_resolve_race <- function(dt, cat1_varname) {
 #' Reduces the estimates for one `indicator_key` to a single time period, so that
 #' all bars on a graph come from the same year.
 #'
+#' Used internally by [chi_plot_demographics()].
+#'
 #' @details
 #' `year` is a character column that can be a single year (e.g., '2023') or a
 #' multi-year range (e.g., '2020-2024'). Rows are compared on the ending year, i.e.,
@@ -123,6 +129,8 @@ chi_plot_latest_year <- function(dt) {
 #' dollars as whole dollars with a comma between thousands ('$123,456'), and all
 #' other types (e.g., rates, counts) as a number with exactly one decimal place and a
 #' comma between thousands ('1,234.5'). The caution symbol is then appended.
+#'
+#' Used internally by [chi_plot_demographics()].
 #'
 #' @param result Numeric vector of estimates.
 #' @param result_type Character vector, the same length as `result`, of result types
@@ -169,6 +177,8 @@ chi_plot_bar_labels <- function(result, result_type, caution) {
 #' 'Multiple') belong after the named categories no matter how they sort
 #' alphabetically. Otherwise, 'Other' would land between 'NHPI' and 'White'.
 #'
+#' Used internally by [chi_plot_demographics()].
+#'
 #' @param x Character vector of `cat1_group` values.
 #'
 #' @return A logical vector the same length as `x`.
@@ -189,6 +199,8 @@ chi_plot_is_catchall <- function(x) {
 #' neighborhood poverty ('<10%', '10-19.9%'), incomes ('<$50,000',
 #' '$50,000-$99,999'), etc. Sorting those as text is wrong because, for example,
 #' '5-9' would come after '10-14'. This function ranks them by value instead.
+#'
+#' Used internally by [chi_plot_demographics()].
 #'
 #' @details
 #' Bands are ranked on their lower bound. Open-ended low bands (e.g., '<18') are
@@ -241,6 +253,8 @@ chi_plot_band_rank <- function(x) {
 #'    [chi_plot_is_catchall()]), numeric bands by value (see [chi_plot_band_rank()]),
 #'    and plain alphabetical order for everything else.
 #'
+#' Used internally by [chi_plot_demographics()].
+#'
 #' @details
 #' 'kingco' is the older HYS spelling of 'chi_geo_kc', and both are treated as King
 #' County.
@@ -290,6 +304,8 @@ chi_plot_order_groups <- function(dt, cat1_varname) {
 #' [ggplot2::geom_text()] at a given size. `geom_text()` sizes are in mm whereas grid
 #' wants points, so this converts between the two.
 #'
+#' Used internally by [chi_plot_demographics()].
+#'
 #' @param labels Character vector of labels. `NA` returns `NA`.
 #' @param size Font size in mm, as used by `geom_text()`.
 #'
@@ -313,6 +329,8 @@ chi_plot_text_width_in <- function(labels, size) {
 #' Greedy word wrap. Breaks each line of `text` (existing line breaks are kept) so
 #' that none is wider than `max_in` inches when drawn. A single word wider than
 #' `max_in` is left on its own line.
+#'
+#'  Used internally by [chi_plot_demographics()].
 #'
 #' @param text A single character string.
 #' @param max_in Maximum width of a line, in inches.
@@ -355,6 +373,8 @@ chi_plot_wrap_text <- function(text, max_in, fontsize, fontface = 'plain') {
 #' y axis labels, margins, and other fixed elements. It is measured off the plot (on a
 #' null device of the output's dimensions) so it stays right if the theme changes.
 #'
+#' Used internally by [chi_plot_demographics()].
+#'
 #' @details
 #' The panel is the one column measured in 'null' units, which converts to zero
 #' inches, so whatever the absolute columns do not use is the panel.
@@ -391,6 +411,8 @@ chi_plot_panel_width_in <- function(plot, width, height) {
 #' Inches of the image height used by everything that is not the bars, i.e., the plot
 #' margins and whichever of the title, subtitle, and caption are drawn (at however many
 #' lines they wrap to).
+#'
+#' Used internally by [chi_plot_demographics()].
 #'
 #' @details
 #' Measured the same way as [chi_plot_panel_width_in()]: the panel is the one row
