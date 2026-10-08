@@ -307,6 +307,10 @@ chi_plot_demographics(table_name = 'birth',
 chi_plot_demographics(table_name = 'brfss',
                        cat1_varname = c('chi_geo_kc', 'race4', 'chi_geo_region'))
 
+chi_plot_demographics(table_name = 'bskhs', 
+                      chi = FALSE, # important for BSK because doesn't use chi col
+                      cat1_varname = c('kingco', 'c_r_omb', 'c_region'))
+
 chi_plot_demographics(table_name = 'chars',
                        cat1_varname = c('chi_geo_kc', 'age6', 'race4'))
 
