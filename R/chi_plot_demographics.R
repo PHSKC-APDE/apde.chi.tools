@@ -393,6 +393,10 @@ chi_plot_demographics <- function(table_name,
            "Check `indicator_key` and `cat1_varname`.")
     }
 
+    # Need to treat AIC chi_race as if they were one cat1_varname for the sake of plotting
+    CHIestimates[grepl('^chi_race_aic_', cat1_varname), cat1_varname := 'chi_race_aic']
+    cv_requested <- unique(sub("^chi_race_aic_.*", "chi_race_aic", cv_requested))
+
   # - sizes and spacing ----
     # complicated! But critical so that all bar labels are visible, even when small in value
     # used AI to come up with this solution
