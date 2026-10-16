@@ -567,7 +567,7 @@ chi_plot_demographics <- function(table_name,
           # trimmed margins were decided via repeated testing
           plot.margin = if (trim_margin) ggplot2::margin(t = 5, r = 5, b = 5, l = 5, unit = 'pt')
                         else ggplot2::margin(t = 1, r = 1, b = 1, l = 1, unit = 'cm'),
-          axis.text.y = ggplot2::element_text(size = axis_text_y_pt),
+          axis.text.y = ggplot2::element_text(size = axis_text_y_pt, color = "black"),
           axis.text.x = ggplot2::element_blank(),
           axis.ticks.x = ggplot2::element_blank(),
           panel.grid.major.x = ggplot2::element_blank(),
