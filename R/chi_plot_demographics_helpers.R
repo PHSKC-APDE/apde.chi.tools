@@ -188,7 +188,7 @@ chi_plot_bar_labels <- function(result, result_type, caution) {
 #'
 #' @keywords internal
 chi_plot_is_catchall <- function(x) {
-  grepl('^\\s*(other|another|unknown|multiple)\\b', x, ignore.case = TRUE)
+  grepl('JUST_a_PLACEHOLDER', x, ignore.case = TRUE)# grepl('^\\s*(other|another|unknown|multiple)\\b', x, ignore.case = TRUE)
 }
 
 # chi_plot_band_rank() ----
