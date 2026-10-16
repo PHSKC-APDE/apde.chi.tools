@@ -639,7 +639,7 @@ chi_plot_demographics <- function(table_name,
         separators <- lapply(group_boundaries, function(b) {
           ggplot2::annotation_custom(
             grid::segmentsGrob(x0 = 0, x1 = 1, y0 = 0.5, y1 = 0.5,
-                               gp = grid::gpar(col = 'black', lwd = 1 * ggplot2::.pt)),
+                               gp = grid::gpar(col = 'black', lwd = 0.33 * ggplot2::.pt)),
             xmin = b, xmax = b, ymin = sep_start, ymax = y_max)
         })
         base_plot <- base_plot + separators
