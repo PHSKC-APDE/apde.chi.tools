@@ -14,11 +14,11 @@ The are meant to support our epidemiologist in various steps along the pipeline,
 
 ## Installation
 
-To install the latest version: [`apde.chi.tools`](https://github.com/PHSKC-APDE/apde.chi.tools) ... `remotes::install_github("PHSKC-APDE/apde.chi.tools", auth_token = NULL)`
+To install the latest version: [`apde.chi.tools`](https://github.com/PHSKC-APDE/apde.chi.tools) ... `pak::pak("PHSKC-APDE/apde.chi.tools")`
 
-To install a particular version, append the version tag to the repository name. You can see a list of recent tags on the right of this page, and click [`Releases`](https://github.com/PHSKC-APDE/apde.chi.tools/releases) to view details ... `remotes::install_github("PHSKC-APDE/apde.chi.tools@v2025.0.0", auth_token = NULL)`. Note, you will want to use the lateset version for the year of work of the CHI project (so work performed in 2025 should use the 2025 version)
+To install a particular version, append the version tag to the repository name. You can see a list of recent tags on the right of this page, and click [`Releases`](https://github.com/PHSKC-APDE/apde.chi.tools/releases) to view details ... `pak::pak("PHSKC-APDE/apde.chi.tools@v2026.1.1")`. Note, you will want to use the lateset version for the year of work of the CHI project (so work performed in 2025 should use the 2025 version)
 
-To install a particular branch, (for example, if participating in testing or needing a feature still in development) specify it with the 'ref' argument, e.g., `remotes::install_github("PHSKC-APDE/apde.chi.tools", ref = "dev", auth_token = NULL)`
+To install a particular branch, (for example, if participating in testing or needing a feature still in development) specify it in the same way, by using the `@` symbol, e.g., `pak::pak("PHSKC-APDE/apde.chi.tools@dev")`
 
 ## Loading a package
 
