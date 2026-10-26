@@ -23,8 +23,8 @@
   test_that("chi_plot_is_catchall() flags catch-all categories only", {
     expect_equal(
       chi_plot_is_catchall(c("Other", "Other race", "Another race", "Unknown", "Multiple", "multiple race",
-                             "White", "Otherwise", "Asian")),
-      c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE))
+                             "White", "Otherwise", "Asian", "JUST_a_PLACEHOLDER")),
+      c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE))
   })
 
 # chi_plot_band_rank() ----
