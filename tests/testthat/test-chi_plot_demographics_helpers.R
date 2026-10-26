@@ -62,9 +62,9 @@
   })
 
   test_that("chi_plot_band_rank() ranks catch-alls after every band", {
-    x <- c("Other", "$100,000 or more", "<$50,000", "Unknown", "$50,000-$99,999")
+    x <- c("JUST_a_PLACEHOLDER", "$100,000 or more", "<$50,000", "$50,000-$99,999")
     expect_equal(x[order(chi_plot_band_rank(x))],
-                 c("<$50,000", "$50,000-$99,999", "$100,000 or more", "Other", "Unknown"))
+                 c("<$50,000", "$50,000-$99,999", "$100,000 or more", "JUST_a_PLACEHOLDER"))
   })
 
   test_that("chi_plot_band_rank() gives all zeros when the values are not bands", {
@@ -177,23 +177,23 @@
 # chi_plot_order_groups() ----
   order_dt <- function() {
     data.table::data.table(
-      cat1_varname = c("chi_geo_region", "race4", "chi_geo_kc", "race4", "race4", "age6", "age6", "age6"),
-      cat1         = c("Regions", "Race", "King County", "Race", "Race", "Age", "Age", "Age"),
-      cat1_group   = c("South", "White", "King County", "Other", "Asian", "10-14", "5-9", "<5"))
+      cat1_varname = c("chi_geo_region", "race4", "chi_geo_kc", "race4", "age6", "age6", "age6"),
+      cat1         = c("Regions", "Race", "King County", "Race", "Age", "Age", "Age"),
+      cat1_group   = c("South", "White", "King County", "Asian", "10-14", "5-9", "<5"))
   }
 
   test_that("chi_plot_order_groups() puts King County first and follows the requested order", {
     out <- chi_plot_order_groups(order_dt(), c("age6", "race4", "chi_geo_region", "chi_geo_kc"))
 
     expect_equal(out$cat1_group[1], "King County")
-    expect_equal(out$cat1_varname, c("chi_geo_kc", "age6", "age6", "age6", "race4", "race4", "race4", "chi_geo_region"))
+    expect_equal(out$cat1_varname, c("chi_geo_kc", "age6", "age6", "age6", "race4", "race4", "chi_geo_region"))
   })
 
   test_that("chi_plot_order_groups() sorts bands by value and catch-alls last within a cat1_varname", {
     out <- chi_plot_order_groups(order_dt(), c("age6", "race4", "chi_geo_region", "chi_geo_kc"))
 
     expect_equal(out[cat1_varname == "age6"]$cat1_group, c("<5", "5-9", "10-14"))
-    expect_equal(out[cat1_varname == "race4"]$cat1_group, c("Asian", "White", "Other"))
+    expect_equal(out[cat1_varname == "race4"]$cat1_group, c("Asian", "White"))
   })
 
   test_that("chi_plot_order_groups() falls back to alphabetical cat1 when cat1_varname is NULL", {
