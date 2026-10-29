@@ -9,7 +9,7 @@
 #' @details Data are pulled from `[PHExtractStore].[APDE].[table_name]` where
 #'   `tab IN ('demgroups', '_kingcounty')` (and `chi = 1` when `chi = TRUE`),
 #'   using a SQL database connection created by
-#'   [apde.etl::create_db_connection()].
+#'   [apde.connect::connect()].
 #'
 #'   Only the most recent `year` is kept, chosen once per `indicator_key` and
 #'   applied to every row of that indicator, so all bars on a graph are from the
@@ -309,7 +309,7 @@ chi_plot_demographics <- function(table_name,
     if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
 
   # - connect & pull data ----
-    db_cxn <- apde.etl::create_db_connection(server = 'phextractstore', prod = prod)
+    db_cxn <- apde.connect::connect('phextractstore', prod = prod)
     on.exit(DBI::dbDisconnect(db_cxn), add = TRUE)
 
     validTables <- setdiff(grep('_results$', DBI::dbListTables(db_cxn), value = TRUE), 'apcd_qa_results')
@@ -439,6 +439,13 @@ chi_plot_demographics <- function(table_name,
       # chi_plot_latest_year().
       dt_ik <- chi_plot_latest_year(dt_ik)
 
+
+      # CUSTOM: split Hispanic into its own pseudo-category race3_hispanic (always so much insanity because of how we code race3)
+      dt_ik[cat1 == "Ethnicity" &
+              cat1_varname == "race3" &
+              cat1_group == "Hispanic",
+            cat1_varname := "race3_hispanic"]
+
       if (nrow(dt_ik) == 0) next
 
       # at this point dt_ik should contain one row per cat1_group since identical rows
@@ -460,6 +467,12 @@ chi_plot_demographics <- function(table_name,
       # with no result (e.g. suppressed) get no label; the suppression symbol for those
       # rows is drawn on its own below. See chi_plot_bar_labels().
       dt_ik[, label := chi_plot_bar_labels(result, result_type, caution)]
+
+      # CUSTOM: if race3_hispanic appears for this indicator, append it to cv_requested
+      if ("race3_hispanic" %in% dt_ik$cat1_varname && !"race3_hispanic" %in% cv_requested) {
+        cv_requested <- append(cv_requested, "race3_hispanic",
+                               after = match("race3", cv_requested))
+      }
 
       # order cat1_group top-to-bottom: King County first, then the user's cat1_varname
       # order, then cat1, then (within a cat1_varname) catch-alls last, numeric bands by

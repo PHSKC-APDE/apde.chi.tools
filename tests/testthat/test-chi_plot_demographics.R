@@ -44,7 +44,7 @@
 # database tests ----
 # These need access to PHExtractStore, so they are skipped on machines without it.
   chi_db_available <- tryCatch({
-    cxn <- apde.etl::create_db_connection(server = "phextractstore", prod = TRUE)
+    cxn <- apde.connect::connect('phextractstore', prod = prod)
     DBI::dbDisconnect(cxn)
     TRUE
   }, error = function(e) FALSE)

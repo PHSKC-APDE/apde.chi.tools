@@ -168,7 +168,7 @@ Style Guide colors and are based on \code{apde.graphs}'s \href{https://github.co
 Data are pulled from \verb{[PHExtractStore].[APDE].[table_name]} where
 \verb{tab IN ('demgroups', '_kingcounty')} (and \code{chi = 1} when \code{chi = TRUE}),
 using a SQL database connection created by
-\code{\link[apde.etl:create_db_connection]{apde.etl::create_db_connection()}}.
+\code{\link[apde.connect:connect]{apde.connect::connect()}}.
 
 Only the most recent \code{year} is kept, chosen once per \code{indicator_key} and
 applied to every row of that indicator, so all bars on a graph are from the
