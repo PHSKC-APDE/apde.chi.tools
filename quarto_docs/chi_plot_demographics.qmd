@@ -26,7 +26,7 @@ The function has a detailed help file accessible by typing `?chi_plot_demographi
 - Every graph is written to disk. Nothing is returned to your console except an invisible character vector of the file paths written.
 - The function needs a connection to `PHExtractStore`, so you must be on the King County network or VPN.
 - You will get one image per `indicator_key`. If you do not name any indicators, you get *all* of them, which can be hundreds of files.
-- Images here are deliberately saved with small dimensions (`width = 9, dpi = 150`, and in most examples `height = 6`) to keep this repository light. For a real CHNA report, you probably want to use the defaults.
+- Images here are deliberately saved with small dimensions (`width = 9, dpi = 150`, and in most examples `height = 6`). For a real CHNA report, you probably want to use the defaults.
 
 # Set up the environment
 
@@ -87,7 +87,7 @@ When relevant, the function will also automatically do the following:
 
 # Plotting every indicator in a table
 
-Leaving `indicator_key = NULL` (its default) plots every indicator available in the table. This is the normal way to produce a full set of CHNA graphics:
+Leaving `indicator_key = NULL` (its default) plots every indicator available in the table. 
 
 ```{r}
 #| eval: false
@@ -126,7 +126,8 @@ myplot <- chi_plot_demographics(
   indicator_key = 'hos1803000_v1',  # asthma hospitalization
   cat1_varname = c('chi_geo_kc', 'age6', 'race4'),
   output_dir = img_dir,
-  width = 9, dpi = 150)
+  width = 9, 
+  dpi = 150)
 ```
 
 ```{r}
@@ -137,11 +138,11 @@ myplot <- chi_plot_demographics(
 knitr::include_graphics(myplot)
 ```
 
-Two things to note here.
+Take note of two things:
 
 First, **the age groups are in numeric order**, not alphabetical. The function detects groups whose values are all numeric bands (e.g., ages or incomes) and sorts them by their lower bound. 
 
-Second, **these are rates, not proportions**, and the labels reflect that. The function reads `result_type` from the indicator's metadata. Proportions are then shown as percents (e.g., `17.5%`), dollars are shown as whole dollars with a comma between thousands (e.g., `$123,456`), and everything else (e.g., rates and counts) is shown as a plain number with one decimal place and a comma between thousands.
+Second, **these are rates, not proportions**, and the labels reflect that. The function reads `result_type` from the indicator's metadata. Proportions are then shown as percents (e.g., `17.5%`), dollars are shown as whole dollars with a comma separator (e.g., `$123,456`), and everything else (e.g., rates and counts) is shown as a plain number with one decimal place and a comma separator.
 
 To rearrange the blocks, rearrange `cat1_varname`. Putting `race4` before `age6` swaps those two sections of the graph:
 
@@ -164,7 +165,7 @@ myplot <- chi_plot_demographics(
 knitr::include_graphics(myplot)
 ```
 
-Within each block, categories are generally alphabetical. The exceptions are the sorting of numeric bands (described above) and catch-all buckets (`'Other'`, `'Multiple'`) that are pushed to the end of their block rather than sorting alphabetically into the middle of the real categories. For example, when graphing race, `'Multiple'` would come *after* `'White'`.
+Within each block, categories are sorted alphabetically. The exceptions is the sorting of numeric bands, which are sorted numerically as described above.
 
 Setting `cat1_varname = NULL` plots every demographic available in the table. The function warns when you do this, because it is rarely what we want for CHI or CHNA graphics. Because the user did not provide an order, the blocks are sorted alphabetically by `cat1`.
 
@@ -195,7 +196,7 @@ King County still floats to the top here, because the function recognizes both `
 
 If you request a `cat1_varname` the table does not have, the function stops and lists what it was asked for versus what is available. The one exception is that a request for `race4` will be replaced with `race3` for any indicator that has `race3` but not `race4`. This is never silent: the function issues a warning that lists the affected indicators, so you can confirm that `race3` is acceptable.
 
-`race3` and `race4` are two different ways of categorizing race, and some indicators have both. When `cat1_varname = NULL` and an indicator has both, only `race4` is plotted. If you name both in `cat1_varname`, the function stops with an error, because the two share group names (e.g., `Black`) and would draw duplicate bars.
+`race3` and `race4` are two different ways of categorizing race, and some indicators have both. When `cat1_varname = NULL` and an indicator has both, only `race4` is plotted. If you name both in `cat1_varname`, the function stops with an error, because the two share group names (e.g., `Black`) and would draw duplicate bars and the world will explode.
 
 # Dollars
 
@@ -294,7 +295,7 @@ Be aware of the tradeoff. Unofficial indicators generally have no row in `[PHExt
 
 # When things go off the rails (common errors)
 
-**"cat1 value(s) ... do not match the standard Tableau Style Guide categories."** The function assigns colors according to `cat1` value, using `apde.etl::chi_standard_varnames` as a reference table to crosswalk `cat1_varname` to `cat1`. If the function does not recognize the `cat1` value it means there was a typo in `*_results` table (unlikely) or the `chi_standard_varnames` (even less likely) or that a new category needs to be added to the color reference file, `inst/ref/tableau_colors.csv`. If this is the case, submit a GitHub issue (or make a branch, add a row for the new value to that file, test your fix, and submit a pull request).
+**"cat1 value(s) ... do not match the standard Tableau Style Guide categories."** The function assigns colors according to `cat1` value, using `apde.etl::chi_standard_varnames` as a reference table to crosswalk `cat1_varname` to `cat1`. If the function does not recognize the `cat1` value it means there was a typo in the `*_results` table (unlikely) or the `chi_standard_varnames` (even less likely) or that a new category needs to be added to the color reference file, `inst/ref/tableau_colors.csv`. If this is the case, submit a GitHub issue (or make a branch, add a row for the new value to that file, test your fix, and submit a pull request).
 
 **"indicator_key ... has more than one estimate for the same cat1_group."** Each `cat1_group` can only be drawn once and therefore should only appear once in the data. The function already deals with two cases of duplication for you. When `cat1 = 'King County'` for both the `_kingcounty` and `demgroups` tabs, only one is kept. Also, when there is a one-year and a five-year estimate that end in the same year, the five-year estimate 'wins'. So, if you still have duplicates, there is likely a problem with the SQL `*_results` table. 
 
@@ -310,7 +311,7 @@ Be aware of the tradeoff. Unofficial indicators generally have no row in `[PHExt
 
 Click [here](https://github.com/PHSKC-APDE/chi/blob/main/chi_plots/2026_chna_demographics.R) to see how we used this function to create the 2026 CHNA graphics
 
-# Batch Produce Graphics
+## Batch Produce Graphics
 
 The code below should batch produce graphics for each of our main data sources. 
 
