@@ -11,6 +11,7 @@ chi_plot_demographics(
   chi = TRUE,
   output_dir = "c:/temp/chi_graphics",
   image_type = c("png", "jpg"),
+  date_stamp = FALSE,
   width = 4,
   height = NULL,
   dpi = 600,
@@ -72,6 +73,13 @@ Default \code{output_dir = "c:/temp/chi_graphics"}.}
 \item{image_type}{One of \code{"png"} or \code{"jpg"}.
 
 Default \code{image_type = "png"}.}
+
+\item{date_stamp}{Logical. If \code{TRUE}, today's date (\code{Sys.Date()}) is added
+to the end of each file name (e.g. \verb{brfss_chi_no_pcp_2026-11-03.png}), so
+re-running on a different day does not overwrite earlier images. If
+\code{FALSE}, file names have no date (e.g. \code{brfss_chi_no_pcp.png}).
+
+Default \code{date_stamp = FALSE}.}
 
 \item{width}{Numeric. Image width in inches. Must be at least 4; narrower
 images leave too little room for the y axis labels, bars and caption.
@@ -203,8 +211,10 @@ sorted numerically and catch-all buckets (\code{'Other'}, \code{'Multiple'}) tha
 are always pushed to the end of their block. For example, when graphing
 race, \code{'Multiple'} would come \emph{after} \code{'White'}.
 
-Output files are named
-\verb{<table_name>_<indicator_key>_<Sys.Date()>.<image_type>}.
+Output files are named \verb{<table_name>_<indicator_key>.<image_type>}, or
+\verb{<table_name>_<indicator_key>_<Sys.Date()>.<image_type>} when
+\code{date_stamp = TRUE}. Existing files with the same name in \code{output_dir} are
+overwritten.
 }
 \examples{
 \dontrun{

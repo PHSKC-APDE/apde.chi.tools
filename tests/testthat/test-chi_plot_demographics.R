@@ -23,6 +23,7 @@
     expect_error(chi_plot_demographics("brfss", show_title = NULL), "show_title")
     expect_error(chi_plot_demographics("brfss", show_caption = 1), "show_caption")
     expect_error(chi_plot_demographics("brfss", trim_margin = "TRUE"), "trim_margin")
+    expect_error(chi_plot_demographics("brfss", date_stamp = NA), "date_stamp")
     expect_error(chi_plot_demographics("brfss", title = c("a", "b")), "title")
     expect_error(chi_plot_demographics("brfss", title = 5), "title")
     expect_error(chi_plot_demographics("brfss", subtitle = NA_character_), "subtitle")
@@ -64,7 +65,7 @@
     expect_true(file.exists(files))
     # normalizePath() so that slash direction and short Windows folder names do not matter
     expect_equal(normalizePath(dirname(files), winslash = "/"), normalizePath(out_dir, winslash = "/"))
-    expect_equal(basename(files), paste0("brfss_chi_no_pcp_", Sys.Date(), ".png"))
+    expect_equal(basename(files), "brfss_chi_no_pcp.png")
   })
 
   test_that("chi_plot_demographics() accepts a table name with or without '_results' and can write jpg", {
@@ -74,7 +75,18 @@
     files <- chi_plot_demographics(table_name = "brfss_results", indicator_key = "chi_no_pcp",
                                    image_type = "jpg", output_dir = out_dir, dpi = 100)
 
-    expect_equal(basename(files), paste0("brfss_chi_no_pcp_", Sys.Date(), ".jpg"))
+    expect_equal(basename(files), "brfss_chi_no_pcp.jpg")
+    expect_true(file.exists(files))
+  })
+
+  test_that("chi_plot_demographics() adds today's date to the file name when date_stamp = TRUE", {
+    skip_if_no_chi_db()
+    out_dir <- withr::local_tempdir()
+
+    files <- chi_plot_demographics(table_name = "brfss", indicator_key = "chi_no_pcp",
+                                   date_stamp = TRUE, output_dir = out_dir, dpi = 100)
+
+    expect_equal(basename(files), paste0("brfss_chi_no_pcp_", Sys.Date(), ".png"))
     expect_true(file.exists(files))
   })
 

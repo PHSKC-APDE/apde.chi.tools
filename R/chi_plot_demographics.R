@@ -45,8 +45,10 @@
 #'   are always pushed to the end of their block. For example, when graphing
 #'   race, `'Multiple'` would come *after* `'White'`.
 #'
-#'   Output files are named
-#'   `<table_name>_<indicator_key>_<Sys.Date()>.<image_type>`.
+#'   Output files are named `<table_name>_<indicator_key>.<image_type>`, or
+#'   `<table_name>_<indicator_key>_<Sys.Date()>.<image_type>` when
+#'   `date_stamp = TRUE`. Existing files with the same name in `output_dir` are
+#'   overwritten.
 #'
 #' @param table_name Character. Name of a single SQL table in
 #'   `PHExtractStore.APDE` ending in `_results` (e.g. use `'acs'` for
@@ -95,6 +97,13 @@
 #' @param image_type One of `"png"` or `"jpg"`.
 #'
 #'   Default `image_type = "png"`.
+#'
+#' @param date_stamp Logical. If `TRUE`, today's date (`Sys.Date()`) is added
+#'   to the end of each file name (e.g. `brfss_chi_no_pcp_2026-11-03.png`), so
+#'   re-running on a different day does not overwrite earlier images. If
+#'   `FALSE`, file names have no date (e.g. `brfss_chi_no_pcp.png`).
+#'
+#'   Default `date_stamp = FALSE`.
 #'
 #' @param width Numeric. Image width in inches. Must be at least 4; narrower
 #'   images leave too little room for the y axis labels, bars and caption.
@@ -230,6 +239,7 @@ chi_plot_demographics <- function(table_name,
                                   chi = TRUE,
                                   output_dir = 'c:/temp/chi_graphics',
                                   image_type = c('png', 'jpg'),
+                                  date_stamp = FALSE,
                                   width = 4,
                                   height = NULL,
                                   dpi = 600,
@@ -297,6 +307,9 @@ chi_plot_demographics <- function(table_name,
     }
     if (!is.logical(trim_margin) || length(trim_margin) != 1 || is.na(trim_margin)) {
       stop("\n\U1F6D1 `trim_margin` must be a single logical value (TRUE or FALSE).")
+    }
+    if (!is.logical(date_stamp) || length(date_stamp) != 1 || is.na(date_stamp)) {
+      stop("\n\U1F6D1 `date_stamp` must be a single logical value (TRUE or FALSE).")
     }
 
     if (!is.null(title) && (!is.character(title) || length(title) != 1 || is.na(title))) {
@@ -676,7 +689,9 @@ chi_plot_demographics <- function(table_name,
                             ggplot2::aes(y = 0, label = suppression), hjust = 0)
 
       safe_ik <- gsub('[^A-Za-z0-9_-]+', '_', ik)
-      filename <- paste0(table_name, "_", safe_ik, "_", Sys.Date(), ".", image_type)
+      filename <- paste0(table_name, "_", safe_ik,
+                         if (date_stamp) paste0("_", Sys.Date()),
+                         ".", image_type)
       filepath <- file.path(output_dir, filename)
 
       ggplot2::ggsave(filepath, myplot, width = width, height = plot_height, dpi = dpi, units = "in")
