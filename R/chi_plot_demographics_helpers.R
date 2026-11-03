@@ -173,9 +173,13 @@ chi_plot_bar_labels <- function(result, result_type, caution) {
 #' Identify catch-all categories
 #'
 #' @description
-#' Catch-all buckets (e.g., 'Other', 'Other race', 'Another race', 'Unknown',
-#' 'Multiple') belong after the named categories no matter how they sort
-#' alphabetically. Otherwise, 'Other' would land between 'NHPI' and 'White'.
+#' Flags `cat1_group` values that should be placed after the named categories no
+#' matter how they sort alphabetically.
+#'
+#' Currently turned off: the pattern only matches the placeholder
+#' 'JUST_a_PLACEHOLDER', so no real category (e.g., 'Other', 'Multiple') is
+#' flagged and every value sorts alphabetically. To turn it on, replace the
+#' placeholder with the commented-out pattern in the function body.
 #'
 #' Used internally by [chi_plot_demographics()].
 #'
@@ -184,7 +188,7 @@ chi_plot_bar_labels <- function(result, result_type, caution) {
 #' @return A logical vector the same length as `x`.
 #'
 #' @examples
-#' apde.chi.tools:::chi_plot_is_catchall(c('Other', 'Multiple race', 'White', 'Otherwise'))
+#' apde.chi.tools:::chi_plot_is_catchall(c('Other', 'Multiple', 'White', 'JUST_a_PLACEHOLDER'))
 #'
 #' @keywords internal
 chi_plot_is_catchall <- function(x) {
@@ -207,7 +211,7 @@ chi_plot_is_catchall <- function(x) {
 #' placed ahead of a band starting at the same number (e.g., '18-25'), and
 #' open-ended upper bands (e.g., '65+') come last among bands. Thousands separators
 #' are ignored, so '$1,000' is read as 1000. Catch-all categories (see
-#' [chi_plot_is_catchall()]) are ranked after every band.
+#' [chi_plot_is_catchall()], currently turned off) are ranked after every band.
 #'
 #' If any value that is not a catch-all contains no number (e.g., region or race
 #' names), the vector is not a set of bands and every value is ranked 0, which leaves
@@ -250,7 +254,7 @@ chi_plot_band_rank <- function(x) {
 #'    no such order, so this key is skipped.
 #' 3. `cat1`, alphabetically.
 #' 4. Within a `cat1_varname`: catch-all categories last (see
-#'    [chi_plot_is_catchall()]), numeric bands by value (see [chi_plot_band_rank()]),
+#'    [chi_plot_is_catchall()], currently turned off), numeric bands by value (see [chi_plot_band_rank()]),
 #'    and plain alphabetical order for everything else.
 #'
 #' Used internally by [chi_plot_demographics()].

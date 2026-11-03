@@ -25,7 +25,7 @@ in this priority order:
 no such order, so this key is skipped.
 \item \code{cat1}, alphabetically.
 \item Within a \code{cat1_varname}: catch-all categories last (see
-\code{\link[=chi_plot_is_catchall]{chi_plot_is_catchall()}}), numeric bands by value (see \code{\link[=chi_plot_band_rank]{chi_plot_band_rank()}}),
+\code{\link[=chi_plot_is_catchall]{chi_plot_is_catchall()}}, currently turned off), numeric bands by value (see \code{\link[=chi_plot_band_rank]{chi_plot_band_rank()}}),
 and plain alphabetical order for everything else.
 }
 

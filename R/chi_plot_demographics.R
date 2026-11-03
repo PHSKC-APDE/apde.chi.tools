@@ -39,11 +39,8 @@
 #'   `cat1_varname = NULL` there is no user-supplied order to follow, so the
 #'   groups fall back to alphabetical by `cat1` (still with King County on top).
 #'
-#'   Within a `cat1_varname`, values are generally ordered alphabetically. The
-#'   exceptions are the sorting of numeric bands (e.g., age bins) that are
-#'   sorted numerically and catch-all buckets (`'Other'`, `'Multiple'`) that
-#'   are always pushed to the end of their block. For example, when graphing
-#'   race, `'Multiple'` would come *after* `'White'`.
+#'   Within a `cat1_varname`, values are ordered alphabetically, except numeric
+#'   bands (e.g., age bins), which are sorted numerically.
 #'
 #'   Output files are named `<table_name>_<indicator_key>.<image_type>`, or
 #'   `<table_name>_<indicator_key>_<Sys.Date()>.<image_type>` when

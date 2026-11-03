@@ -26,7 +26,7 @@ Bands are ranked on their lower bound. Open-ended low bands (e.g., '<18') are
 placed ahead of a band starting at the same number (e.g., '18-25'), and
 open-ended upper bands (e.g., '65+') come last among bands. Thousands separators
 are ignored, so '$1,000' is read as 1000. Catch-all categories (see
-\code{\link[=chi_plot_is_catchall]{chi_plot_is_catchall()}}) are ranked after every band.
+\code{\link[=chi_plot_is_catchall]{chi_plot_is_catchall()}}, currently turned off) are ranked after every band.
 
 If any value that is not a catch-all contains no number (e.g., region or race
 names), the vector is not a set of bands and every value is ranked 0, which leaves

@@ -13,14 +13,18 @@ chi_plot_is_catchall(x)
 A logical vector the same length as \code{x}.
 }
 \description{
-Catch-all buckets (e.g., 'Other', 'Other race', 'Another race', 'Unknown',
-'Multiple') belong after the named categories no matter how they sort
-alphabetically. Otherwise, 'Other' would land between 'NHPI' and 'White'.
+Flags \code{cat1_group} values that should be placed after the named categories no
+matter how they sort alphabetically.
+
+Currently turned off: the pattern only matches the placeholder
+'JUST_a_PLACEHOLDER', so no real category (e.g., 'Other', 'Multiple') is
+flagged and every value sorts alphabetically. To turn it on, replace the
+placeholder with the commented-out pattern in the function body.
 
 Used internally by \code{\link[=chi_plot_demographics]{chi_plot_demographics()}}.
 }
 \examples{
-apde.chi.tools:::chi_plot_is_catchall(c('Other', 'Multiple race', 'White', 'Otherwise'))
+apde.chi.tools:::chi_plot_is_catchall(c('Other', 'Multiple', 'White', 'JUST_a_PLACEHOLDER'))
 
 }
 \keyword{internal}

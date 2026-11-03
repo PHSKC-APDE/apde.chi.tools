@@ -205,11 +205,8 @@ and \code{'kingco'} are recognized as naming the county. When
 \code{cat1_varname = NULL} there is no user-supplied order to follow, so the
 groups fall back to alphabetical by \code{cat1} (still with King County on top).
 
-Within a \code{cat1_varname}, values are generally ordered alphabetically. The
-exceptions are the sorting of numeric bands (e.g., age bins) that are
-sorted numerically and catch-all buckets (\code{'Other'}, \code{'Multiple'}) that
-are always pushed to the end of their block. For example, when graphing
-race, \code{'Multiple'} would come \emph{after} \code{'White'}.
+Within a \code{cat1_varname}, values are ordered alphabetically, except numeric
+bands (e.g., age bins), which are sorted numerically.
 
 Output files are named \verb{<table_name>_<indicator_key>.<image_type>}, or
 \verb{<table_name>_<indicator_key>_<Sys.Date()>.<image_type>} when
