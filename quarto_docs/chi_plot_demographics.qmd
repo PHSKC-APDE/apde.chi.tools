@@ -44,7 +44,7 @@ library(knitr)
 #| message: false
 # Images are written next to this document so that the links keep working once
 # the vignette is rendered to GitHub flavored markdown. Clearing the folder
-# first keeps stale, date-stamped files from piling up on re-render.
+# first keeps images from examples that were removed from piling up on re-render.
 img_dir <- 'chi_plot_demographics_images'
 unlink(img_dir, recursive = TRUE)
 dir.create(img_dir, showWarnings = FALSE)
@@ -99,7 +99,18 @@ chi_plot_demographics(
   output_dir = file.path('c:/temp/blah'))
 ```
 
-We haven't actually run it here because the resulting graphics would overwhelm this vignette. If you did run it, you'd find one file per indicator, named `<table_name>_<indicator_key>_<Sys.Date()>.<image_type>`.
+We haven't actually run it here because the resulting graphics would overwhelm this vignette. If you did run it, you'd find one file per indicator, named `<table_name>_<indicator_key>.<image_type>`. Re-running the function overwrites files with the same name.
+
+If you want to keep earlier versions, set `date_stamp = TRUE`. This adds today's date to the end of each file name (e.g., `brfss_chi_no_pcp_2026-11-03.png`), so a run on a different day writes new files instead of overwriting the old ones:
+
+```{r}
+#| eval: false
+chi_plot_demographics(
+  table_name = 'brfss',
+  cat1_varname = c('chi_geo_kc', 'race4', 'chi_geo_region'),
+  date_stamp = TRUE,
+  output_dir = file.path('c:/temp/blah'))
+```
 
 # Choosing the groups, and their order
 
