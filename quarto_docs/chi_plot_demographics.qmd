@@ -293,7 +293,15 @@ Be aware of the tradeoff. Unofficial indicators generally have no row in `[PHExt
 
 `chi_plot_demographics()` is meant to save you from carpal tunnel syndrome that may result from endless clicking on Tableau and cropping of resulting images. If you think you need something the arguments do not cover, please read the help file first. If you still think a feature is missing, please leave a GitHub issue.
 
-# Sample code to batch produce graphics
+# Sample code 
+
+## Use in CHNA
+
+Click [here](https://github.com/PHSKC-APDE/chi/blob/main/chi_plots/2026_chna_demographics.R) to see how we used this function to create the 2026 CHNA graphics
+
+# Batch Produce Graphics
+
+The code below should batch produce graphics for each of our main data sources. 
 
 ```{r}
 #| eval: false
