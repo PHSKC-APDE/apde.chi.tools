@@ -47,7 +47,8 @@ chi_generate_metadata <- function(meta.old = NULL,
   # only replace old data when there is new data because may stop calculating indicators, in which case, would want to keep old data
   meta.new[!is.na(latest_yearx), latest_year := as.numeric(latest_yearx)]
   meta.new[!is.na(latest_year_resultx), latest_year_result := latest_year_resultx]
-  meta.new[!is.na(run_datex), run_date := as.Date(gsub("-", "", run_datex), "%Y%m%d")]
+  meta.new[, run_date := rads::convert_to_date(run_date)] # need to do this before the replacement with run_datex to make sure run_date is of class Date, not string, etc.
+  meta.new[!is.na(run_datex), run_date := rads::convert_to_date(run_datex)]
   meta.new[!is.na(latest_year_countx), latest_year_count := latest_year_countx]
   meta.new[!is.na(latest_year_kc_popx), latest_year_kc_pop := latest_year_kc_popx]
   meta.new[, c("latest_yearx", "latest_year_resultx", "run_datex", "latest_year_countx", "latest_year_kc_popx") := NULL]

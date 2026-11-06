@@ -38,7 +38,7 @@ check_version <- function(print_message = TRUE) {
     if (!requireNamespace("httr", quietly = TRUE)) {
       result$message <- "httr package is needed to check for updates and is not installed."
       if (print_message) {
-        message(result$message)
+        packageStartupMessage(result$message)
       }
       return(invisible(result))
     }
@@ -65,9 +65,9 @@ check_version <- function(print_message = TRUE) {
         # Compare versions
         if (remote_version > local_version) {
           result$is_current <- FALSE
-          update_msg <- ifelse(requireNamespace("devtools", quietly = TRUE),
-                               'To update, run: devtools::install_github("PHSKC-APDE/apde.chi.tools", auth_token = NULL)',
-                               'To update, install devtools and then run: devtools::install_github("PHSKC-APDE/apde.chi.tools", auth_token = NULL)'
+          update_msg <- ifelse(requireNamespace("pak", quietly = TRUE),
+                               'To update, run: pak::pak("PHSKC-APDE/apde.chi.tools")',
+                               'To update, install pack and then run: pak::pack("PHSKC-APDE/apde.chi.tools")'
           )
 
           result$message <- paste0(
