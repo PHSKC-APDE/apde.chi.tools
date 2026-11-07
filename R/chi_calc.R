@@ -401,18 +401,10 @@ chi_calc <- function(ph.data = NULL,
     # change all NaN to a normal NA or SQL will vomit ----
     for(col in names(tempCHIest)) data.table::set(tempCHIest, i=which(is.nan(tempCHIest[[col]])), j=col, value=NA)
 
-    # apply rounding rules for proportions----
-    if(rate == FALSE){
-      tempCHIest[, c("result", "lower_bound", "upper_bound", "rse") := lapply(.SD, rads::round2, 3), .SDcols = c("result", "lower_bound", "upper_bound", "rse")]
-      tempCHIest[, c("se") := lapply(.SD, rads::round2, 4), .SDcols = c("se")]
-    }
-
-    # apply rounding rules for rates----
-    if(rate == TRUE){
-      tempCHIest[, c("result", "lower_bound", "upper_bound") := lapply(.SD, rads::round2, 1), .SDcols = c("result", "lower_bound", "upper_bound")]
-      tempCHIest[, c("rse") := lapply(.SD, rads::round2, 3), .SDcols = c("rse")]
-      tempCHIest[, c("se") := lapply(.SD, rads::round2, 2), .SDcols = c("se")]
-    }
+    # apply CHI rounding rules (proportions or rates) ----
+    # chi_round() holds the CHI rounding standards so they are defined in one place
+    tempCHIest <- chi_round(ph.data = tempCHIest,
+                            result_type = if (rate) "rate" else "proportion")
 
     # prevent negative lower CI ----
     tempCHIest[lower_bound < 0, lower_bound := 0]
