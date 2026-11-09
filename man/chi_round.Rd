@@ -35,8 +35,7 @@ decimal places depends on the \code{result_type} of each row (e.g., proportions
 and rates are rounded differently).
 
 All rounding uses \code{\link[rads:round2]{rads::round2()}}, which rounds halves away from zero
-(e.g., 4.5 becomes 5), as public health expects. Base R's \code{round()} rounds
-halves to the nearest even number (e.g., 4.5 becomes 4).
+(e.g., 4.5 becomes 5), as public health expects.
 
 This function replaces the deprecated \code{rads::digits()}.
 }

@@ -8,8 +8,7 @@
 #' and rates are rounded differently).
 #'
 #' All rounding uses [rads::round2()], which rounds halves away from zero
-#' (e.g., 4.5 becomes 5), as public health expects. Base R's `round()` rounds
-#' halves to the nearest even number (e.g., 4.5 becomes 4).
+#' (e.g., 4.5 becomes 5), as public health expects.
 #'
 #' This function replaces the deprecated `rads::digits()`.
 #'
@@ -229,7 +228,7 @@ chi_round <- function(ph.data,
 
     # result, lower_bound, & upper_bound (only those present)
     if (length(estimate_cols) > 0) {
-      ph.data[, (estimate_cols) := lapply(.SD, rads::round2, n = row_rules$digits_estimate),
+      ph.data[, (estimate_cols) := lapply(.SD, rads::round2, n = row_rules$digits_estimate), # this works because `n` is vectorized
               .SDcols = estimate_cols]
     }
 
