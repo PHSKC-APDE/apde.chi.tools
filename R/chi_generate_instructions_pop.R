@@ -1,43 +1,41 @@
 #' Generate Population Instructions for CHI Analysis
 #'
 #' @description
-#' Creates instructions for \code{\link{chi_get_proper_pop}} based on a table of count
+#' Creates instructions for [chi_get_proper_pop()] based on a table of count
 #' data. These instructions configure appropriate demographic groupings,
 #' geographic types, and time periods for retrieving population denominators used
 #' in CHI rate calculations.
 #'
-#' @param mycount.data Input data.table produced by \code{\link{chi_count_by_age}},
-#' \code{\link{chi_chars_ccs}}, \code{\link{chi_chars_injury}}, or similar functions.
+#' @param mycount.data Input data.table produced by [chi_count_by_age()],
+#' [chi_chars_ccs()], [chi_chars_injury()], or similar functions.
 #' The table should contain the following columns:
-#'  \itemize{
-#'    \item \code{indicator_key}: indicator_key used by CHI
-#'    \item \code{year}: Year range (e.g., "2019-2021" or single year)
-#'    \item \code{tab}: Visualization tab type
-#'    \item \code{cat1}, \code{cat1_varname}, \code{cat1_group}: Primary stratification variables
-#'    \item \code{cat2}, \code{cat2_varname}, \code{cat2_group}: Secondary stratification variables
-#'    \item \code{chi_age}: Single year age
-#'    \item \code{count}: Count of events (births, death, hospitalizations, etc. )
-#'  }
+#'
+#' - `indicator_key`: indicator_key used by CHI
+#' - `year`: Year range (e.g., "2019-2021" or single year)
+#' - `tab`: Visualization tab type
+#' - `cat1`, `cat1_varname`, `cat1_group`: Primary stratification variables
+#' - `cat2`, `cat2_varname`, `cat2_group`: Secondary stratification variables
+#' - `chi_age`: Single year age
+#' - `count`: Count of events (births, death, hospitalizations, etc. )
 #' @param povgeo Geographic level for poverty analysis ('blk' or 'zip')
 #'
 #' @return Returns a data.table containing population processing instructions with columns:
-#'  \itemize{
-#'    \item \code{year}: Original year range from input
-#'    \item \code{cat1}, cat1_varname: Primary stratification details
-#'    \item \code{cat2}, cat2_varname: Secondary stratification details
-#'    \item \code{tab}: Visualization tab type
-#'    \item \code{start}, \code{stop}: Start and end years parsed from the year range
-#'    \item \code{race_type}: Race categorization type ('race', 'race_eth', or 'race_aic')
-#'    \item \code{geo_type}: Geographic level for analysis ('kc', 'hra', 'region', 'blk', 'zip', 'wa')
-#'    \item \code{group_by1}, \code{group_by2}: Demographic grouping specifications
-#'  }
+#'
+#' - `year`: Original year range from input
+#' - `cat1`, cat1_varname: Primary stratification details
+#' - `cat2`, cat2_varname: Secondary stratification details
+#' - `tab`: Visualization tab type
+#' - `start`, `stop`: Start and end years parsed from the year range
+#' - `race_type`: Race categorization type ('race', 'race_eth', or 'race_aic')
+#' - `geo_type`: Geographic level for analysis ('kc', 'hra', 'region', 'blk', 'zip', 'wa')
+#' - `group_by1`, `group_by2`: Demographic grouping specifications
 #'
 #' @seealso
-#' \code{\link{chi_count_by_age}}, \code{\link{chi_chars_ccs}}, and
-#' \code{\link{chi_chars_injury}} which may have generated the count data used
+#' [chi_count_by_age()], [chi_chars_ccs()], and
+#' [chi_chars_injury()] which may have generated the count data used
 #' as input for this function
 #'
-#' \code{\link{chi_get_proper_pop}} which uses the output of this function
+#' [chi_get_proper_pop()] which uses the output of this function
 #'
 #' @export
 #'

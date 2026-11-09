@@ -7,8 +7,8 @@
 chi_generate_instructions_pop(mycount.data, povgeo = c("blk", "zip"))
 }
 \arguments{
-\item{mycount.data}{Input data.table produced by \code{\link{chi_count_by_age}},
-\code{\link{chi_chars_ccs}}, \code{\link{chi_chars_injury}}, or similar functions.
+\item{mycount.data}{Input data.table produced by \code{\link[=chi_count_by_age]{chi_count_by_age()}},
+\code{\link[=chi_chars_ccs]{chi_chars_ccs()}}, \code{\link[=chi_chars_injury]{chi_chars_injury()}}, or similar functions.
 The table should contain the following columns:
 \itemize{
 \item \code{indicator_key}: indicator_key used by CHI
@@ -36,15 +36,15 @@ Returns a data.table containing population processing instructions with columns:
 }
 }
 \description{
-Creates instructions for \code{\link{chi_get_proper_pop}} based on a table of count
+Creates instructions for \code{\link[=chi_get_proper_pop]{chi_get_proper_pop()}} based on a table of count
 data. These instructions configure appropriate demographic groupings,
 geographic types, and time periods for retrieving population denominators used
 in CHI rate calculations.
 }
 \seealso{
-\code{\link{chi_count_by_age}}, \code{\link{chi_chars_ccs}}, and
-\code{\link{chi_chars_injury}} which may have generated the count data used
+\code{\link[=chi_count_by_age]{chi_count_by_age()}}, \code{\link[=chi_chars_ccs]{chi_chars_ccs()}}, and
+\code{\link[=chi_chars_injury]{chi_chars_injury()}} which may have generated the count data used
 as input for this function
 
-\code{\link{chi_get_proper_pop}} which uses the output of this function
+\code{\link[=chi_get_proper_pop]{chi_get_proper_pop()}} which uses the output of this function
 }

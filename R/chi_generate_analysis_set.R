@@ -4,56 +4,53 @@
 #' Creates sets of indicator keys that share common analysis patterns within CHI
 #' (Community Health Indicators) data. This function can either:
 #'
-#' \enumerate{
-#'    \item Read the most recent production version of CHI estimates from the TSQL Production Server for a specified data source, or
-#'    \item Process a provided data.table/data.frame containing CHI data
-#' }
+#' 1. Read the most recent production version of CHI estimates from the TSQL Production Server for a specified data source, or
+#' 2. Process a provided data.table/data.frame containing CHI data
 #'
-#' It groups indicators that use the same combinations of \code{cat1}, \code{cat1_varname}, and
-#' tab columns (\code{_kingcounty}, \code{_wastate}, \code{demgroups}, \code{crosstabs}, \code{trends}).
+#' It groups indicators that use the same combinations of `cat1`, `cat1_varname`, and
+#' tab columns (`_kingcounty`, `_wastate`, `demgroups`, `crosstabs`, `trends`).
 #'
 #' @param data_source Character string (length 1) specifying the data source to
-#' analyze (e.g., \code{'birth'}, \code{'brfss'}, \code{'chars'}, \code{'death'},
-#' \code{'hys'}). This corresponds to a table name in the PHExtractStore database
-#' on the TSQL Production Server. Required if \code{CHIestimates} is not provided.
+#' analyze (e.g., `'birth'`, `'brfss'`, `'chars'`, `'death'`,
+#' `'hys'`). This corresponds to a table name in the PHExtractStore database
+#' on the TSQL Production Server. Required if `CHIestimates` is not provided.
 #' @param CHIestimates A data.table or data.frame containing CHI data to analyze.
-#' If provided, \code{data_source} is ignored. Must comply with the latest CHI
-#' standard, which can be assessed/tested with the \code{\link{chi_qa_tro}}
+#' If provided, `data_source` is ignored. Must comply with the latest CHI
+#' standard, which can be assessed/tested with the [chi_qa_tro()]
 #' function in this package.
 #'
 #' @return Returns a data.table containing analysis sets with the following columns:
-#'   \itemize{
-#'     \item \code{cat1}: character. A standard value from the \code{'cat'} column
-#'     of \code{\link[rads.data]{misc_chi_byvars}}, e.g. \code{'Gender'}
-#'     \item \code{cat1_varname}: character. A standard value from the \code{'varname'}
-#'     column of \code{\link[rads.data]{misc_chi_byvars}}, e.g., \code{'chi_sex'}
-#'     \item \code{_kingcounty}: character \code{'x'}. Is the analysis for King County as a whole?
-#'     \item \code{_wastate}: character \code{'x'}. Is the analysis is for WA state as a whole?
-#'     \item \code{demgroups}: character \code{'x'}. Is the analysis for demgroups?
-#'     \item \code{crosstabs}: character \code{'x'}. Is the analysis for crosstabs?
-#'     \item \code{trends}: character \code{'x'}, Is the the analysis for trends?
-#'     \item \code{set}: Integer identifying groups of indicators with identical analysis patterns
-#'     \item \code{set_indicator_keys}: Comma-separated list of indicator keys sharing the pattern
-#'   }
+#'
+#' - `cat1`: character. A standard value from the `'cat'` column
+#'   of [rads.data::misc_chi_byvars], e.g. `'Gender'`
+#' - `cat1_varname`: character. A standard value from the `'varname'`
+#'   column of [rads.data::misc_chi_byvars], e.g., `'chi_sex'`
+#' - `_kingcounty`: character `'x'`. Is the analysis for King County as a whole?
+#' - `_wastate`: character `'x'`. Is the analysis is for WA state as a whole?
+#' - `demgroups`: character `'x'`. Is the analysis for demgroups?
+#' - `crosstabs`: character `'x'`. Is the analysis for crosstabs?
+#' - `trends`: character `'x'`, Is the the analysis for trends?
+#' - `set`: Integer identifying groups of indicators with identical analysis patterns
+#' - `set_indicator_keys`: Comma-separated list of indicator keys sharing the pattern
 #'
 #'
 #' @details
-#' This function generates a table for \code{\link{chi_generate_tro_shell}}, providing the
+#' This function generates a table for [chi_generate_tro_shell()], providing the
 #' structure required for generating analysis instructions.
 #'
-#' When using \code{data_source}, the function connects to the \code{[PHExtractStore]}
-#' database on the TSQL Production Server \code{KCITSQLPRPHIP40} to retrieve the
+#' When using `data_source`, the function connects to the `[PHExtractStore]`
+#' database on the TSQL Production Server `KCITSQLPRPHIP40` to retrieve the
 #' latest production estimates. Users need appropriate database credentials - contact
 #' your manager if you need access.
 #'
-#' When using \code{CHIestimates}, the provided estimates are processed directly,
+#' When using `CHIestimates`, the provided estimates are processed directly,
 #' bypassing the database connection. The data must comply with the latest CHI
-#' standard, which can be assessed/tested with the \code{\link{chi_qa_tro}} function.
+#' standard, which can be assessed/tested with the [chi_qa_tro()] function.
 #'
 #' @export
 #'
 #' @seealso
-#' \code{\link{chi_generate_tro_shell}} for generating calculation instructions
+#' [chi_generate_tro_shell()] for generating calculation instructions
 #' from these analysis sets
 #'
 #' @examples

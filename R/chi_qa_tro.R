@@ -15,19 +15,19 @@
 #'
 #' @param CHIestimates Name of a data.table or data.frame containing the prepared data to be pushed to SQL
 #' @param CHImetadata Name of a data.table or data.frame containing the metadata to be pushed to SQL
-#' @param acs default \code{FALSE}, Indicates whether it is ACS data (which does not have / need varnames)
-#' @param verbose default \code{TRUE}, Controls whether to display detailed progress and diagnostic messages
+#' @param acs default `FALSE`, Indicates whether it is ACS data (which does not have / need varnames)
+#' @param verbose default `TRUE`, Controls whether to display detailed progress and diagnostic messages
 #'
 #' @return Returns 1 if all checks pass, 0 if any deviations from standards are detected.
 #' If the return value is 0, we suggest running the function with verbose=TRUE to review
 #' specific details about potential issues that may need attention.
 #'
 #' @seealso
-#' \code{\link{chi_calc}} for generating estimates
+#' [chi_calc()] for generating estimates
 #'
-#' \code{\link{chi_generate_metadata}} for creating metadata
+#' [chi_generate_metadata()] for creating metadata
 #'
-#' \code{\link{chi_compare_estimates}} for comparing estimates between versions
+#' [chi_compare_estimates()] for comparing estimates between versions
 #'
 #' @keywords CHI, Tableau, Production
 #'

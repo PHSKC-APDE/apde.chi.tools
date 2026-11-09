@@ -10,7 +10,7 @@ chi_count_by_age(ph.data = NULL, ph.instructions = NULL, source_date = NULL)
 \item{ph.data}{A data table containing line level data to be analyzed}
 
 \item{ph.instructions}{A data table of calculation instructions created by
-\code{\link{chi_generate_tro_shell}}}
+\code{\link[=chi_generate_tro_shell]{chi_generate_tro_shell()}}}
 
 \item{source_date}{Date of data source, added to output metadata}
 }
@@ -32,15 +32,15 @@ stratification variable details (if applicable)
 }
 \description{
 Creates a detailed breakdown of counts by age for CHI data analysis using
-instructions created by \code{\link{chi_generate_tro_shell}}. Primarily
+instructions created by \code{\link[=chi_generate_tro_shell]{chi_generate_tro_shell()}}. Primarily
 used for age standardization and rate calculations when combined with
 population estimates. Processes data according to provided instructions and
 handles demographic groupings with special treatment for race and ethnicity
 variables.
 }
 \seealso{
-\code{\link{chi_generate_tro_shell}} which creates ph.instructions
+\code{\link[=chi_generate_tro_shell]{chi_generate_tro_shell()}} which creates ph.instructions
 
-\code{\link{chi_generate_instructions_pop}} which uses the output of the output
+\code{\link[=chi_generate_instructions_pop]{chi_generate_instructions_pop()}} which uses the output of the output
 of \code{chi_count_by_age}
 }

@@ -1,57 +1,55 @@
 #' CHI generate TRO shell
 #'
 #' @description
-#' This function takes an analysis set table created by \code{\link{chi_generate_analysis_set}}
+#' This function takes an analysis set table created by [chi_generate_analysis_set()]
 #' and specified time period parameters to generate a complete set of analysis
-#' instructions which can be used by \code{\link{chi_calc}}, \code{\link{chi_count_by_age}},
-#' \code{\link{chi_chars_ccs}}, and \code{\link{chi_chars_injury}}.
+#' instructions which can be used by [chi_calc()], [chi_count_by_age()],
+#' [chi_chars_ccs()], and [chi_chars_injury()].
 #'
 #' @details
-#' The expected format of \code{ph.analysis_set} is:
-#'   \itemize{
-#'     \item \code{cat1}: character. A standard value from the \code{'cat'} column
-#'     of \code{\link[rads.data]{misc_chi_byvars}}, e.g. \code{'Gender'}
-#'     \item \code{cat1_varname}: character. A standard value from the \code{'varname'}
-#'     column of \code{\link[rads.data]{misc_chi_byvars}}, e.g., \code{'chi_sex'}
-#'     \item \code{_kingcounty}: character \code{'x'}. Is the analysis for King County as a whole?
-#'     \item \code{_wastate}: character \code{'x'}. Is the analysis is for WA state as a whole?
-#'     \item \code{demgroups}: character \code{'x'}. Is the analysis for demgroups?
-#'     \item \code{crosstabs}: character \code{'x'}. Is the analysis for crosstabs?
-#'     \item \code{trends}: character \code{'x'}, Is the the analysis for trends?
-#'     \item \code{set}: Integer identifying groups of indicators with identical analysis patterns
-#'     \item \code{set_indicator_keys}: Comma-separated list of indicator keys sharing the pattern
-#'   }
+#' The expected format of `ph.analysis_set` is:
 #'
-#' @param ph.analysis_set name of a formal \code{analysis_set} as described in the
-#' \strong{Details} section below
+#' - `cat1`: character. A standard value from the `'cat'` column
+#'   of [rads.data::misc_chi_byvars], e.g. `'Gender'`
+#' - `cat1_varname`: character. A standard value from the `'varname'`
+#'   column of [rads.data::misc_chi_byvars], e.g., `'chi_sex'`
+#' - `_kingcounty`: character `'x'`. Is the analysis for King County as a whole?
+#' - `_wastate`: character `'x'`. Is the analysis is for WA state as a whole?
+#' - `demgroups`: character `'x'`. Is the analysis for demgroups?
+#' - `crosstabs`: character `'x'`. Is the analysis for crosstabs?
+#' - `trends`: character `'x'`, Is the the analysis for trends?
+#' - `set`: Integer identifying groups of indicators with identical analysis patterns
+#' - `set_indicator_keys`: Comma-separated list of indicator keys sharing the pattern
+#'
+#' @param ph.analysis_set name of a formal `analysis_set` as described in the
+#' **Details** section below
 #' @param end.year the latest year to be used for aggregate estimates
 #' @param year.span the number of years to be included in a single non-trend period.
-#' e.g. if \code{end.year = 2023} & \code{year.span = 5}, calculations would be
+#' e.g. if `end.year = 2023` & `year.span = 5`, calculations would be
 #' performed for 2019-2023
 #' @param trend.span the number of years to be included in a single trend period
 #' @param trend.periods the number of periods to be included in a trend series,
-#' e.g., if \code{end.year = 2023} & \code{trend.span = 2} & \code{trend.periods = 5},
+#' e.g., if `end.year = 2023` & `trend.span = 2` & `trend.periods = 5`,
 #' then trends would be calculated for c('2023-2022', '2022-2021', '2021-2020',
 #' '2019-2020', '2018-2019')
 #'
 #' @return Returns a data table of calculation instructions with columns:
-#' \itemize{
-#'   \item \code{indicator_key} Unique identifier for each indicator
-#'   \item \code{tab} Analysis type (_kingcounty, demgroups, trends, etc.)
-#'   \item \code{cat1} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
-#'   \item \code{cat1_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
-#'   \item \code{cat2} A standard value from the \code{'cat'} column of \code{\link[rads.data]{misc_chi_byvars}}
-#'   \item \code{cat2_varname} A standard value from the \code{'varname'} column of \code{\link[rads.data]{misc_chi_byvars}}
-#'   \item \code{start} Starting year of the time period to be analyzed
-#'   \item \code{end} Ending year of the time period to be analyzed
-#' }
+#'
+#' - `indicator_key` Unique identifier for each indicator
+#' - `tab` Analysis type (_kingcounty, demgroups, trends, etc.)
+#' - `cat1` A standard value from the `'cat'` column of [rads.data::misc_chi_byvars]
+#' - `cat1_varname` A standard value from the `'varname'` column of [rads.data::misc_chi_byvars]
+#' - `cat2` A standard value from the `'cat'` column of [rads.data::misc_chi_byvars]
+#' - `cat2_varname` A standard value from the `'varname'` column of [rads.data::misc_chi_byvars]
+#' - `start` Starting year of the time period to be analyzed
+#' - `end` Ending year of the time period to be analyzed
 #'
 #' @seealso
-#' \code{\link{chi_generate_analysis_set}} for creating analysis sets
+#' [chi_generate_analysis_set()] for creating analysis sets
 #'
-#' \code{\link{chi_calc}}, \code{\link{chi_count_by_age}}, \code{\link{chi_chars_ccs}},
-#' and \code{\link{chi_chars_injury}} for performing
-#' calculations using the output of \code{chi_generate_tro_shell}
+#' [chi_calc()], [chi_count_by_age()], [chi_chars_ccs()],
+#' and [chi_chars_injury()] for performing
+#' calculations using the output of `chi_generate_tro_shell`
 #'
 #' @keywords CHI, Tableau, Production
 #'

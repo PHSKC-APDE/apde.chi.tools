@@ -18,7 +18,7 @@ which must exist in the chars.defs data table.}
 \item{ph.data}{A data.table containing the CHARS data to be processed.}
 
 \item{ph.instructions}{A data.table containing processing instructions for each indicator.
-Default is the output from \code{\link{chi_generate_tro_shell}}.}
+Default is the output from \code{\link[=chi_generate_tro_shell]{chi_generate_tro_shell()}}.}
 
 \item{chars.defs}{A data.table containing definitions for each indicator. It
 should have the following columns: \code{indicator_name}, \code{indicator_key}, \code{intent},
@@ -76,10 +76,10 @@ future::plan(future::sequential)
 
 }
 \seealso{
-\code{\link[apde.data]{chars}}, which provides creates ph.data
+\code{\link[apde.data:chars]{apde.data::chars()}}, which provides creates ph.data
 
-\code{\link[rads]{chars_icd_ccs_count}}, in the rads package, which is the
+\code{\link[rads:chars_icd_ccs_count]{rads::chars_icd_ccs_count()}}, in the rads package, which is the
 engine used by this function
 
-\code{\link{chi_generate_tro_shell}}, which creates ph.instructions
+\code{\link[=chi_generate_tro_shell]{chi_generate_tro_shell()}}, which creates ph.instructions
 }

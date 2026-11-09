@@ -6,15 +6,15 @@
 #' @param meta.old Name of a data.table with the prior year's metadata
 #' @param est.current current year's tableau ready output with completed estimates
 #' @param allowed_missing A list of lists specifying allowed missing metadata values. Each inner list
-#'        should have \code{indicator_key} and \code{column} elements.
+#'        should have `indicator_key` and `column` elements.
 #' @param warn_only Logical, if TRUE, only warns about unexpected missing values instead of stopping
 #'
 #' @return Returns a table of metadata
 #'
 #' @seealso
-#' \code{\link{chi_calc}} for generating estimates
+#' [chi_calc()] for generating estimates
 #'
-#' \code{\link{chi_qa_tro}} for validating metadata
+#' [chi_qa_tro()] for validating metadata
 #'
 #' @export
 #'
