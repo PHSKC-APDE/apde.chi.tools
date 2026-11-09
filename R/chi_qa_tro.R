@@ -393,7 +393,7 @@ chi_qa_tro <- function(CHIestimates,
       }
 
     # Check result rounding
-      report_message("Checking that result is rounded correctly (3 decimals for proportions, 1 decimal for rates)")
+      report_message("Checking that result is rounded correctly (3 decimals for proportions, 1 decimal for rates, 0 decimals for counts, dollars, & integers)")
       proportions_wrong_rounding <- CHIestimates[result_type == "proportion" &
                                                    !is.na(result) &
                                                    result != rads::round2(result, 3)]
@@ -404,7 +404,7 @@ chi_qa_tro <- function(CHIestimates,
 
       integers_wrong_rounding <- CHIestimates[result_type %in% c("count", "dollars", "integer") &
                                                 !is.na(result) &
-                                                result != round(result)]
+                                                result != rads::round2(result, 0)]
 
       if(nrow(proportions_wrong_rounding) > 0 ||
          nrow(rates_wrong_rounding) > 0 ||
@@ -428,7 +428,7 @@ chi_qa_tro <- function(CHIestimates,
 
       integers_wrong_rounding <- CHIestimates[result_type %in% c("count", "dollars", "integer") &
                                                 !is.na(lower_bound) &
-                                                lower_bound != round(lower_bound)]
+                                                lower_bound != rads::round2(lower_bound, 0)]
 
       if(nrow(proportions_wrong_rounding) > 0 ||
          nrow(rates_wrong_rounding) > 0 ||
@@ -452,7 +452,7 @@ chi_qa_tro <- function(CHIestimates,
 
       integers_wrong_rounding <- CHIestimates[result_type %in% c("count", "dollars", "integer") &
                                                 !is.na(upper_bound) &
-                                                upper_bound != round(upper_bound)]
+                                                upper_bound != rads::round2(upper_bound, 0)]
 
       if(nrow(proportions_wrong_rounding) > 0 ||
          nrow(rates_wrong_rounding) > 0 ||
