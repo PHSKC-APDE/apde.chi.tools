@@ -55,7 +55,7 @@ Generates CHI estimates from input data according to provided instructions.
 Handles both proportions and means, with options for suppression of small numbers.
 }
 \details{
-Uses \code{ph.instructions} created by \code{\link{chi_generate_tro_shell}} to
+Uses \code{ph.instructions} created by \code{\link[=chi_generate_tro_shell]{chi_generate_tro_shell()}} to
 generate standard CHI output following \href{https://kc1.sharepoint.com/teams/DPH-CHI/CHIVizes/CHI-Standards-TableauReady Output.xlsx}{SharePoint > DPH-CHI > CHI_vizes > CHI-Standards-TableauReady Output.xlsx}.
 The exception is the inclusion of the column \code{'level'}, which contains
 the specific factor level for categorical variables. For example, if
@@ -67,35 +67,35 @@ interest.
 
 For convenience, details of the returned column are presented here:
 \itemize{
-\item{\code{data_source}} Data source (e.g., acs, brfss, etc.)
-\item{\code{indicator_key}} Unique indicator key
-\item{\code{level}} factor level of the indicator_key (e.g., Breech vs Cephalic vs other for fetal_pres in birth data)
-\item{\code{tab}} Type of analysis (e.g., demgroups, _kingcounty, etc.)
-\item{\code{year}} Year(s) of data
-\item{\code{cat1}} Describes data field (e.g., Gender, Ethnicity, etc.)
-\item{\code{cat1_group}} Demographics variables for cat1 (e.g., Female, Hispanic, etc.)
-\item{\code{cat1_varname}} cat1 variable name in the analytic data sets
-\item{\code{cat2}} Describes data field (e.g., Gender, Ethnicity, etc.)
-\item{\code{cat2_group}} Demographics variables for cat2 (e.g., Female, Hispanic, etc.)
-\item{\code{cat2_varname}} cat2 variable name in the analytic data sets
-\item{\code{result}} Calculated proportion/percent or rate
-\item{\code{lower_bound}} Lower bound of confidence interval
-\item{\code{upper_bound}} Upper bound of confidence interval
-\item{\code{se}} Standard error
-\item{\code{rse}} Relative standard error
-\item{\code{caution}} '!' when RSE>=30\% | N == 0
-\item{\code{suppression}} '^' when suppressed
-\item{\code{numerator}} For line-level data, count of events; for surveys, people who responded yes or no for binary variable
-\item{\code{denominator}} For line-level data, population; for surveys, sample size
-\item{\code{chi}} '1' indicates that rows is used for CHI
-\item{\code{source_date}} date analytic ready data was created
-\item{\code{run_date}} date of this analysis
+\item \code{data_source}: Data source (e.g., acs, brfss, etc.)
+\item \code{indicator_key}: Unique indicator key
+\item \code{level}: factor level of the indicator_key (e.g., Breech vs Cephalic vs other for fetal_pres in birth data)
+\item \code{tab}: Type of analysis (e.g., demgroups, _kingcounty, etc.)
+\item \code{year}: Year(s) of data
+\item \code{cat1}: Describes data field (e.g., Gender, Ethnicity, etc.)
+\item \code{cat1_group}: Demographics variables for cat1 (e.g., Female, Hispanic, etc.)
+\item \code{cat1_varname}: cat1 variable name in the analytic data sets
+\item \code{cat2}: Describes data field (e.g., Gender, Ethnicity, etc.)
+\item \code{cat2_group}: Demographics variables for cat2 (e.g., Female, Hispanic, etc.)
+\item \code{cat2_varname}: cat2 variable name in the analytic data sets
+\item \code{result}: Calculated proportion/percent or rate
+\item \code{lower_bound}: Lower bound of confidence interval
+\item \code{upper_bound}: Upper bound of confidence interval
+\item \code{se}: Standard error
+\item \code{rse}: Relative standard error
+\item \code{caution}: '!' when RSE>=30\% | N == 0
+\item \code{suppression}: '^' when suppressed
+\item \code{numerator}: For line-level data, count of events; for surveys, people who responded yes or no for binary variable
+\item \code{denominator}: For line-level data, population; for surveys, sample size
+\item \code{chi}: '1' indicates that rows is used for CHI
+\item \code{source_date}: date analytic ready data was created
+\item \code{run_date}: date of this analysis
 }
 }
 \seealso{
-\code{\link{chi_generate_tro_shell}} for creating calculation instructions
+\code{\link[=chi_generate_tro_shell]{chi_generate_tro_shell()}} for creating calculation instructions
 
-\code{\link{chi_qa_tro}} for validating results
+\code{\link[=chi_qa_tro]{chi_qa_tro()}} for validating results
 
-\code{\link{chi_generate_metadata}} for creating metadata from results
+\code{\link[=chi_generate_metadata]{chi_generate_metadata()}} for creating metadata from results
 }

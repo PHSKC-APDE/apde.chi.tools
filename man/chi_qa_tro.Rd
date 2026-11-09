@@ -46,11 +46,11 @@ qa_status <- chi_qa_tro(
 
 }
 \seealso{
-\code{\link{chi_calc}} for generating estimates
+\code{\link[=chi_calc]{chi_calc()}} for generating estimates
 
-\code{\link{chi_generate_metadata}} for creating metadata
+\code{\link[=chi_generate_metadata]{chi_generate_metadata()}} for creating metadata
 
-\code{\link{chi_compare_estimates}} for comparing estimates between versions
+\code{\link[=chi_compare_estimates]{chi_compare_estimates()}} for comparing estimates between versions
 }
 \keyword{CHI,}
 \keyword{Production}

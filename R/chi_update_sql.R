@@ -15,7 +15,7 @@
 #' @param server type of server (`'development'` for KCITSQLUATHIP40 and
 #' `'production'` for KCITSQLPRPHIP40)
 #'
-#' Default \code{server = 'development'}
+#' Default `server = 'development'`
 #' @param replace_table If `TRUE`, the existing SQL table is dropped and fully replaced with the
 #' new data. If `FALSE`, rows matching the `indicator_key` values in `CHIestimates` and
 #' `CHIestimates` are deleted from SQL and then replaced with the new data, leaving all other rows
@@ -36,9 +36,9 @@
 #' }
 #'
 #' @seealso
-#' \code{\link{chi_qa_tro}} for validating data before upload
+#' [chi_qa_tro()] for validating data before upload
 #'
-#' \code{\link{chi_compare_estimates}} for comparing with existing data
+#' [chi_compare_estimates()] for comparing with existing data
 #'
 #' @return Returns a status message indicating success and location, or failure, of upload
 #'

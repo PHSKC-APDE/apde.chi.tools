@@ -28,7 +28,7 @@ Returns a table of metadata
 Function to generate metadata table combining existing metadata and latest estimates.
 }
 \seealso{
-\code{\link{chi_calc}} for generating estimates
+\code{\link[=chi_calc]{chi_calc()}} for generating estimates
 
-\code{\link{chi_qa_tro}} for validating metadata
+\code{\link[=chi_qa_tro]{chi_qa_tro()}} for validating metadata
 }

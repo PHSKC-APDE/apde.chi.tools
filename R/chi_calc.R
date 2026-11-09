@@ -7,67 +7,66 @@
 #' @param ph.data data.frame, data.table, dtsurvey, or imputationList.
 #'   Input data containing analytic-ready data.
 #'
-#'   If \code{ph.data} is provided as an \code{imputationList}, it is assumed to
+#'   If `ph.data` is provided as an `imputationList`, it is assumed to
 #'   be BRFSS data. The imputation list is internally converted to a
-#'   \code{data.table} for validation and preprocessing, and converted back to
-#'   an imputation list immediately before calls to \code{rads::calc()}.
+#'   `data.table` for validation and preprocessing, and converted back to
+#'   an imputation list immediately before calls to `rads::calc()`.
 #' @param ph.instructions data.frame or data.table. Calculation instructions for processing.
-#' @param ci numeric. Confidence level between 0 and 1. Default: \code{0.90}.
-#' @param rate logical. If TRUE calculates rates, if FALSE calculates proportions. Default: \code{FALSE}.
-#' @param rate_per numeric. Rate multiplier when \code{rate = TRUE} (e.g., 100000 for per 100,000). Default: \code{NULL}.
-#' @param small_num_suppress logical. If TRUE suppresses small numbers. Default: \code{TRUE}.
-#' @param suppress_low numeric. Lower bound for suppression. Default: \code{0}.
-#' @param suppress_high numeric. Upper bound for suppression. Default: \code{9}.
-#' @param source_name character. Name of data source. Default: \code{NULL}.
-#' @param source_date Date. Date ph.data was created. Default: \code{NULL}.
-#' @param non_chi_byvars character vector. Variable names to exclude from CHI byvar encoding validation. Default: \code{NULL}.
+#' @param ci numeric. Confidence level between 0 and 1. Default: `0.90`.
+#' @param rate logical. If TRUE calculates rates, if FALSE calculates proportions. Default: `FALSE`.
+#' @param rate_per numeric. Rate multiplier when `rate = TRUE` (e.g., 100000 for per 100,000). Default: `NULL`.
+#' @param small_num_suppress logical. If TRUE suppresses small numbers. Default: `TRUE`.
+#' @param suppress_low numeric. Lower bound for suppression. Default: `0`.
+#' @param suppress_high numeric. Upper bound for suppression. Default: `9`.
+#' @param source_name character. Name of data source. Default: `NULL`.
+#' @param source_date Date. Date ph.data was created. Default: `NULL`.
+#' @param non_chi_byvars character vector. Variable names to exclude from CHI byvar encoding validation. Default: `NULL`.
 #'
 #' @details
-#' Uses \code{ph.instructions} created by \code{\link{chi_generate_tro_shell}} to
+#' Uses `ph.instructions` created by [chi_generate_tro_shell()] to
 #' generate standard CHI output following [SharePoint > DPH-CHI > CHI_vizes > CHI-Standards-TableauReady Output.xlsx](<https://kc1.sharepoint.com/teams/DPH-CHI/CHIVizes/CHI-Standards-TableauReady Output.xlsx>).
-#' The exception is the inclusion of the column \code{'level'}, which contains
+#' The exception is the inclusion of the column `'level'`, which contains
 #' the specific factor level for categorical variables. For example, if
-#' \code{indicator_key == 'fetal_pres'}, the function would return separate rows
-#' for each possible presentation: a row with \code{level == 'Breech'}, another
-#' with \code{level == 'Cephalic'}, and another with \code{level == 'Other'}. In
+#' `indicator_key == 'fetal_pres'`, the function would return separate rows
+#' for each possible presentation: a row with `level == 'Breech'`, another
+#' with `level == 'Cephalic'`, and another with `level == 'Other'`. In
 #' these cases, we would use the level column to filter for our factor level of
 #' interest.
 #'
 #' For convenience, details of the returned column are presented here:
-#' \itemize{
-#'   \item{\code{data_source}} Data source (e.g., acs, brfss, etc.)
-#'   \item{\code{indicator_key}} Unique indicator key
-#'   \item{\code{level}} factor level of the indicator_key (e.g., Breech vs Cephalic vs other for fetal_pres in birth data)
-#'   \item{\code{tab}} Type of analysis (e.g., demgroups, _kingcounty, etc.)
-#'   \item{\code{year}} Year(s) of data
-#'   \item{\code{cat1}} Describes data field (e.g., Gender, Ethnicity, etc.)
-#'   \item{\code{cat1_group}} Demographics variables for cat1 (e.g., Female, Hispanic, etc.)
-#'   \item{\code{cat1_varname}} cat1 variable name in the analytic data sets
-#'   \item{\code{cat2}} Describes data field (e.g., Gender, Ethnicity, etc.)
-#'   \item{\code{cat2_group}} Demographics variables for cat2 (e.g., Female, Hispanic, etc.)
-#'   \item{\code{cat2_varname}} cat2 variable name in the analytic data sets
-#'   \item{\code{result}} Calculated proportion/percent or rate
-#'   \item{\code{lower_bound}} Lower bound of confidence interval
-#'   \item{\code{upper_bound}} Upper bound of confidence interval
-#'   \item{\code{se}} Standard error
-#'   \item{\code{rse}} Relative standard error
-#'   \item{\code{caution}} '!' when RSE>=30% | N == 0
-#'   \item{\code{suppression}} '^' when suppressed
-#'   \item{\code{numerator}} For line-level data, count of events; for surveys, people who responded yes or no for binary variable
-#'   \item{\code{denominator}} For line-level data, population; for surveys, sample size
-#'   \item{\code{chi}} '1' indicates that rows is used for CHI
-#'   \item{\code{source_date}} date analytic ready data was created
-#'   \item{\code{run_date}} date of this analysis
-#' }
+#'
+#' - `data_source`: Data source (e.g., acs, brfss, etc.)
+#' - `indicator_key`: Unique indicator key
+#' - `level`: factor level of the indicator_key (e.g., Breech vs Cephalic vs other for fetal_pres in birth data)
+#' - `tab`: Type of analysis (e.g., demgroups, _kingcounty, etc.)
+#' - `year`: Year(s) of data
+#' - `cat1`: Describes data field (e.g., Gender, Ethnicity, etc.)
+#' - `cat1_group`: Demographics variables for cat1 (e.g., Female, Hispanic, etc.)
+#' - `cat1_varname`: cat1 variable name in the analytic data sets
+#' - `cat2`: Describes data field (e.g., Gender, Ethnicity, etc.)
+#' - `cat2_group`: Demographics variables for cat2 (e.g., Female, Hispanic, etc.)
+#' - `cat2_varname`: cat2 variable name in the analytic data sets
+#' - `result`: Calculated proportion/percent or rate
+#' - `lower_bound`: Lower bound of confidence interval
+#' - `upper_bound`: Upper bound of confidence interval
+#' - `se`: Standard error
+#' - `rse`: Relative standard error
+#' - `caution`: '!' when RSE>=30% | N == 0
+#' - `suppression`: '^' when suppressed
+#' - `numerator`: For line-level data, count of events; for surveys, people who responded yes or no for binary variable
+#' - `denominator`: For line-level data, population; for surveys, sample size
+#' - `chi`: '1' indicates that rows is used for CHI
+#' - `source_date`: date analytic ready data was created
+#' - `run_date`: date of this analysis
 #'
 #' @return Returns a data.table containing CHI estimates, regardless of input type
 #'
 #' @seealso
-#' \code{\link{chi_generate_tro_shell}} for creating calculation instructions
+#' [chi_generate_tro_shell()] for creating calculation instructions
 #'
-#' \code{\link{chi_qa_tro}} for validating results
+#' [chi_qa_tro()] for validating results
 #'
-#' \code{\link{chi_generate_metadata}} for creating metadata from results
+#' [chi_generate_metadata()] for creating metadata from results
 #'
 #' @export
 #'

@@ -57,9 +57,9 @@ chi_update_sql(
 
 }
 \seealso{
-\code{\link{chi_qa_tro}} for validating data before upload
+\code{\link[=chi_qa_tro]{chi_qa_tro()}} for validating data before upload
 
-\code{\link{chi_compare_estimates}} for comparing with existing data
+\code{\link[=chi_compare_estimates]{chi_compare_estimates()}} for comparing with existing data
 }
 \keyword{CHI,}
 \keyword{Production}

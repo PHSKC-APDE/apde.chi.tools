@@ -14,18 +14,18 @@ on the TSQL Production Server. Required if \code{CHIestimates} is not provided.}
 
 \item{CHIestimates}{A data.table or data.frame containing CHI data to analyze.
 If provided, \code{data_source} is ignored. Must comply with the latest CHI
-standard, which can be assessed/tested with the \code{\link{chi_qa_tro}}
+standard, which can be assessed/tested with the \code{\link[=chi_qa_tro]{chi_qa_tro()}}
 function in this package.}
 }
 \value{
 Returns a data.table containing analysis sets with the following columns:
 \itemize{
 \item \code{cat1}: character. A standard value from the \code{'cat'} column
-of \code{\link[rads.data]{misc_chi_byvars}}, e.g. \code{'Gender'}
+of \link[rads.data:misc_chi_byvars]{rads.data::misc_chi_byvars}, e.g. \code{'Gender'}
 \item \code{cat1_varname}: character. A standard value from the \code{'varname'}
-column of \code{\link[rads.data]{misc_chi_byvars}}, e.g., \code{'chi_sex'}
-\item \code{_kingcounty}: character \code{'x'}. Is the analysis for King County as a whole?
-\item \code{_wastate}: character \code{'x'}. Is the analysis is for WA state as a whole?
+column of \link[rads.data:misc_chi_byvars]{rads.data::misc_chi_byvars}, e.g., \code{'chi_sex'}
+\item \verb{_kingcounty}: character \code{'x'}. Is the analysis for King County as a whole?
+\item \verb{_wastate}: character \code{'x'}. Is the analysis is for WA state as a whole?
 \item \code{demgroups}: character \code{'x'}. Is the analysis for demgroups?
 \item \code{crosstabs}: character \code{'x'}. Is the analysis for crosstabs?
 \item \code{trends}: character \code{'x'}, Is the the analysis for trends?
@@ -36,27 +36,26 @@ column of \code{\link[rads.data]{misc_chi_byvars}}, e.g., \code{'chi_sex'}
 \description{
 Creates sets of indicator keys that share common analysis patterns within CHI
 (Community Health Indicators) data. This function can either:
-
 \enumerate{
 \item Read the most recent production version of CHI estimates from the TSQL Production Server for a specified data source, or
 \item Process a provided data.table/data.frame containing CHI data
 }
 
 It groups indicators that use the same combinations of \code{cat1}, \code{cat1_varname}, and
-tab columns (\code{_kingcounty}, \code{_wastate}, \code{demgroups}, \code{crosstabs}, \code{trends}).
+tab columns (\verb{_kingcounty}, \verb{_wastate}, \code{demgroups}, \code{crosstabs}, \code{trends}).
 }
 \details{
-This function generates a table for \code{\link{chi_generate_tro_shell}}, providing the
+This function generates a table for \code{\link[=chi_generate_tro_shell]{chi_generate_tro_shell()}}, providing the
 structure required for generating analysis instructions.
 
-When using \code{data_source}, the function connects to the \code{[PHExtractStore]}
+When using \code{data_source}, the function connects to the \verb{[PHExtractStore]}
 database on the TSQL Production Server \code{KCITSQLPRPHIP40} to retrieve the
 latest production estimates. Users need appropriate database credentials - contact
 your manager if you need access.
 
 When using \code{CHIestimates}, the provided estimates are processed directly,
 bypassing the database connection. The data must comply with the latest CHI
-standard, which can be assessed/tested with the \code{\link{chi_qa_tro}} function.
+standard, which can be assessed/tested with the \code{\link[=chi_qa_tro]{chi_qa_tro()}} function.
 }
 \examples{
 \dontrun{
@@ -73,6 +72,6 @@ custom_sets <- chi_generate_analysis_set(CHIestimates = my_data)
 
 }
 \seealso{
-\code{\link{chi_generate_tro_shell}} for generating calculation instructions
+\code{\link[=chi_generate_tro_shell]{chi_generate_tro_shell()}} for generating calculation instructions
 from these analysis sets
 }

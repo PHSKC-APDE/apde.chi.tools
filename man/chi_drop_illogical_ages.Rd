@@ -76,9 +76,9 @@ unique(filtered_data[, .(min_age = min(chi_age), max_age = max(chi_age)),
 
 }
 \seealso{
-\code{\link{chi_chars_ccs}} and \code{\link{chi_chars_injury}} which use this
+\code{\link[=chi_chars_ccs]{chi_chars_ccs()}} and \code{\link[=chi_chars_injury]{chi_chars_injury()}} which use this
 function internally
 
-\code{\link{chi_count_by_age}} and \code{\link{chi_get_proper_pop}} whose
+\code{\link[=chi_count_by_age]{chi_count_by_age()}} and \code{\link[=chi_get_proper_pop]{chi_get_proper_pop()}} whose
 results are often filtered with this function
 }

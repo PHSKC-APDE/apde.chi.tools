@@ -3,8 +3,8 @@
 #' @description
 #' This function applies primary data suppression based on the numerator and
 #' denominator and secondary suppression based on the numerator. It also flags
-#' low reliability. Suppressed data are noted by \code{suppression = '^'} and
-#' unreliable data are noted by \code{caution = '!'}.
+#' low reliability. Suppressed data are noted by `suppression = '^'` and
+#' unreliable data are noted by `caution = '!'`.
 #'
 #' @details
 #' Data source specific suppression ranges can be found
@@ -26,23 +26,23 @@
 #' proportion
 #' @param suppress_range Integer vector of length 2. They specify the minimum and
 #' maximum range for suppression.
-#' @param secondary Logical (\code{T}, \code{TRUE}, \code{F}, or \code{FALSE})
+#' @param secondary Logical (`T`, `TRUE`, `F`, or `FALSE`)
 #' indicating whether secondary suppression should be run
 #' @param secondary_ids Character vector of column names which are used to define
 #' groups for secondary suppression.
 #' Note, this should not include the most granular level. For example, if you wanted
 #' secondary suppression for race/ethnicity within HRAs
-#' where \code{cat1_varname == 'race4'} and \code{cat1_group == 'AIAN'},
-#' \code{cat1_group == 'Asian'}, \code{cat1_group == 'Black'}, etc., you should
-#' have \code{secondary_ids = c('hra20_name', 'cat1_varname')} rather than
-#' \code{secondary_ids = c('hra20_name', 'cat1_varname', 'cat1_group')}
+#' where `cat1_varname == 'race4'` and `cat1_group == 'AIAN'`,
+#' `cat1_group == 'Asian'`, `cat1_group == 'Black'`, etc., you should
+#' have `secondary_ids = c('hra20_name', 'cat1_varname')` rather than
+#' `secondary_ids = c('hra20_name', 'cat1_varname', 'cat1_group')`
 #' @param secondary_exclude An unquoted expression that evaluates to a logical vector
 #' indicating which rows to include in secondary suppression analysis. Use this parameter
 #' to exclude categories that are not mutually exclusive (e.g., overlapping demographic
 #' groups). The expression should use column names from the dataset and evaluate to TRUE
 #' for rows to include. For example: `secondary_exclude = cat1_varname != "race3"` would
 #' exclude all rows where cat1_varname equals "race3" from secondary suppression.
-#' @param flag_only Logical (\code{T}, \code{TRUE}, \code{F}, or \code{FALSE})
+#' @param flag_only Logical (`T`, `TRUE`, `F`, or `FALSE`)
 #' indicating whether data to be
 #' suppressed should be flagged without setting estimates to NA
 #' @param numerator_col Character string with the name of the numerator column. Default is "numerator".
